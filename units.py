@@ -63,11 +63,7 @@ class Unit(Symbol):
 		self.abbrev=name
 		self._name=name
 		return self
-   
-	def getSymbolicName(self):
-		return self._name
-	def getRealName(self):
-		return self._name
+
 	def getComplexity(self):
 		return self._complexity
 	#gibt Einheit in Grundeinheiten an

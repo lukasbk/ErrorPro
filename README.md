@@ -5,9 +5,9 @@ python script to calculate physical quantities from data including units and unc
 
 - Messdaten aus Dateien lesen (Einzelmessungen, Konstanten, Messreihen, abhängige Größen)
 - SI-System implementieren, m,c,d,k,M als Vorfaktoren?, clearUnits optimieren
-- Formschöne Ausgabe von Zahlen (Einheiten gut formatiert, Wert und Fehler in der Form "(5 +- 1)")
-- Latex-Ausgabe der Fehlerformel
-- Mittelwertberechnung einer Liste (gewichtet/nicht gewichtet?)
+- Latex-Ausgabe verbessern
+- Student-t-Faktor beim Mittelwert
+- gewichteter Mittelwert
 - Regressionen?
 - Performance-Verbesserungen?
 - GnuPlot-Erweiterung?

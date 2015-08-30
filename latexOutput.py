@@ -1,4 +1,5 @@
-from sympy import latex
+from sympy import latex, N
+from math import log10, floor, ceil
 import shlex, subprocess, os
 import units
 
@@ -21,27 +22,58 @@ code=r'''
 
 \subsection*{Fehlerformeln}
 
+%(formulas)s
+
 \end{document}
 '''
 
+#Größe zur Ausgabe hinzufügen
 def addQuantity(quantity):
 	quantities.append(quantity)
 	content["a"]=2
-	print("1")
 
-def test():
-	content["a"]=2
+def format(quantity):
+	u=quantity.calculateUncertainty().evalf(6)
 
+	uFirstDigitPos=floor(log10(u))
+	uFirstDigit=floor(u*10**(-uFirstDigitPos))
+	if uFirstDigit<3:
+		precision=uFirstDigitPos-1
+	else:
+		precision=uFirstDigitPos
+
+	vPrecise=quantity.calculate()
+	vRough=vPrecise.evalf(1)
+	v=vPrecise.evalf(floor(log10(vRough))-precision+5)
+
+	uCeiled=ceil(u*10**(-precision))/10**(-precision)
+	vRounded=round(v,-precision)
+
+	number=str(vRounded)+"\pm "+str(uCeiled)
+	unit="\mathrm{"+latex(units.clearUnits(quantity.calculateUnit()))+"}"
+
+	return quantity.name+" = ("+number+")\\,"+unit
+
+
+
+#Ausgabe in Datei speichern
 def save(filename):
-	print("2")
-	content["results"]="aaa"
+	content["results"]=""
+	content["formulas"]=""
 	for q in quantities:
-		content["results"]=""
 		content["results"]+=r'\begin{align*}'
-		content["results"]+=q.name+"= ("+str(q.calculate())+"\pm "+\
-							str(q.calculateUncertainty())+")"\
-							+"\mathrm{"+latex(units.clearUnits(q.calculateUnit()))+"}"
+		content["results"]+=format(q)
 		content["results"]+=r'\end{align*}'
+
+	for q in quantities:
+		try:
+			formula=q.getUncertaintyFormula()
+			content["formulas"]+=r'\begin{align*}'
+			content["formulas"]+="\\sigma_{"+q.name+"}="+latex(formula)
+			content["formulas"]+=r'\end{align*}'
+		except AttributeError:
+			pass
+
 
 	with open(filename+'.tex','w') as f:
 		f.write(code%content)

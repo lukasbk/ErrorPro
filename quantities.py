@@ -56,6 +56,14 @@ def newResultList(name,value,length):
 	lists[name]=ResultList(name,parse_expr(value),length)
 	return lists[name]
 
+def newUnweightedMeanValue(name,list):
+	if name in lists or name in quantities:
+		raise ValueError("Symbol gibt es schon.")
+	if not isinstance(list,QuantityList):
+		raise TypeError("Es muss ein Listen-Objekt übergeben werden.")
+	quantities[name]=UnweightedMeanValue(name,list)
+	return quantities[name]
+
 def parse_expr(expr):
 	expr=sym_parse_expr(expr)
 	for var in expr.free_symbols:
@@ -77,6 +85,13 @@ def getQuantity(sym):
 		return quantities[name]
 	else:
 		raise ValueError("Diese Größe gibt es nicht.")
+
+#intern: Fehlerformel
+def uncertaintyFormula(expr):
+	formula=0
+	for var in expr.free_symbols:
+		formula+=(Symbol("\\sigma_{"+var.name+"}",positive=True)*diff(expr,var))**2
+	return sqrt(formula)
 
 class Quantity(Symbol):
 	def __new__(cls,name):
@@ -143,6 +158,31 @@ class Result(Quantity):
 			calculation=calculation.subs(var,var.calculateUnit())
 		return calculation
 
+	def getUncertaintyFormula(self):
+		return uncertaintyFormula(self._value)
+
+class UnweightedMeanValue(Result):
+	def __new__(cls, name, listObj):
+		self=Quantity.__new__(cls,name)
+		self._list=listObj
+		return self
+
+	def calculate(self):
+		sum=0
+		for item in self._list.getItems():
+			sum+=item.calculate()
+		return sum/self._list.getLength()
+		
+	def calculateUncertainty(self):
+		value=self.calculate()
+		sum=0
+		for item in self._list.getItems():
+			sum+=(item.calculate()-value)**2
+		#todo: t-Faktor muss hier noch rein
+		return sqrt(1/self._list.getLength()/(self._list.getLength()-1)*sum)
+		
+	def calculateUnit(self):
+		return self._list.calculateUnit()
 
 
 class QuantityList(Symbol):
@@ -158,12 +198,15 @@ class QuantityList(Symbol):
 		return self._items[no]
 	def getItems(self):
 		return self._items
+	def calculateUnit(self):
+		pass
 
 class MeasurementList(QuantityList):
 	def __new__(cls, name, value, uncertainty, unit):
 		self=QuantityList.__new__(cls,name)
 		self._length=0
 		self._items=[]
+		self._unit=unit
 		for index, valueItem in enumerate(value):
 			self._length+=1
 			itemName=name+"_item_"+str(index)
@@ -172,6 +215,8 @@ class MeasurementList(QuantityList):
 			quantities[itemName]=Measurement(itemName,valueItem,uncertainty[index],unit)
 			self._items.append(quantities[itemName])
 		return self
+	def calculateUnit(self):
+		return self._unit
 	
 
 class ResultList(QuantityList):
@@ -194,3 +239,11 @@ class ResultList(QuantityList):
 
 		return self
 
+	def calculateUnit(self):
+		calculation=self._value
+		for var in self._value.free_symbols:
+			calculation=calculation.subs(var,var.calculateUnit())
+		return calculation
+
+	def getUncertaintyFormula(self):
+		return uncertaintyFormula(self._value)
