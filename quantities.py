@@ -1,5 +1,6 @@
 from sympy import Expr,Symbol,diff,sqrt
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
+from sympy.physics.unitsystems.quantities import Quantity as symQuantity
 import units
 quantities={}
 lists={}
@@ -107,18 +108,13 @@ class Quantity(Symbol):
 	#berechnet Fehler durch rekursives Einsetzen
 	def calculateUncertainty(self):
 		pass
-
-	#berechnet Einheit durch rekursives Einsetzen
-	def calculateUnit(self):
-		pass
 		
 class Measurement(Quantity):
 
 	def __new__(cls, name, value, uncertainty, unit):
 		self=Quantity.__new__(cls,name)
-		self._value=value
-		self._uncertainty=uncertainty
-		self._unit=unit
+		self._value=symQuantity(value,unit)
+		self._uncertainty=symQuantity(uncertainty,unit)
 		return self
 
 	def calculate(self):
@@ -126,9 +122,6 @@ class Measurement(Quantity):
 
 	def calculateUncertainty(self):
 		return self._uncertainty
-
-	def calculateUnit(self):
-		return self._unit
 
 class Result(Quantity):
 	def __new__(cls, name, value):
@@ -152,11 +145,6 @@ class Result(Quantity):
 			integrand+=( var.calculateUncertainty()
 						*result )**2
 		return sqrt(integrand)
-	def calculateUnit(self):
-		calculation=self._value
-		for var in self._value.free_symbols:
-			calculation=calculation.subs(var,var.calculateUnit())
-		return calculation
 
 	def getUncertaintyFormula(self):
 		return uncertaintyFormula(self._value)
@@ -180,9 +168,6 @@ class UnweightedMeanValue(Result):
 			sum+=(item.calculate()-value)**2
 		#todo: t-Faktor muss hier noch rein
 		return sqrt(1/self._list.getLength()/(self._list.getLength()-1)*sum)
-		
-	def calculateUnit(self):
-		return self._list.calculateUnit()
 
 
 class QuantityList(Symbol):
@@ -198,8 +183,6 @@ class QuantityList(Symbol):
 		return self._items[no]
 	def getItems(self):
 		return self._items
-	def calculateUnit(self):
-		pass
 
 class MeasurementList(QuantityList):
 	def __new__(cls, name, value, uncertainty, unit):
@@ -215,8 +198,6 @@ class MeasurementList(QuantityList):
 			quantities[itemName]=Measurement(itemName,valueItem,uncertainty[index],unit)
 			self._items.append(quantities[itemName])
 		return self
-	def calculateUnit(self):
-		return self._unit
 	
 
 class ResultList(QuantityList):
@@ -238,12 +219,6 @@ class ResultList(QuantityList):
 		self._value=value
 
 		return self
-
-	def calculateUnit(self):
-		calculation=self._value
-		for var in self._value.free_symbols:
-			calculation=calculation.subs(var,var.calculateUnit())
-		return calculation
 
 	def getUncertaintyFormula(self):
 		return uncertaintyFormula(self._value)
