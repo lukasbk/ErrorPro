@@ -52,7 +52,7 @@ def parse_expr(exprStr):
 	expr=sym_parse_expr(exprStr)
 	for var in expr.free_symbols:
 		if not var.name in units:
-			raise ValueError("Einheit gibt es nicht.")
+			raise ValueError("Einheit "+var.name+" gibt es nicht.")
 		expr=expr.subs(var,units[var.name])
 	return expr
 

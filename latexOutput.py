@@ -2,6 +2,7 @@ from sympy import latex, N
 from math import log10, floor, ceil
 import shlex, subprocess, os
 import units
+from quantities import Measurement,Result,MeasurementList,ResultList,UnweightedMeanValue
 
 content={}
 quantities=[]
@@ -32,8 +33,10 @@ def addQuantity(quantity):
 	quantities.append(quantity)
 
 def format(quantity):
-	u=quantity.calculateUncertainty().evalf(6)
+	return quantity.name+" = "+formatValue(quantity)
 
+def formatValue(quantity):
+	u=quantity.calculateUncertainty().evalf(6)
 	uFirstDigitPos=floor(log10(u))
 	uFirstDigit=floor(u*10**(-uFirstDigitPos))
 	if uFirstDigit<3:
@@ -51,8 +54,7 @@ def format(quantity):
 	number=str(vRounded)+"\pm "+str(uCeiled)
 	unit="\mathrm{"+latex(units.clearUnits(quantity.calculateUnit()))+"}"
 
-	return quantity.name+" = ("+number+")\\,"+unit
-
+	return "("+number+")\\,"+unit
 
 
 #Ausgabe in Datei speichern
@@ -60,9 +62,23 @@ def save(filename):
 	content["results"]=""
 	content["formulas"]=""
 	for q in quantities:
-		content["results"]+=r'\begin{align*}'
-		content["results"]+=format(q)
-		content["results"]+=r'\end{align*}'
+		if isinstance(q, Measurement) or isinstance(q,Result):
+			content["results"]+=r'\begin{align*}'+'\n'
+			content["results"]+=format(q)+'\n'
+			content["results"]+=r'\end{align*}'+'\n'
+		elif isinstance(q,MeasurementList) or isinstance(q,ResultList):
+			content["results"]+=r"\begin{table}[htb]"+'\n'
+			content["results"]+=r"\centering"+'\n'
+			content["results"]+=r"\begin{tabular}{|l|}"+'\n'
+			content["results"]+=r"\hline"+'\n'
+			content["results"]+=r"\textbf{"+q.name+r"}  \\ \hline"+'\n'
+			for item in q.getItems():
+				content["results"]+="$"+formatValue(item)+'$\n'
+				content["results"]+=r"\\ \hline"+'\n'
+			content["results"]+=r"\end{tabular}"+'\n'
+			content["results"]+=r"\end{table}"+'\n'
+
+
 
 	for q in quantities:
 		try:

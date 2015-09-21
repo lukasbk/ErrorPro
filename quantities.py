@@ -20,13 +20,24 @@ def newResult(name,value):
 	if name in lists or name in quantities:
 		raise ValueError("Symbol gibt es schon.")
 
+	#überprüfen, ob es eine Messreihe ist
+	length=0
 	expr=parse_expr(value)
-	for var in expr.free_symbols:
-		if not isinstance(var,Quantity):
-			raise ValueError("Wert darf nur Größen enthalten.")
 
-	quantities[name]=Result(name,expr)
-	return quantities[name]
+	for var in expr.free_symbols:
+		if isinstance(var,QuantityList):
+			if not length==0:
+				if not length==var.getLength():
+					raise ValueError("Ausdruck enthält Listen unterschiedlicher Länge.")
+			else:
+				length=var.getLength()
+	if length==0:
+		quantities[name]=Result(name,expr)
+		return quantities[name]
+	else:
+		lists[name]=ResultList(name,expr,length)
+		return lists[name]
+	
 
 def newMeasurementList(name,values,uncertainties,unit):
 	if name in lists or name in quantities:
@@ -48,12 +59,6 @@ def newMeasurementList(name,values,uncertainties,unit):
 		uncertExpr.append(uncertainty)
 
 	lists[name]=MeasurementList(name,valuesExpr,uncertExpr,units.parse_expr(unit))
-	return lists[name]
-
-def newResultList(name,value,length):
-	if name in lists or name in quantities:
-		raise ValueError("Symbol gibt es schon.")
-	lists[name]=ResultList(name,parse_expr(value),length)
 	return lists[name]
 
 def newUnweightedMeanValue(name,list):
@@ -121,6 +126,9 @@ class Measurement(Quantity):
 		self._unit=unit
 		return self
 
+	def __repr__(self):
+		return self._name+"=("+str(self._value)+"+-"+str(self._uncertainty)+")"+str(self._unit)
+
 	def calculate(self):
 		return self._value
 
@@ -135,6 +143,9 @@ class Result(Quantity):
 		self=Quantity.__new__(cls,name)
 		self._value=value
 		return self
+
+	def __repr__(self):
+		return self._name+"="+str(self._value)
 
 	def calculate(self):
 		calculation=self._value
