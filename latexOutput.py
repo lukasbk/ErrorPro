@@ -30,7 +30,6 @@ code=r'''
 #Größe zur Ausgabe hinzufügen
 def addQuantity(quantity):
 	quantities.append(quantity)
-	content["a"]=2
 
 def format(quantity):
 	u=quantity.calculateUncertainty().evalf(6)

@@ -90,7 +90,7 @@ def getQuantity(sym):
 def uncertaintyFormula(expr):
 	formula=0
 	for var in expr.free_symbols:
-		formula+=(Symbol("\\sigma_{"+var.name+"}",positive=True)*diff(expr,var))**2
+		formula+=(Symbol("{\\sigma_{"+var.name+"}}",positive=True)*diff(expr,var))**2
 	return sqrt(formula)
 
 class Quantity(Symbol):
@@ -192,6 +192,8 @@ class QuantityList(Symbol):
 		self._name=name
 		return self
 	
+	def getName(self):
+		return self._name
 	def getLength(self):
 		return self._length
 	def getItem(self,no):
