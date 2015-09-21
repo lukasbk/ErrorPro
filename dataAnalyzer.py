@@ -4,11 +4,12 @@ import quantities as q
 import latexOutput
 from sympy.physics.unitsystems.simplifiers import qsimplify
 
-a=q.newMeasurement("s",1,0.1,"V*A")
-e=q.newMeasurement("e",1,0.1,"V*A")
-b=q.newResult("B","s+e")
-c=q.newMeasurementList("l",[1,2,1,2,2],[1,1,1,1,1],"Pa")
-d=q.newUnweightedMeanValue("m",c)
+a=q.newMeasurement("s",1,0.1,"m")
+e=q.newMeasurement("e",2,0.1,"m")
+b=q.newResult("B","s/e")
+c=q.newResult("c","B+s")
+
+print(qsimplify(c.calculate()))
 
 #latexOutput.addQuantity(q.newMeasurement("s_1",1437,13,"V*A"))
 #latexOutput.addQuantity(q.newMeasurement("s_2",1144100,6660,"V*A"))
