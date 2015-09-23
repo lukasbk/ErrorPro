@@ -1,8 +1,22 @@
 import os
+import re
 
 measurements=[]
 results=[]
 measurementLists=[]
+
+rDescription=r"[\w ,]+"
+rName=r"[\w\{\}\\]+"
+rUnit=r"[\w\*\/\°]+"
+rNumber=r"[\d\.\-]+"
+rTerm=r"[\w\{\}\\*/\+\-\(\) ]+"
+rS="\s+"
+rW="\s*"
+
+def isAllowedName(name):
+	if re.search(r"^[\w\{\}\\]+$",name):
+	    return True
+	return False
 
 def readFiles(dir):
 	for dirname, dirnames, filenames in os.walk(dir):
@@ -13,63 +27,87 @@ def readFiles(dir):
 	        	file = open(dir+"/"+filename, 'r')
 
 	        	for line in file:
-	        		if "=" in line:
-	        			line=line.partition("=")
-	        			#Variablenname
-	        			name=line[0].strip()
-	        			if not name.isalpha():
-	        				raise IOError("Variablenname '"+name+"' besteht nicht nur aus Buchstaben.")
-
-	        			if line[2].find("+-") == -1:
-	        			#Result
-	        				value=line[2].strip()
-	        				results.append({"name":name,"value":value})
+	        		#Measurement
+	        		match=re.match(r"^"+rW+"(?:("+rDescription+")"+rS+")?("+rName+")"+rW+"="+rW+"("+rNumber+")[\s(?:\+\-)]+("+rNumber+")"+rW+"("+rUnit+")?"+rW+"$",line)
+	        		if not match == None:
+	        			description=match.group(1)
+	        			if description == None:
+	        				description=""
 	        			else:
-	        			#Measurement
-	        				line2=line[2].rpartition(" ")
-
-	        				#Einheit
-	        				unit=line2[2].strip()
-
-	        				line3=line2[0].partition("+-")
-	        				#Wert
-	        				value=line3[0].strip()
-	        				#Fehler
-	        				uncert=line3[2].strip()
-	        				measurements.append({"name":name,"value":value,"uncertainty":uncert,"unit":unit})
+	        				description=description.strip()
+	        			name=match.group(2)
+	        			value=match.group(3)
+	        			uncert=match.group(4)
+	        			unit=match.group(5)
+	        			if unit == None:
+	        				unit="1"
+	        			measurements.append({"name":name,"description":description,"value":value,"uncertainty":uncert,"unit":unit})
+	        			continue
+	        		#Result
+	        		match=re.match("^"+rW+"(?:("+rDescription+")"+rS+")?("+rName+")"+rW+"="+rW+"("+rTerm+")"+rW+"$",line)
+	        		if not match == None:
+	        			description=match.group(1)
+	        			if description == None:
+	        				description=""
+	        			else:
+	        				description=description.strip()
+	        			name=match.group(2)
+	        			term=match.group(3)
+	        			results.append({"name":name,"description":description,"value":term})
+	        			continue
 	        elif filename[-5:] == ".list":
 	        	file = open(dir+"/"+filename, 'r')
 	        	
-	        	qs=file.readline().split("	")
+	        	quantitiesStr=file.readline().split("	")
 	        	measurementsHere=[]
-	        	for q in qs:
+	        	#Erste Zeile
+	        	quantityAmount=0
+	        	for quantityStr in quantitiesStr:
 	        		dict={}
-	        		q=q.partition("[")
-	        		#Name
-	        		dict["name"]=q[0].strip()
-	        		if not dict["name"].isalpha():
-	        			raise IOError("Variablenname '"+dict["name"]+"' besteht nicht nur aus Buchstaben.")
-
-
-	        		#Einheit
-	        		dict["unit"]=q[2].strip()
-	        		if not dict["unit"][-1:] == "]":
-	        			raise IOError("Falsche Formatierung der ersten Zeile")
-	        		dict["unit"]=dict["unit"][:-1]
+	        		match=re.match("^"+rW+"(?:("+rDescription+")"+rS+")?("+rName+")"+rW+"(?:\(("+rNumber+")\))?"+rW+"(?:\[("+rUnit+")\])?"+rW,quantityStr)
+	        		if match == None:
+	        			raise SyntaxError("Erste Zeile von "+filename+" hat falsches Format.")
+	        		description=match.group(1)
+	        		if description == None:
+        				description=""
+        			else:
+        				description=description.strip()
+	        		dict["description"]=description
+	        		dict["name"]=match.group(2)
+	        		dict["uncertainty"]=match.group(3)
+	        		unit=match.group(4)
+	        		if unit == None:
+	        			unit="1"
+	        		dict["unit"]=unit
 	        		dict["values"]=[]
 	        		dict["uncertainties"]=[]
 	        		measurementsHere.append(dict)
+	        		quantityAmount+=1
 
+	        	#Rest
+	        	number=re.compile("^"+rNumber+"$")
+	        	lineCount=2
 	        	for line in file:
 	        		turnForValue=True
-	        		mCount=0
+	        		count=0
 	        		line=line.split("	")
-	        		for v in line:
+	        		for value in line:
+	        			if number.match(value) == None:
+	        				raise SyntaxError("Werte von "+filename+" sind falsch formatiert.")
+
 	        			if turnForValue:
-	        				measurementsHere[mCount]["values"].append(v)
-	        				turnForValue=False
+	        				measurementsHere[count]["values"].append(value)
+	        				if measurementsHere[count]["uncertainty"] == None:
+	        					turnForValue=False
+	        					print(filename)
+	        				else:
+	        					measurementsHere[count]["uncertainties"].append(measurementsHere[count]["uncertainty"])
+	        					count+=1
 	        			else:
-	        				measurementsHere[mCount]["uncertainties"].append(v)
+	        				measurementsHere[count]["uncertainties"].append(value)
 	        				turnForValue=True
-	        				mCount+=1
+	        				count+=1
+	        		if not count == quantityAmount:
+	        			raise SyntaxError("Anzahl der Werte ("+str(count)+") in "+filename+", Zeile "+str(lineCount)+" entspricht nicht der der definierten Größen ("+str(quantityAmount)+").")
+	        		lineCount+=1
 	        	measurementLists.extend(measurementsHere)

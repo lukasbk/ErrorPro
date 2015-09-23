@@ -14,6 +14,7 @@ units.makeUnit("K")
 
 units.makeUnit("mA","A/1000")
 units.makeUnit("mm","m/1000")
+units.makeUnit("Hz","1/s")
 #Newton
 units.makeUnit("Pa","kg/m/s**2")
 units.makeUnit("J","m**2*kg/s**2")
@@ -26,15 +27,15 @@ units.makeUnit("ohm","m**2*kg/s**3/A**2")
 
 inp.readFiles("data")
 for m in inp.measurements:
-	q=newMeasurement(m["name"],m["value"],m["uncertainty"],m["unit"])
+	q=newMeasurement(m["name"],m["description"],m["value"],m["uncertainty"],m["unit"])
 	out.addQuantity(q)
 
 for m in inp.measurementLists:
-	q=newMeasurementList(m["name"],m["values"],m["uncertainties"],m["unit"])
+	q=newMeasurementList(m["name"],m["description"],m["values"],m["uncertainties"],m["unit"])
 	out.addQuantity(q)
 
 for m in inp.results:
-	q=newResult(m["name"],m["value"])
+	q=newResult(m["name"],m["description"],m["value"])
 	out.addQuantity(q)
 
 

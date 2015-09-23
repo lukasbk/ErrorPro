@@ -1,5 +1,5 @@
-from sympy import latex, N
-from math import log10, floor, ceil
+from sympy import latex, N, Symbol
+from math import log10, floor, ceil, fabs
 import shlex, subprocess, os
 import units
 from quantities import Measurement,Result,MeasurementList,ResultList,UnweightedMeanValue
@@ -33,7 +33,13 @@ def addQuantity(quantity):
 	quantities.append(quantity)
 
 def format(quantity):
-	return quantity.name+" = "+formatValue(quantity)
+	return formatName(quantity)+" = "+formatValue(quantity)
+
+def formatName(quantity):
+	description=quantity.getDescription()
+	if not description == "":
+		description=r"\text{"+description+"}\,"
+	return description+quantity.name
 
 def formatValue(quantity):
 	u=quantity.calculateUncertainty().evalf(6)
@@ -45,7 +51,8 @@ def formatValue(quantity):
 		precision=uFirstDigitPos
 
 	vPrecise=quantity.calculate()
-	vRough=vPrecise.evalf(1)
+	vRough=fabs(vPrecise.evalf(1))
+
 	v=vPrecise.evalf(floor(log10(vRough))-precision+5)
 
 	uCeiled=ceil(u*10**(-precision))/10**(-precision)
@@ -71,7 +78,7 @@ def save(filename):
 			content["results"]+=r"\centering"+'\n'
 			content["results"]+=r"\begin{tabular}{|l|}"+'\n'
 			content["results"]+=r"\hline"+'\n'
-			content["results"]+=r"\textbf{"+q.name+r"}  \\ \hline"+'\n'
+			content["results"]+="$"+formatName(q)+r"$  \\ \hline"+'\n'
 			for item in q.getItems():
 				content["results"]+="$"+formatValue(item)+'$\n'
 				content["results"]+=r"\\ \hline"+'\n'
@@ -83,6 +90,9 @@ def save(filename):
 	for q in quantities:
 		try:
 			formula=q.getUncertaintyFormula()
+			for var in formula.free_symbols:
+				if not (var.name[:1]=="{" and var.name[-1:]=="}"):
+					formula=formula.subs(var,Symbol("{"+var.name+"}"))
 			content["formulas"]+=r'\begin{align*}'
 			content["formulas"]+="\\sigma_{"+q.name+"}="+latex(formula)
 			content["formulas"]+=r'\end{align*}'

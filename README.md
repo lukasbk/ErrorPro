@@ -3,8 +3,8 @@ python script to calculate physical quantities from data including units and unc
 
 # ToDo
 
-- Messdaten aus Dateien lesen (Einzelmessungen, Konstanten, Messreihen, abhängige Größen)
 - Darum kümmern, dass N,I,O? nicht anders interpretiert werden
+- Funktionierendes Einheitensystem, SI implementieren, 
 - SI-System implementieren, m,c,d,k,M als Vorfaktoren?, clearUnits optimieren
 - Latex-Ausgabe verbessern
 - Student-t-Faktor beim Mittelwert
