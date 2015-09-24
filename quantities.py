@@ -4,6 +4,9 @@ import units
 quantities={}
 lists={}
 
+# TODO
+# gewichtetes Mittel
+
 #erzeugt neuen Messwert
 def newMeasurement(name,description,value,uncertainty,unit):
 	if name in lists or name in quantities:
@@ -165,6 +168,8 @@ class Result(Quantity):
 	def getUncertaintyFormula(self):
 		return uncertaintyFormula(self._value)
 
+# TODO
+# Student-t-Faktor !!
 class UnweightedMeanValue(Result):
 	def __new__(cls, name, description, listObj):
 		self=Quantity.__new__(cls,name,description)

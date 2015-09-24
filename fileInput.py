@@ -13,11 +13,6 @@ rTerm=r"[\w\{\}\\*/\+\-\(\) ]+"
 rS="\s+"
 rW="\s*"
 
-def isAllowedName(name):
-	if re.search(r"^[\w\{\}\\]+$",name):
-	    return True
-	return False
-
 def readFiles(dir):
 	for dirname, dirnames, filenames in os.walk(dir):
 
@@ -41,7 +36,7 @@ def readFiles(dir):
 	        			unit=match.group(5)
 	        			if unit == None:
 	        				unit="1"
-	        			measurements.append({"name":name,"description":description,"value":value,"uncertainty":uncert,"unit":unit})
+	        			measurements.append({"name":name,"description":description,"value":value,"uncertainty":uncert,"unit":unit,"file":filename})
 	        			continue
 	        		#Result
 	        		match=re.match("^"+rW+"(?:("+rDescription+")"+rS+")?("+rName+")"+rW+"="+rW+"("+rTerm+")"+rW+"$",line)
@@ -53,7 +48,7 @@ def readFiles(dir):
 	        				description=description.strip()
 	        			name=match.group(2)
 	        			term=match.group(3)
-	        			results.append({"name":name,"description":description,"value":term})
+	        			results.append({"name":name,"description":description,"value":term,"file":filename})
 	        			continue
 	        elif filename[-5:] == ".list":
 	        	file = open(dir+"/"+filename, 'r')
@@ -79,6 +74,7 @@ def readFiles(dir):
 	        		if unit == None:
 	        			unit="1"
 	        		dict["unit"]=unit
+	        		dict["file"]=filename
 	        		dict["values"]=[]
 	        		dict["uncertainties"]=[]
 	        		measurementsHere.append(dict)

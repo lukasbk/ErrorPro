@@ -5,7 +5,7 @@ import units
 from quantities import Measurement,Result,MeasurementList,ResultList,UnweightedMeanValue
 
 content={}
-quantities=[]
+quantities={}
 q={}
 
 
@@ -29,8 +29,10 @@ code=r'''
 '''
 
 #Größe zur Ausgabe hinzufügen
-def addQuantity(quantity):
-	quantities.append(quantity)
+def addQuantity(quantity,group="default"):
+	if not group in quantities:
+		quantities[group]=[]
+	quantities[group].append(quantity)
 
 def format(quantity):
 	return formatName(quantity)+" = "+formatValue(quantity)
@@ -68,36 +70,55 @@ def formatValue(quantity):
 def save(filename):
 	content["results"]=""
 	content["formulas"]=""
-	for q in quantities:
-		if isinstance(q, Measurement) or isinstance(q,Result):
-			content["results"]+=r'\begin{align*}'+'\n'
-			content["results"]+=format(q)+'\n'
-			content["results"]+=r'\end{align*}'+'\n'
-		elif isinstance(q,MeasurementList) or isinstance(q,ResultList):
+	for group in quantities:
+		tables={}
+		for q in quantities[group]:
+			if isinstance(q, Measurement) or isinstance(q,Result):
+				content["results"]+=r'\begin{align*}'+'\n'
+				content["results"]+=format(q)+'\n'
+				content["results"]+=r'\end{align*}'+'\n'
+			elif isinstance(q,MeasurementList) or isinstance(q,ResultList):
+				if not q.getLength() in tables:
+					tables[q.getLength()]=[]
+				tables[q.getLength()].append(q)
+		for length in tables:
+			amount=len(tables[length])
 			content["results"]+=r"\begin{table}[htb]"+'\n'
 			content["results"]+=r"\centering"+'\n'
-			content["results"]+=r"\begin{tabular}{|l|}"+'\n'
+			content["results"]+=r"\begin{tabular}{|"+("l|"*amount)+"}"+'\n'
 			content["results"]+=r"\hline"+'\n'
-			content["results"]+="$"+formatName(q)+r"$  \\ \hline"+'\n'
-			for item in q.getItems():
-				content["results"]+="$"+formatValue(item)+'$\n'
+			first=True
+			for q in tables[length]:
+				if not first:
+					content["results"]+=" & "
+				content["results"]+="$"+formatName(q)+"$"
+				first=False
+			content["results"]+=r"  \\ \hline"+'\n'
+			
+			for key in range(0,length):
+				first=True
+				for q in tables[length]:
+					if not first:
+						content["results"]+=" & "
+					content["results"]+="$"+formatValue(q.getItem(key))+"$"
+					first=False
 				content["results"]+=r"\\ \hline"+'\n'
 			content["results"]+=r"\end{tabular}"+'\n'
 			content["results"]+=r"\end{table}"+'\n'
 
 
-
-	for q in quantities:
-		try:
-			formula=q.getUncertaintyFormula()
-			for var in formula.free_symbols:
-				if not (var.name[:1]=="{" and var.name[-1:]=="}"):
-					formula=formula.subs(var,Symbol("{"+var.name+"}"))
-			content["formulas"]+=r'\begin{align*}'
-			content["formulas"]+="\\sigma_{"+q.name+"}="+latex(formula)
-			content["formulas"]+=r'\end{align*}'
-		except AttributeError:
-			pass
+	for group in quantities:
+		for q in quantities[group]:
+			try:
+				formula=q.getUncertaintyFormula()
+				for var in formula.free_symbols:
+					if not (var.name[:1]=="{" and var.name[-1:]=="}"):
+						formula=formula.subs(var,Symbol("{"+var.name+"}"))
+				content["formulas"]+=r'\begin{align*}'
+				content["formulas"]+="\\sigma_{"+q.name+"}="+latex(formula)
+				content["formulas"]+=r'\end{align*}'
+			except AttributeError:
+				pass
 
 
 	with open(filename+'.tex','w') as f:

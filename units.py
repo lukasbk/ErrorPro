@@ -1,7 +1,18 @@
 from sympy import Expr,Symbol
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 
-units={} #NEU MACHEN
+# TODO
+# Einheitensystem neu machen
+# Momentan addieren sich "3 m + 3 m" zu "6 2m"
+# Entweder muss das ausgebessert werden oder das sympy-Paket unitsystems benutzt werden (siehe Branch newUnits)
+
+# TODO
+# SI-System implementieren
+
+# TODO
+# M,m,k,mikro als Vorfaktoren
+
+units={}
 
 def makeUnit(name,dependency=False):
 	if not isinstance(name,str):
@@ -29,6 +40,7 @@ def getUnit(sym):
 		raise ValueError("Diese Einheit gibt es nicht.")
 
 #bringt Einheiten in eine schönere Form
+#TODO Diese Funktion verbessern
 def clearUnits(expr):
 	result=expr
 

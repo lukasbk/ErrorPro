@@ -25,6 +25,8 @@ units.makeUnit("F","s**4*A**2/m**2/kg")
 units.makeUnit("ohm","m**2*kg/s**3/A**2")
 #...
 
+#TODO Dateien und Abhängigkeit der Größen auf groups der Ausgabe weiterleiten
+
 inp.readFiles("data")
 for m in inp.measurements:
 	q=newMeasurement(m["name"],m["description"],m["value"],m["uncertainty"],m["unit"])
