@@ -43,6 +43,10 @@ def formatName(quantity):
 		description=r"\text{"+description+"}\,"
 	return description+quantity.name
 
+# TODO
+# Ausgabe der Floats ohne 10er-Potenzen oder unnötigen Nullen
+# bzw. mit 10er-Potenzen, wenn gewollt
+# Benutzen des Latex-Pakets siunitx
 def formatValue(quantity):
 	u=quantity.calculateUncertainty().evalf(6)
 	uFirstDigitPos=floor(log10(u))
