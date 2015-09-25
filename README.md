@@ -15,6 +15,8 @@ python script to calculate physical quantities from data including units and unc
 
 To use it, you need python3, sympy and pdflatex. On Ubuntu:
 
+For fits: scipy
+
 sudo apt-get install python3
 
 sudo apt-get install python3-pip

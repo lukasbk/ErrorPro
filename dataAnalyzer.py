@@ -1,6 +1,7 @@
 from sympy import Symbol
 import units
 from quantities import *
+import gnuplot
 import latexOutput as out
 import fileInput as inp
 
@@ -38,23 +39,11 @@ for m in inp.measurementLists:
 
 for m in inp.results:
 	q=newResult(m["name"],m["description"],m["value"])
-	out.addQuantity(q)
+	out.addQuantity(q,"extra")
 
-
-
-#a=q.newMeasurement("s",1,0.1,"V*A")
-#b=q.newResult("B","s*3")
-#c=q.newMeasurementList("l",[1,2,1,2,2],[1,1,1,1,1],"Pa")
-#d=q.newUnweightedMeanValue("m",c)
-
-#latexOutput.addQuantity(q.newMeasurement("s_1",1437,13,"V*A"))
-#latexOutput.addQuantity(q.newMeasurement("s_2",1144100,6660,"V*A"))
-#latexOutput.addQuantity(q.newMeasurement("s_3",0.003,0.1,"V*A"))
-#latexOutput.addQuantity(q.newMeasurement("s_4",0.00007,0.000000001,"V*A"))
-#latexOutput.addQuantity(q.newMeasurement("s_5",14,1,"V*A"))
-#latexOutput.addQuantity(q.newMeasurement("s_6",41.88,2.9,"V*A"))
-
-#latexOutput.addQuantity(q.newResult("T","sqrt((s_2-s_1)/s_3-s_2)"))
+newFitParameter("m","")
+newFitParameter("b","")
+gnuplot.fit(parse_expr("L"),parse_expr("m*P+b"))
 
 out.save("test")
 

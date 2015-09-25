@@ -10,7 +10,7 @@ lists={}
 #erzeugt neuen Messwert
 def newMeasurement(name,description,value,uncertainty,unit):
 	if name in lists or name in quantities:
-		raise ValueError("Symbol gibt es schon.")
+		raise ValueError("Symbol "+name+" gibt es schon.")
 	value=sym_parse_expr(str(value))
 	uncertainty=sym_parse_expr(str(uncertainty))
 	if not (value.is_number and uncertainty.is_number):
@@ -21,7 +21,7 @@ def newMeasurement(name,description,value,uncertainty,unit):
 #erzeugt neue abhängige Größe
 def newResult(name,description,value):
 	if name in lists or name in quantities:
-		raise ValueError("Symbol gibt es schon.")
+		raise ValueError("Symbol "+name+" gibt es schon.")
 
 	#überprüfen, ob es eine Messreihe ist
 	length=0
@@ -44,7 +44,7 @@ def newResult(name,description,value):
 
 def newMeasurementList(name,description,values,uncertainties,unit):
 	if name in lists or name in quantities:
-		raise ValueError("Symbol gibt es schon.")
+		raise ValueError("Symbol "+name+" gibt es schon.")
 	if not len(values)==len(uncertainties):
 		raise ValueError("Werte und Fehler sind nicht gleich viele.")
 
@@ -66,13 +66,19 @@ def newMeasurementList(name,description,values,uncertainties,unit):
 
 def newUnweightedMeanValue(name,description,list):
 	if name in lists or name in quantities:
-		raise ValueError("Symbol gibt es schon.")
+		raise ValueError("Symbol "+name+" gibt es schon.")
 	if not isinstance(list,QuantityList):
 		raise TypeError("Es muss ein Listen-Objekt übergeben werden.")
 	quantities[name]=UnweightedMeanValue(name,description,list)
 	return quantities[name]
 
-def parse_expr(expr):
+def newFitParameter(name,description):
+	if name in lists or name in quantities:
+		raise ValueError("Symbol "+name+" gibt es schon.")
+	quantities[name]=FitParameter(name,description)
+	return quantities[name]
+
+def parse_expr(expr,fit=False):
 	expr=sym_parse_expr(expr)
 	for var in expr.free_symbols:
 		if not (var.name in quantities or var.name in lists):
@@ -193,6 +199,27 @@ class UnweightedMeanValue(Result):
 	def calculateUnit(self):
 		return self._list.calculateUnit()
 
+class FitParameter(Quantity):
+	def __new__(cls, name, description):
+		self=Quantity.__new__(cls,name,description)
+		self._set=False
+		return self
+	def set(self,value,uncertainty):
+		self._value=value
+		self._uncertainty=uncertainty
+		self._set=True
+
+	def calculate():
+		if not self._set:
+			raise RuntimeError("Fit wurde noch nicht berechnet.")
+		return self._value
+
+	def calculateUncertainty():
+		if not self._set:
+			raise RuntimeError("Fit wurde noch nicht berechnet.")
+
+	def calculateUnit():
+		raise NotImplementedError()
 
 class QuantityList(Symbol):
 	def __new__(cls,name,description):

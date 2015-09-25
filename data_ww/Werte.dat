@@ -1,8 +1,8 @@
-N = 1020+-0.00000001 1
-d = 233 +-0.00000001 mm
-R = 64.1 +- 0.05 ohm
-Ohm = 10.1 +- 0.05 ohm
-Kkons = 0.001817 +- 0.0000005 F
-RAmpe = 10.4 +- 0.05 ohm
+Windungszahl N = 1020+-0.00000001 1
+Durchmesser d = 233 +-0.00000001 mm
+Widerstand Spule R_S = 64.1 +- 0.05 ohm
+ohmscher Widerstand R_o = 10.1 +- 0.05 ohm
+Kapazität Kondensator C = 0.001817 +- 0.0000005 F
+Widerstand Amperemeter R_A = 10.4 +- 0.05 ohm
 
-ges = RAmpe + Ohm + R
+Gesamtwiderstand R_g = R_A + R_o + R_S
