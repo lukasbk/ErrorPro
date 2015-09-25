@@ -2,7 +2,7 @@ from sympy import latex, N, Symbol
 from math import log10, floor, ceil, fabs
 import shlex, subprocess, os
 import units
-from quantities import Measurement,Result,MeasurementList,ResultList,UnweightedMeanValue
+from quantities import *
 
 content={}
 quantities={}
@@ -77,11 +77,11 @@ def save(filename):
 	for group in quantities:
 		tables={}
 		for q in quantities[group]:
-			if isinstance(q, Measurement) or isinstance(q,Result):
+			if isinstance(q, Quantity):
 				content["results"]+=r'\begin{align*}'+'\n'
 				content["results"]+=format(q)+'\n'
 				content["results"]+=r'\end{align*}'+'\n'
-			elif isinstance(q,MeasurementList) or isinstance(q,ResultList):
+			elif isinstance(q,QuantityList):
 				if not q.getLength() in tables:
 					tables[q.getLength()]=[]
 				tables[q.getLength()].append(q)

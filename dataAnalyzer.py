@@ -41,9 +41,11 @@ for m in inp.results:
 	q=newResult(m["name"],m["description"],m["value"])
 	out.addQuantity(q,"extra")
 
-newFitParameter("m","")
-newFitParameter("b","")
+m=newFitParameter("m","")
+b=newFitParameter("b","")
 gnuplot.fit(parse_expr("L"),parse_expr("m*P+b"))
+out.addQuantity(m)
+out.addQuantity(b)
 
 out.save("test")
 

@@ -76,4 +76,14 @@ set output '%(output)s'
 	proc=subprocess.Popen(shlex.split('gnuplot '+gpFile))
 	proc.communicate()
 
+	with open(paramsFile,'r') as f:
+		for p in parameters:
+			numbers=f.readline().partition(" ")
+			value=parse_expr(numbers[0])
+			uncert=parse_expr(numbers[2])
+			if not (value.is_number and uncert.is_number):
+				raise RuntimeError("Gnuplot Parameterdatei fehlerhaft!")
+			p.set(value,uncert)
+
+
 	fitCount+=1

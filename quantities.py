@@ -209,17 +209,20 @@ class FitParameter(Quantity):
 		self._uncertainty=uncertainty
 		self._set=True
 
-	def calculate():
+	def calculate(self):
 		if not self._set:
 			raise RuntimeError("Fit wurde noch nicht berechnet.")
 		return self._value
 
-	def calculateUncertainty():
+	def calculateUncertainty(self):
 		if not self._set:
 			raise RuntimeError("Fit wurde noch nicht berechnet.")
+		return self._uncertainty
 
-	def calculateUnit():
-		raise NotImplementedError()
+	#TODO
+	#Einheit in Datei angeben und beim fitten überprüfen
+	def calculateUnit(self):
+		return sym_parse_expr("1")
 
 class QuantityList(Symbol):
 	def __new__(cls,name,description):
