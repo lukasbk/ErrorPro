@@ -3,6 +3,8 @@ import re
 
 measurements=[]
 results=[]
+fitParameters=[]
+fits=[]
 measurementLists=[]
 
 rDescription=r"[\w ,]+"
@@ -20,8 +22,13 @@ def readFiles(dir):
 
 	        if filename[-4:] == ".dat":
 	        	file = open(dir+"/"+filename, 'r')
-
+	        	lineNo=0
 	        	for line in file:
+	        		lineNo+=1
+	        		#Kommentar oder Leerzeile
+	        		match=re.match("^"+rW+"#",line)
+	        		if line.strip()=="" or not match == None:
+	        			continue
 	        		#Measurement
 	        		match=re.match(r"^"+rW+"(?:("+rDescription+")"+rS+")?("+rName+")"+rW+"="+rW+"("+rNumber+")[\s(?:\+\-)]+("+rNumber+")"+rW+"("+rUnit+")?"+rW+"$",line)
 	        		if not match == None:
@@ -50,6 +57,29 @@ def readFiles(dir):
 	        			term=match.group(3)
 	        			results.append({"name":name,"description":description,"value":term,"file":filename})
 	        			continue
+	        		#FitParameter
+	        		match=re.match("^"+rW+"(?:("+rDescription+")"+rS+")?("+rName+")"+rW+"(?:\[("+rUnit+")\])?"+rW+"$",line)
+	        		if not match == None:
+	        			description=match.group(1)
+	        			if description == None:
+	        				description=""
+	        			else:
+	        				description=description.strip()
+	        			name=match.group(2)
+	        			unit=match.group(3)
+	        			if unit == None:
+	        				unit="1"
+	        			fitParameters.append({"name":name,"description":description,"unit":unit,"file":filename})
+	        			continue
+	        		#gnuplot fit
+	        		match=re.match("^"+rW+"[fF]it"+rW+r"\("+rW+"("+rName+")"+rW+","+rW+"("+rTerm+")"+rW+r"\)"+rW+"$",line)
+	        		if not match == None:
+	        			yData=match.group(1)
+	        			fitFunction=match.group(2)
+	        			fits.append({"yData":yData,"fitFunction":fitFunction,"file":filename})
+	        			continue
+
+	        		raise SyntaxError("Falsche Syntax in '"+filename+"', Zeile "+str(lineNo)+".")
 	        elif filename[-5:] == ".list":
 	        	file = open(dir+"/"+filename, 'r')
 	        	

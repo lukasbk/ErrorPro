@@ -1,6 +1,9 @@
 from quantities import *
 import shlex, subprocess, os
 
+# TODO
+# Einheiten checken
+
 fitCount=1
 
 def fit(yData,fitFunction):

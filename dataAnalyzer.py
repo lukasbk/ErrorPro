@@ -5,6 +5,7 @@ import gnuplot
 import latexOutput as out
 import fileInput as inp
 
+
 units.makeUnit("m")
 units.makeUnit("s")
 units.makeUnit("A")
@@ -31,21 +32,22 @@ units.makeUnit("ohm","m**2*kg/s**3/A**2")
 inp.readFiles("data")
 for m in inp.measurements:
 	q=newMeasurement(m["name"],m["description"],m["value"],m["uncertainty"],m["unit"])
-	out.addQuantity(q)
+	#out.addQuantity(q)
 
 for m in inp.measurementLists:
 	q=newMeasurementList(m["name"],m["description"],m["values"],m["uncertainties"],m["unit"])
-	out.addQuantity(q)
+	#out.addQuantity(q)
 
 for m in inp.results:
 	q=newResult(m["name"],m["description"],m["value"])
 	out.addQuantity(q,"extra")
 
-m=newFitParameter("m","")
-b=newFitParameter("b","")
-gnuplot.fit(parse_expr("L"),parse_expr("m*P+b"))
-out.addQuantity(m)
-out.addQuantity(b)
+for m in inp.fitParameters:
+	q=newFitParameter(m["name"],m["description"],m["unit"])
+	out.addQuantity(q)
+
+for m in inp.fits:
+	gnuplot.fit(parse_expr(m["yData"]),parse_expr(m["fitFunction"]))
 
 out.save("test")
 

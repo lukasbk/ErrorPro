@@ -1,0 +1,9 @@
+Impedanz Z_I=U_I/I_I
+Impedanz Z_S=U_S/I_S
+
+quadrierte Kreisfrequenz ww = (f_I*2*pi)**2
+quadrierte Impedanz zz = (Z_I)**2
+
+m
+b
+Fit(zz,m*ww+b)

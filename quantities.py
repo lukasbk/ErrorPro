@@ -72,10 +72,10 @@ def newUnweightedMeanValue(name,description,list):
 	quantities[name]=UnweightedMeanValue(name,description,list)
 	return quantities[name]
 
-def newFitParameter(name,description):
+def newFitParameter(name,description,unit):
 	if name in lists or name in quantities:
 		raise ValueError("Symbol "+name+" gibt es schon.")
-	quantities[name]=FitParameter(name,description)
+	quantities[name]=FitParameter(name,description,units.parse_expr(unit))
 	return quantities[name]
 
 def parse_expr(expr,fit=False):
@@ -156,15 +156,14 @@ class Result(Quantity):
 		return calculation
 	def calculateUncertainty(self):
 		integrand=0
-		for var in self._value.free_symbols:
+		for outerVar in self._value.free_symbols:
 			#Ableitung ausrechnen
-			result=diff(self._value,var)
-			for var in result.free_symbols:
-				result=result.subs(var,var.calculate())
-
-			integrand+=( var.calculateUncertainty()
-						*result )**2
+			result=diff(self._value,outerVar)
+			for innerVar in result.free_symbols:
+				result=result.subs(innerVar,innerVar.calculate())
+			integrand+=( outerVar.calculateUncertainty()*result )**2
 		return sqrt(integrand)
+
 	def calculateUnit(self):
 		calculation=self._value
 		for var in self._value.free_symbols:
@@ -200,9 +199,10 @@ class UnweightedMeanValue(Result):
 		return self._list.calculateUnit()
 
 class FitParameter(Quantity):
-	def __new__(cls, name, description):
+	def __new__(cls, name, description,unit):
 		self=Quantity.__new__(cls,name,description)
 		self._set=False
+		self._unit=unit
 		return self
 	def set(self,value,uncertainty):
 		self._value=value
@@ -219,10 +219,8 @@ class FitParameter(Quantity):
 			raise RuntimeError("Fit wurde noch nicht berechnet.")
 		return self._uncertainty
 
-	#TODO
-	#Einheit in Datei angeben und beim fitten überprüfen
 	def calculateUnit(self):
-		return sym_parse_expr("1")
+		return self._unit
 
 class QuantityList(Symbol):
 	def __new__(cls,name,description):
