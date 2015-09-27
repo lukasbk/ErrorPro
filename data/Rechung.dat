@@ -7,11 +7,3 @@ quadrierte Impedanz zz = (Z_I)**2
 m
 b
 Fit(zz,m*ww+b)
-
-Induktivität I = sqrt(m)
-Widerstand R1 = sqrt(b)
-
-Rf
-Lf
-Cf
-Fit(Z_S,sqrt(Rf**2+(Lf*f_s-1/Cf/f_s)**2))
