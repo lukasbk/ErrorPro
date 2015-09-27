@@ -35,7 +35,7 @@ def addQuantity(quantity,group="default"):
 	quantities[group].append(quantity)
 
 def format(quantity):
-	return formatName(quantity)+" = "+formatValue(quantity)
+	return formatName(quantity)+" = "+formatValue(quantity.getValue(),quantity.getUncertainty(),quantity.getUnit())
 
 def formatName(quantity):
 	description=quantity.getDescription()
@@ -47,25 +47,24 @@ def formatName(quantity):
 # Ausgabe der Floats ohne 10er-Potenzen oder unnötigen Nullen
 # bzw. mit 10er-Potenzen, wenn gewollt
 # Benutzen des Latex-Pakets siunitx
-def formatValue(quantity):
-	u=quantity.calculateUncertainty().evalf(6)
-	uFirstDigitPos=floor(log10(u))
-	uFirstDigit=floor(u*10**(-uFirstDigitPos))
+def formatValue(value,uncertainty,unit):
+
+	uFirstDigitPos=floor(log10(uncertainty))
+	uFirstDigit=floor(uncertainty*10**(-uFirstDigitPos))
 	if uFirstDigit<3:
 		precision=uFirstDigitPos-1
 	else:
 		precision=uFirstDigitPos
 
-	vPrecise=quantity.calculate()
-	vRough=fabs(vPrecise.evalf(1))
+	uCeiled=ceil(uncertainty*10**(-precision))/10**(-precision)
+	vRounded=round(value,-precision)
 
-	v=vPrecise.evalf(floor(log10(vRough))-precision+5)
-
-	uCeiled=ceil(u*10**(-precision))/10**(-precision)
-	vRounded=round(v,-precision)
-
-	number=str(vRounded)+"\pm "+str(uCeiled)
-	unit="\mathrm{"+latex(units.clearUnits(quantity.calculateUnit()))+"}"
+	if precision>=0:
+		viewPrecision="0"
+	else:
+		viewPrecision=str(-precision)
+	number=("{v:."+viewPrecision+"f}\pm {u:."+viewPrecision+"f}").format(v=vRounded,u=uCeiled)
+	unit="\mathrm{"+latex(units.clearUnits(unit))+"}"
 
 	return "("+number+")\\,"+unit
 
@@ -77,11 +76,11 @@ def save(filename):
 	for group in quantities:
 		tables={}
 		for q in quantities[group]:
-			if isinstance(q, Quantity):
+			if q.getLength()==1:
 				content["results"]+=r'\begin{align*}'+'\n'
 				content["results"]+=format(q)+'\n'
 				content["results"]+=r'\end{align*}'+'\n'
-			elif isinstance(q,QuantityList):
+			else:
 				if not q.getLength() in tables:
 					tables[q.getLength()]=[]
 				tables[q.getLength()].append(q)
@@ -104,7 +103,7 @@ def save(filename):
 				for q in tables[length]:
 					if not first:
 						content["results"]+=" & "
-					content["results"]+="$"+formatValue(q.getItem(key))+"$"
+					content["results"]+="$"+formatValue(q.getValue()[key],q.getUncertainty()[key],q.getUnit())+"$"
 					first=False
 				content["results"]+=r"\\ \hline"+'\n'
 			content["results"]+=r"\end{tabular}"+'\n'
