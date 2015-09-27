@@ -1,5 +1,0 @@
-Impedanz Z_I=U_I/I_I
-Impedanz Z_S=U_S/I_S
-
-quadrierte Kreisfrequenz a = (f_I*2*pi)**2
-quadrierte Impedanz b = (Z_I)**2
