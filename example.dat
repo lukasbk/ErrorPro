@@ -1,0 +1,14 @@
+# This is a comment
+# another comment
+  # an interesting comment
+{
+    x[1e3 kg*pounds], "Some cool things"y[123.2e3]
+    42 4
+    43  5
+}
+# this is ugly on purpose, to show evaluation will handle it.
+ {   x1[1e3 kg*pounds], "Some cool things"y1[123.2e3]
+    45 5 # there may be a comment here...
+    43  5}
+
+> print(data['x1'])
