@@ -1,144 +1,153 @@
-from sympy import Expr,Symbol
-from sympy.core.mul import Mul
-from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
+from sympy import Symbol,N
+from sympy.core import Mul
+from sympy.physics.unitsystems.simplifiers import dim_simplify
+from sympy.parsing.sympy_parser import parse_expr
 
-# TODO
-# Einheitensystem neu machen
-# Momentan addieren sich "3 m + 3 m" zu "6 2m"
-# Entweder muss das ausgebessert werden oder das sympy-Paket unitsystems benutzt werden (siehe Branch newUnits)
+#überprüft local_dict, ob es auch Sachen nicht gibt?
 
-# TODO
-# SI-System implementieren
-
-# TODO
-# M,m,k,mikro als Vorfaktoren
-
-units={}
-
-def makeUnit(name,dependency=False,inOutput=True):
-	if not isinstance(name,str):
-		raise TypeError("Einheitenname muss ein String sein.")
-	if not (dependency==False or isinstance(dependency,str)):
-		raise TypeError("Abhängigkeit der Einheit muss als String angegeben werden.")
-	if name in units:
-		raise ValueError("Einheit gibt es schon.")
-	if dependency==False:
-		units[name]=BaseUnit(name,inOutput=inOutput)
+def parse_unit(unitStr,unitSystem):
+	"""
+	parses a unit string and returns (factor,dimension)
+	where factor is the correction factor to get to the base unit system
+	"""
+	unit=parse_expr(unitStr,local_dict=unitSystem)
+	if isinstance(unit,Unit):
+		factor=1
 	else:
-		units[name]=DerivedUnit(name,parse_expr(dependency),inOutput=inOutput)
+		if not isinstance(unit,Mul):
+			raise ValueError("%s is not a valid unit string." % unitStr)
+		
+		factor=unit.as_two_terms()[0]
+		if not factor.is_number:
+			factor=1
+	dim=unit
+	for var in unit.free_symbols:
+		exp=unit.as_coeff_exponent(var)[1]
+		if exp==0:
+			raise ValueError("%s is not a valid unit string." % unitStr)
+		factor*=var.factor**exp
+		dim=dim.subs(var,var.dim)
+	return (N(factor),dim_simplify(dim))
 
-#gibt Einheitenobjekt zurück
-def getUnit(sym):
-	if isinstance(sym,Symbol):
-		name=sym.name
-	elif isinstance(sym,str):
-		name=sym
-	else:
-		raise TypeError
-	if name in units:
-		return units[name]
-	else:
-		raise ValueError("Diese Einheit gibt es nicht.")
 
-#bringt Einheiten in eine schönere Form
-#TODO Diese Funktion verbessern
-def clearUnits(expr):
-	result=expr
+def write_as_unit(inputDimension,unitSystem):
+	"""
+	function that converts dimension into units
+	very ugly...
+	doesn't look at factors so far
+	"""
+	outputUnit=1
+	sortedUnits=sorted(unitSystem.values(),key=lambda u: -u.complexity)
+	for unit in sortedUnits:
+		if unit.standard:
+			tryAgain=True
+			while(tryAgain):
+				tryAgain=False
 
-	#Einheiten expandieren
-	for unit in expr.free_symbols:
-		result=result.subs(unit,unit.expandUnits())
+				for baseDimension,exponent in unit.dim.items():
+					#checks if unit dimension fits into input dimension
+					inputExponent=inputDimension.get(baseDimension,0)
+					if inputExponent>0:
+						if exponent<0 or exponent>inputExponent:
+							#this is when dimension doesn't fit
+							break
+					elif inputExponent<0:
+						if exponent>0 or exponent<inputExponent:
+							#this is when dimension doesn't fit
+							break
+					else:
+						if not exponent==0:
+							break
+				else:
+					#if it fits, unit will be used and it will try to fit it in again
+					outputUnit*=unit
+					inputDimension=dim_simplify(inputDimension/unit.dim)
+					tryAgain=True
+				if isinstance(inputDimension,int) or inputDimension.is_number:
+					break
 
-	result=removeFactors(result)
+			if isinstance(inputDimension,int) or inputDimension.is_number:
+				break
 
-	#Einheiten nach Komplexität ordnen
-	unitList=[]
-	for key in units:
-		unitList.append(units[key])
-	sortedList=sorted(unitList,key=lambda u: -u.getComplexity())
+			tryAgain=True
+			while(tryAgain):
+				tryAgain=False
 
-	#Einheiten nach Komplexitätsstufe einsetzen
-	for unit in sortedList:
-		if unit.inOutput():
-			result=result.subs(unit.expandUnits(),unit)			
+				for baseDimension,exponent in unit.dim.items():
+					#checks if unit dimension fits reciprocal into input dimension
+					inputExponent=inputDimension.get(baseDimension,0)
+					if inputExponent>0:
+						if exponent>0 or abs(exponent)>inputExponent:
+							#this is when dimension doesn't fit
+							break
+					elif inputExponent<0:
+						if exponent<0 or exponent<abs(inputExponent):
+							#this is when dimension doesn't fit
+							break
+					else:
+						if not exponent==0:
+							break
+				else:
+					#if it fits, unit will be used and it will try to fit it in again
+					outputUnit/=unit
+					inputDimension=dim_simplify(inputDimension*unit.dim)
+					tryAgain=True
+				if isinstance(inputDimension,int) or inputDimension.is_number:
+					break
 
-	return result
 
-#entfernt Zahlen-Faktoren aus Einheit
-def removeFactors(expr):
-	newArgs=[]
-	for arg in expr.args:
-		if not (expr.func==Mul and arg.is_number):
-			newArgs.append(arg)
-	return expr.func(*newArgs)
+		if isinstance(inputDimension,int) or inputDimension.is_number:
+			break
+	assert isinstance(inputDimension,int) or inputDimension.is_number
+	return outputUnit
 
-def parse_expr(exprStr):
-	expr=sym_parse_expr(exprStr)
-	for var in expr.free_symbols:
-		if not var.name in units:
-			raise ValueError("Einheit "+var.name+" gibt es nicht.")
-		expr=expr.subs(var,units[var.name])
-	return expr
 
 class Unit(Symbol):
-
-	def __new__(cls,name,inOutput):
-		self = Symbol.__new__(cls, name, positive=True)
+	"""
+	class for handling units and output
+	calculations must be done with Dimension!
+	dim: corresponding dimension
+	factor: factor with respect to base unit system
+	complexity: number summing up all exponents
+	standard: bool if unit should appear in output
+	"""
+	def __new__(cls,name):
+		self = Symbol.__new__(cls, name)
 		self.abbrev=name
-		self._name=name
-		self._inOutput=inOutput
+		self.name=name
 		return self
-
-	def inOutput(self):
-		return self._inOutput
-
-	def getComplexity(self):
-		return self._complexity
-	#gibt Einheit in Grundeinheiten an
-	def expandUnits(self):
-		pass
 
 class BaseUnit(Unit):
-	def __new__(cls, name,  inOutput):
-		self=Unit.__new__(cls,name,inOutput)
-		self._complexity=1
-		return self
-	def expandUnits(self):
+	def __new__(cls,name,dim,standard=True):
+		self = Unit.__new__(cls, name)
+		self.dim=dim
+		self.factor=1
+		self.complexity=1
+		self.standard=standard
 		return self
 
 class DerivedUnit(Unit):
-	def __new__(cls, name, dependency, inOutput):
-		self=Unit.__new__(cls,name,inOutput)
-		self._dependency=dependency
-		expanded=self.expandUnits()
-		self._complexity=0
-		for var in expanded.free_symbols:
-			self._complexity+=abs(expanded.as_coeff_exponent(var)[1])
+	def __new__(cls,name,dependency,unitSystem,standard=True):
+		"""
+		class for units that are derived from base units
+		"""
+		self = Unit.__new__(cls, name)
+		self.standard=standard
+		self.dependency=parse_expr(dependency,local_dict=unitSystem)
+		
+		if not isinstance(self.dependency,Mul):
+			raise ValueError("Not a valid dependency string.")
+		self.factor=self.dependency.as_two_terms()[0]
+		if not self.factor.is_number:
+			self.factor=1
+
+		dim=self.dependency
+		for var in self.dependency.free_symbols:
+			dim=dim.subs(var,var.dim)
+		self.dim=dim_simplify(dim)
+
+		self.complexity=0
+		for exponent in self.dim.values():
+			self.complexity+=abs(exponent)
 
 		return self
-
-	def expandUnits(self):
-		result=self._dependency
-		for unit in self._dependency.free_symbols:
-			result=result.subs(unit,getUnit(unit).expandUnits())
-		return result
-
-makeUnit("m")
-makeUnit("s")
-makeUnit("A")
-makeUnit("mol")
-makeUnit("cd")
-makeUnit("kg")
-makeUnit("K")
-
-makeUnit("mA","A/1000",inOutput=False)
-makeUnit("mm","m/1000",inOutput=False)
-makeUnit("Hz","1/s",inOutput=False)
-#Newton
-makeUnit("Pa","kg/m/s**2")
-makeUnit("J","m**2*kg/s**2")
-makeUnit("W","m**2*kg/s**3")
-makeUnit("C","s*A")
-makeUnit("V","m**2*kg/s**3/A")
-makeUnit("F","s**4*A**2/m**2/kg")
-makeUnit("ohm","m**2*kg/s**3/A**2")

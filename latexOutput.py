@@ -64,7 +64,7 @@ def formatValue(value,uncertainty,unit):
 	else:
 		viewPrecision=str(-precision)
 	number=("{v:."+viewPrecision+"f}\pm {u:."+viewPrecision+"f}").format(v=vRounded,u=uCeiled)
-	unit="\mathrm{"+latex(units.clearUnits(unit))+"}"
+	unit="\mathrm{"+latex(unit)+"}"
 
 	return "("+number+")\\,"+unit
 

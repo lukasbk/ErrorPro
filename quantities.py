@@ -3,6 +3,9 @@ import sympy
 import numpy as np
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from sympy.utilities.lambdify import lambdify
+from sympy.physics.unitsystems.simplifiers import dim_simplify
+from units import parse_unit, write_as_unit
+from si import system as si
 
 # TODO
 # gewichtetes Mittel
@@ -43,35 +46,38 @@ class Quantity(Symbol):
 			raise RuntimeError("Fehler wurde noch nicht berechnet.")
 		return self._uncertainty
 
+	def getDimension(self):
+		if self._dim==None:
+			raise RuntimeError("Dimension wurde noch nicht berechnet.")
+		return self._dim
+
 	def getUnit(self):
-		if self._unit==None:
+		if self._dim==None:
 			raise RuntimeError("Einheit wurde noch nicht berechnet.")
-		return self._unit
+		return write_as_unit(self._dim,si)
 
 	def getLength(self):
 		if isinstance(self._value,np.ndarray):
 			return len(self._value)
 		else:
 			return 1
-
-	#berechnet Einheit durch rekursives Einsetzen
-	def calculateUnit(self):
-		pass
 		
 class Measurement(Quantity):
 
 	def __new__(cls, name, description, value, uncertainty, unit):
 		self=Quantity.__new__(cls,name,description)
-		self._value=value
-		self._uncertainty=uncertainty
-		self._unit=unit
+		factor,self._dim=parse_unit(unit,si)
+
+		"""
+		TODO
+
+		Faktor führt zu Fehler!!!!
+
+		"""
+
+		self._value=value#*factor
+		self._uncertainty=uncertainty#*factor
 		return self
-
-	def __repr__(self):
-		return self._name+"=("+str(self._value)+"+-"+str(self._uncertainty)+")"+str(self._unit)
-
-	def calculateUnit(self):
-		return self._unit
 
 class Result(Quantity):
 	def __new__(cls, name, description, term):
@@ -99,13 +105,14 @@ class Result(Quantity):
 				values.append(var.getValue())
 			
 			integrand+=( outerVar.getUncertainty()*diffFunction(*values) )**2
+
 		self._uncertainty=np.sqrt(integrand)
 
 		#Einheit berechnen
-		unit=self._term
+		dim=self._term
 		for var in self._term.free_symbols:
-			unit=unit.subs(var,var.getUnit())
-		self._unit=unit
+			dim=dim.subs(var,var.getDimension())
+		self._dim=dim_simplify(dim)
 
 	def getUncertaintyFormula(self):
 		return uncertaintyFormula(self._value)
@@ -130,14 +137,14 @@ class UnweightedMeanValue(Result):
 		sum=0
 		for item in self._list.getItems():
 			sum+=(item.getValue()-self._value)**2
-		return np.sqrt(1/self._list.getLength()/(self._list.getLength()-1)*sum)
-		
-	def calculateUnit(self):
-		return self._list.getUnit()
+		self._uncertainty=np.sqrt(1/self._list.getLength()/(self._list.getLength()-1)*sum)
+
+		self._dim=self._list.getDimension()
 
 class FitParameter(Quantity):
 	def __new__(cls, name, description,unit):
 		self=Quantity.__new__(cls,name,description)
+		#TODO Einheiten überlegn
 		self._unit=unit
 		return self
 

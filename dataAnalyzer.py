@@ -1,4 +1,4 @@
-import units
+from units import parse_unit
 from quantities import *
 import gnuplot
 import numpy as np
@@ -7,8 +7,8 @@ import fileInput as inp
 
 
 data={}
-data["m"]=Measurement("m","",np.array([123421.124556,4.0,14]),np.array([0.0145,1.3,3]),units.parse_expr("V"))
-data["n"]=Measurement("n","",np.array([123421.124556,4.0,14]),np.array([0.0145,1.3,3]),units.parse_expr("A"))
+data["m"]=Measurement("m","",np.float64(34),np.float64(1),"V")
+data["n"]=Measurement("n","",np.float64(23),np.float64(2),"A")
 data["b"]=Result("b","",parse_expr("2*m/n",data))
 
 out.addQuantity(data["m"])
