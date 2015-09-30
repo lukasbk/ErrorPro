@@ -49,7 +49,7 @@ def clearUnits(expr):
 	for unit in expr.free_symbols:
 		result=result.subs(unit,unit.expandUnits())
 
-	result=simplifyUnits(result)
+	result=removeFactors(result)
 
 	#Einheiten nach Komplexität ordnen
 	unitList=[]
@@ -64,7 +64,8 @@ def clearUnits(expr):
 
 	return result
 
-def simplifyUnits(expr):
+#entfernt Zahlen-Faktoren aus Einheit
+def removeFactors(expr):
 	newArgs=[]
 	for arg in expr.args:
 		if not (expr.func==Mul and arg.is_number):
