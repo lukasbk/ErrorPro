@@ -68,15 +68,8 @@ class Measurement(Quantity):
 		self=Quantity.__new__(cls,name,description)
 		factor,self._dim=parse_unit(unit,si)
 
-		"""
-		TODO
-
-		Faktor führt zu Fehler!!!!
-
-		"""
-
-		self._value=value#*factor
-		self._uncertainty=uncertainty#*factor
+		self._value=np.float_(value)*np.float_(factor)
+		self._uncertainty=np.float_(uncertainty)*np.float_(factor)
 		return self
 
 class Result(Quantity):
@@ -115,7 +108,7 @@ class Result(Quantity):
 		self._dim=dim_simplify(dim)
 
 	def getUncertaintyFormula(self):
-		return uncertaintyFormula(self._value)
+		return uncertaintyFormula(self._term)
 
 # TODO
 # Student-t-Faktor

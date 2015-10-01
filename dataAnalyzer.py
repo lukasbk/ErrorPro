@@ -7,11 +7,12 @@ import fileInput as inp
 
 
 data={}
-data["m"]=Measurement("m","",np.float64(34),np.float64(1),"V")
-data["n"]=Measurement("n","",np.float64(23),np.float64(2),"A")
-data["b"]=Result("b","",parse_expr("2*m/n",data))
+data["m"]=Measurement("m","",10,1,"km/h")
+data["n"]=Measurement("n","",12,1,"m/s")
+data["b"]=Result("b","",parse_expr("m+n",data))
 
 out.addQuantity(data["m"])
+out.addQuantity(data["n"])
 out.addQuantity(data["b"])
 
 #inp.readFiles("data")

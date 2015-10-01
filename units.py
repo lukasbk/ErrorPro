@@ -1,9 +1,10 @@
 from sympy import Symbol,N
-from sympy.core import Mul
+from sympy.core import Mul,Pow
 from sympy.physics.unitsystems.simplifiers import dim_simplify
 from sympy.parsing.sympy_parser import parse_expr
 
 #überprüft local_dict, ob es auch Sachen nicht gibt?
+#write_as_unit muss sich um Faktoren kümmern
 
 def parse_unit(unitStr,unitSystem):
 	"""
@@ -11,23 +12,24 @@ def parse_unit(unitStr,unitSystem):
 	where factor is the correction factor to get to the base unit system
 	"""
 	unit=parse_expr(unitStr,local_dict=unitSystem)
-	if isinstance(unit,Unit):
-		factor=1
-	else:
-		if not isinstance(unit,Mul):
-			raise ValueError("%s is not a valid unit string." % unitStr)
-		
-		factor=unit.as_two_terms()[0]
-		if not factor.is_number:
-			factor=1
+
+
+	factor=unit
+	for var in unit.free_symbols:
+		exponent=factor.as_coeff_exponent(var)[1]
+		factor*=var.factor**exponent
+		factor/=var**exponent
+	if not factor.is_number:
+		raise ValueError("%s is not a valid unit string." % unitStr)
+
+	
 	dim=unit
 	for var in unit.free_symbols:
 		exp=unit.as_coeff_exponent(var)[1]
 		if exp==0:
 			raise ValueError("%s is not a valid unit string." % unitStr)
-		factor*=var.factor**exp
 		dim=dim.subs(var,var.dim)
-	return (N(factor),dim_simplify(dim))
+	return (factor,dim_simplify(dim))
 
 
 def write_as_unit(inputDimension,unitSystem):
@@ -36,6 +38,8 @@ def write_as_unit(inputDimension,unitSystem):
 	very ugly...
 	doesn't look at factors so far
 	"""
+	if inputDimension.is_number:
+		return 1
 	outputUnit=1
 	sortedUnits=sorted(unitSystem.values(),key=lambda u: -u.complexity)
 	for unit in sortedUnits:
@@ -81,7 +85,7 @@ def write_as_unit(inputDimension,unitSystem):
 							#this is when dimension doesn't fit
 							break
 					elif inputExponent<0:
-						if exponent<0 or exponent<abs(inputExponent):
+						if exponent<0 or exponent>abs(inputExponent):
 							#this is when dimension doesn't fit
 							break
 					else:
@@ -133,13 +137,17 @@ class DerivedUnit(Unit):
 		"""
 		self = Unit.__new__(cls, name)
 		self.standard=standard
-		self.dependency=parse_expr(dependency,local_dict=unitSystem)
+		if isinstance(dependency,str):
+			self.dependency=parse_expr(dependency,local_dict=unitSystem)
+		else:
+			self.dependency=dependency
 		
-		if not isinstance(self.dependency,Mul):
-			raise ValueError("Not a valid dependency string.")
-		self.factor=self.dependency.as_two_terms()[0]
-		if not self.factor.is_number:
-			self.factor=1
+		self.factor=self.dependency
+		for var in self.dependency.free_symbols:
+			exponent=self.factor.as_coeff_exponent(var)[1]
+			self.factor*=var.factor**exponent
+			self.factor/=var**exponent
+		assert self.factor.is_number
 
 		dim=self.dependency
 		for var in self.dependency.free_symbols:
