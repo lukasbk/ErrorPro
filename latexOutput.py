@@ -35,13 +35,13 @@ def addQuantity(quantity,group="default"):
 	quantities[group].append(quantity)
 
 def format(quantity):
-	return formatName(quantity)+" = "+formatValue(quantity.getValue(),quantity.getUncertainty(),quantity.getUnit())
+	return formatName(quantity)+" = "+formatValue(*quantity.getResult())
 
 def formatName(quantity):
-	description=quantity.getDescription()
-	if not description == "":
-		description=r"\text{"+description+"}\,"
-	return description+quantity.name
+	longname=quantity.getLongname()
+	if not longname == "":
+		longname=r"\text{"+longname+"}\,"
+	return longname+quantity.name
 
 # TODO
 # Ausgabe der Floats ohne 10er-Potenzen oder unnötigen Nullen
@@ -98,12 +98,20 @@ def save(filename):
 				first=False
 			content["results"]+=r"  \\ \hline"+'\n'
 			
-			for key in range(0,length):
+			values=[]
+			uncerts=[]
+			units=[]
+			for q in tables[length]:
+				value,uncert,unit=q.getResult()
+				values.append(value)
+				uncerts.append(uncert)
+				units.append(unit)
+			for valueKey in range(0,length):
 				first=True
-				for q in tables[length]:
+				for quantityKey in range(0,len(tables[length])):
 					if not first:
 						content["results"]+=" & "
-					content["results"]+="$"+formatValue(q.getValue()[key],q.getUncertainty()[key],q.getUnit())+"$"
+					content["results"]+="$"+formatValue(values[quantityKey][valueKey],uncerts[quantityKey][valueKey],units[quantityKey])+"$"
 					first=False
 				content["results"]+=r"\\ \hline"+'\n'
 			content["results"]+=r"\end{tabular}"+'\n'

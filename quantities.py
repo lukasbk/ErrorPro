@@ -3,8 +3,7 @@ import sympy
 import numpy as np
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from sympy.utilities.lambdify import lambdify
-from sympy.physics.unitsystems.simplifiers import dim_simplify
-from units import parse_unit, write_as_unit
+from units import parse_unit, convert_to_unit, dim_simplify
 from si import system as si
 
 # TODO
@@ -26,35 +25,40 @@ def uncertaintyFormula(expr):
 	return sympy.sqrt(formula)
 
 class Quantity(Symbol):
-	def __new__(cls,name,description):
+	def __new__(cls,name,longname):
 		self = Symbol.__new__(cls, name)
 		self.abbrev=name
 		self._name=name
-		self._description=description
+		self._longname=longname
 		return self
 	
-	def getDescription(self):
-		return self._description
+	def getLongname(self):
+		return self._longname
+
+	def getResult(self,unit=None):
+		if self._value==None:
+			raise RuntimeError("Value has not been calculated, yet.")
+		if self._uncertainty==None:
+			raise RuntimeError("Uncertainty has not been calculated, yet.")
+		if self._dim==None:
+			raise RuntimeError("Dimension has not been calculated, yet.")
+		factor,unit=convert_to_unit(self._dim,si,unit)
+		return (np.float_(factor)*self._value,np.float_(factor)*self._uncertainty,unit)
 
 	def getValue(self):
 		if self._value==None:
-			raise RuntimeError("Wert wurde noch nicht berechnet.")
+			raise RuntimeError("Value has not been calculated, yet.")
 		return self._value
 	
 	def getUncertainty(self):
 		if self._uncertainty==None:
-			raise RuntimeError("Fehler wurde noch nicht berechnet.")
+			raise RuntimeError("Uncertainty has not been calculated, yet.")
 		return self._uncertainty
 
 	def getDimension(self):
 		if self._dim==None:
-			raise RuntimeError("Dimension wurde noch nicht berechnet.")
+			raise RuntimeError("Dimension has not been calculated, yet.")
 		return self._dim
-
-	def getUnit(self):
-		if self._dim==None:
-			raise RuntimeError("Einheit wurde noch nicht berechnet.")
-		return write_as_unit(self._dim,si)
 
 	def getLength(self):
 		if isinstance(self._value,np.ndarray):
@@ -64,8 +68,8 @@ class Quantity(Symbol):
 		
 class Measurement(Quantity):
 
-	def __new__(cls, name, description, value, uncertainty, unit):
-		self=Quantity.__new__(cls,name,description)
+	def __new__(cls, name, longname, value, uncertainty, unit):
+		self=Quantity.__new__(cls,name,longname)
 		factor,self._dim=parse_unit(unit,si)
 
 		self._value=np.float_(value)*np.float_(factor)
@@ -73,9 +77,9 @@ class Measurement(Quantity):
 		return self
 
 class Result(Quantity):
-	def __new__(cls, name, description, term):
-		self=Quantity.__new__(cls,name,description)
-		self._term=term
+	def __new__(cls, name, longname, term, data):
+		self=Quantity.__new__(cls,name,longname)
+		self._term=parse_expr(term,data)
 		self.calculate()
 		return self
 
@@ -113,8 +117,8 @@ class Result(Quantity):
 # TODO
 # Student-t-Faktor
 class UnweightedMeanValue(Result):
-	def __new__(cls, name, description, listObj):
-		self=Quantity.__new__(cls,name,description)
+	def __new__(cls, name, longname, listObj):
+		self=Quantity.__new__(cls,name,longname)
 		self._list=listObj
 		self.calculate()
 		return self
@@ -135,8 +139,8 @@ class UnweightedMeanValue(Result):
 		self._dim=self._list.getDimension()
 
 class FitParameter(Quantity):
-	def __new__(cls, name, description,unit):
-		self=Quantity.__new__(cls,name,description)
+	def __new__(cls, name, longname,unit):
+		self=Quantity.__new__(cls,name,longname)
 		#TODO Einheiten überlegn
 		self._unit=unit
 		return self

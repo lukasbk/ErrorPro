@@ -1,19 +1,28 @@
-from sympy import Symbol,N
+from sympy import Symbol,N,S
 from sympy.core import Mul,Pow
-from sympy.physics.unitsystems.simplifiers import dim_simplify
+from sympy.functions import sign
+from sympy.physics.unitsystems.simplifiers import dim_simplify as sym_dim_simplify
+from sympy.physics.unitsystems.dimensions import Dimension
 from sympy.parsing.sympy_parser import parse_expr
 
-#überprüft local_dict, ob es auch Sachen nicht gibt?
-#write_as_unit muss sich um Faktoren kümmern
+#TODO
+#Measurement __new__ : auch numpy-Arrays erlauben
 
-def parse_unit(unitStr,unitSystem):
+
+def parse_unit(unit,unitSystem):
 	"""
-	parses a unit string and returns (factor,dimension)
+	parses a unit string or unit expression and returns (factor,dimension)
 	where factor is the correction factor to get to the base unit system
 	"""
-	unit=parse_expr(unitStr,local_dict=unitSystem)
+	if isinstance(unit,str):
+		unit=parse_expr(unit,local_dict=unitSystem)
+		for u in unit.free_symbols:
+			if not isinstance(u,Unit):
+				raise ValueError("%s is not a unit." % u.name)
+	else:
+		assert isinstance(unit,Unit)
 
-
+	#calculate factor
 	factor=unit
 	for var in unit.free_symbols:
 		exponent=factor.as_coeff_exponent(var)[1]
@@ -22,98 +31,99 @@ def parse_unit(unitStr,unitSystem):
 	if not factor.is_number:
 		raise ValueError("%s is not a valid unit string." % unitStr)
 
-	
+	#calculate dimension
 	dim=unit
 	for var in unit.free_symbols:
 		exp=unit.as_coeff_exponent(var)[1]
 		if exp==0:
 			raise ValueError("%s is not a valid unit string." % unitStr)
 		dim=dim.subs(var,var.dim)
+
 	return (factor,dim_simplify(dim))
 
 
-def write_as_unit(inputDimension,unitSystem):
+def convert_to_unit(inputDimension,unitSystem,outputUnit=None):
 	"""
-	function that converts dimension into units
-	very ugly...
-	doesn't look at factors so far
+	function that converts dimension to unit
+	With outputUnit, you can specify a unit to convert to.
+	Returns factor and unit.
 	"""
-	if inputDimension.is_number:
-		return 1
-	outputUnit=1
-	sortedUnits=sorted(unitSystem.values(),key=lambda u: -u.complexity)
-	for unit in sortedUnits:
-		if unit.standard:
-			tryAgain=True
-			while(tryAgain):
-				tryAgain=False
 
-				for baseDimension,exponent in unit.dim.items():
-					#checks if unit dimension fits into input dimension
-					inputExponent=inputDimension.get(baseDimension,0)
-					if inputExponent>0:
-						if exponent<0 or exponent>inputExponent:
-							#this is when dimension doesn't fit
-							break
-					elif inputExponent<0:
-						if exponent>0 or exponent<inputExponent:
-							#this is when dimension doesn't fit
-							break
-					else:
-						if not exponent==0:
-							break
+	if outputUnit==None:
+		outputUnit=S.One
+		if inputDimension==S.One or inputDimension.is_dimensionless:
+			return (S.One,S.One)
+		assert isinstance(inputDimension,Dimension)
+		factor=1
+
+		sortedComplexities=sorted(set(map(lambda x:unitSystem[x].complexity,unitSystem)), reverse=True)
+		#iterates all complexities
+		for complexity in sortedComplexities:
+			reciprocal=S.One
+			#checks first putting in normally, then putting in reciprocally
+			while True:
+				#iterates all units of this complexity
+				for unit in unitSystem.values():
+					if unit.standard and unit.complexity==complexity:
+						#tries to put in as often as possible
+						while True:
+							if fits_in(unit,inputDimension,reciprocal):
+								inputDimension=dim_simplify(inputDimension/(unit.dim**reciprocal))
+								outputUnit*=unit**reciprocal
+								factor*=unit.factor**reciprocal
+								if inputDimension==S.One:
+									return (factor,outputUnit)
+							else:
+								break
+
+				if reciprocal==S.One:
+					reciprocal=S.NegativeOne
 				else:
-					#if it fits, unit will be used and it will try to fit it in again
-					outputUnit*=unit
-					inputDimension=dim_simplify(inputDimension/unit.dim)
-					tryAgain=True
-				if isinstance(inputDimension,int) or inputDimension.is_number:
 					break
+		assert inputDimension==S.One
+	else:
+		factor, dim=parse_unit(outputUnit)
+		if not inputDimension==dim:
+			raise ValueError("Unit %s does not fit to Dimension %s.",outputUnit,inputDimension)
 
-			if isinstance(inputDimension,int) or inputDimension.is_number:
-				break
+	return (factor,outputUnit)
 
-			tryAgain=True
-			while(tryAgain):
-				tryAgain=False
+#internal
+def fits_in(unit,dimension,reciprocal):
+	"""
+	checks if unit fits in given dimension
+	reciprocal: 1 or -1 to show if unit is supposed to be fitted in as reciprocal or not
+	"""
+	assert isinstance(unit,Unit)
+	assert isinstance(dimension,Dimension)
+	assert reciprocal is S.One or reciprocal is S.NegativeOne
 
-				for baseDimension,exponent in unit.dim.items():
-					#checks if unit dimension fits reciprocal into input dimension
-					inputExponent=inputDimension.get(baseDimension,0)
-					if inputExponent>0:
-						if exponent>0 or abs(exponent)>inputExponent:
-							#this is when dimension doesn't fit
-							break
-					elif inputExponent<0:
-						if exponent<0 or exponent>abs(inputExponent):
-							#this is when dimension doesn't fit
-							break
-					else:
-						if not exponent==0:
-							break
-				else:
-					#if it fits, unit will be used and it will try to fit it in again
-					outputUnit/=unit
-					inputDimension=dim_simplify(inputDimension*unit.dim)
-					tryAgain=True
-				if isinstance(inputDimension,int) or inputDimension.is_number:
-					break
+	for lookAtThis, unitExp in unit.dim.items():
+		dimExp=dimension.get(lookAtThis,0)
+		if not unitExp==0:
+			if not sign(unitExp)==sign(dimExp*reciprocal):
+				return False
+			if not abs(unitExp)<=abs(dimExp):
+				return False
 
+	return True
 
-		if isinstance(inputDimension,int) or inputDimension.is_number:
-			break
-	assert isinstance(inputDimension,int) or inputDimension.is_number
-	return outputUnit
-
+def dim_simplify(expr):
+	if expr.is_number:
+		return S.One
+	else:
+		return sym_dim_simplify(expr)
 
 class Unit(Symbol):
 	"""
-	class for handling units and output
-	calculations must be done with Dimension!
-	dim: corresponding dimension
-	factor: factor with respect to base unit system
-	complexity: number summing up all exponents
-	standard: bool if unit should appear in output
+	class for handling unit system internally.
+	Output will also be given as expressions containing Unit-objects.
+	Calculations must be done with Dimension objects!
+	properties:
+	 - dim: corresponding dimension
+	 - factor: factor with respect to base unit system
+	 - complexity: number summing up all exponents
+	 - standard: bool if unit should appear in output
 	"""
 	def __new__(cls,name):
 		self = Symbol.__new__(cls, name)
@@ -122,6 +132,9 @@ class Unit(Symbol):
 		return self
 
 class BaseUnit(Unit):
+	"""
+	all units forming the base unit system
+	"""
 	def __new__(cls,name,dim,standard=True):
 		self = Unit.__new__(cls, name)
 		self.dim=dim
@@ -131,17 +144,21 @@ class BaseUnit(Unit):
 		return self
 
 class DerivedUnit(Unit):
+	"""
+	all units derived from other units
+	"""
 	def __new__(cls,name,dependency,unitSystem,standard=True):
-		"""
-		class for units that are derived from base units
-		"""
 		self = Unit.__new__(cls, name)
 		self.standard=standard
 		if isinstance(dependency,str):
 			self.dependency=parse_expr(dependency,local_dict=unitSystem)
+			for u in self.dependency.free_symbols:
+				if not isinstance(u,Unit):
+					raise ValueError("%s is not a unit." % u.name)
 		else:
 			self.dependency=dependency
 		
+		#calculate factor
 		self.factor=self.dependency
 		for var in self.dependency.free_symbols:
 			exponent=self.factor.as_coeff_exponent(var)[1]
@@ -149,11 +166,13 @@ class DerivedUnit(Unit):
 			self.factor/=var**exponent
 		assert self.factor.is_number
 
+		#calculate dimension
 		dim=self.dependency
 		for var in self.dependency.free_symbols:
 			dim=dim.subs(var,var.dim)
 		self.dim=dim_simplify(dim)
 
+		#calculate complexity
 		self.complexity=0
 		for exponent in self.dim.values():
 			self.complexity+=abs(exponent)

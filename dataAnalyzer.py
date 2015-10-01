@@ -5,11 +5,11 @@ import numpy as np
 import latexOutput as out
 import fileInput as inp
 
-
 data={}
-data["m"]=Measurement("m","",10,1,"km/h")
-data["n"]=Measurement("n","",12,1,"m/s")
-data["b"]=Result("b","",parse_expr("m+n",data))
+data["m"]=Measurement("m","Var1",[10,11,12],[1,2,3],"km/h")
+print(data["m"].getDimension())
+data["n"]=Measurement("n","Var2",12,0.001,"m/s**2")
+data["b"]=Result("b","Var3","m/n",data)
 
 out.addQuantity(data["m"])
 out.addQuantity(data["n"])
