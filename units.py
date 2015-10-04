@@ -15,7 +15,10 @@ def parse_unit(unit,unitSystem):
 	where factor is the correction factor to get to the base unit system
 	"""
 	if isinstance(unit,str):
-		unit=parse_expr(unit,local_dict=unitSystem)
+		if unit=="":
+			unit=S.One
+		else:
+			unit=parse_expr(unit,local_dict=unitSystem)
 		for u in unit.free_symbols:
 			if not isinstance(u,Unit):
 				raise ValueError("%s is not a unit." % u.name)
@@ -42,7 +45,7 @@ def parse_unit(unit,unitSystem):
 	return (factor,dim_simplify(dim))
 
 
-def convert_to_unit(inputDimension,unitSystem,outputUnit=None):
+def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
 	"""
 	function that converts dimension to unit
 	With outputUnit, you can specify a unit to convert to.
@@ -64,17 +67,18 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None):
 			while True:
 				#iterates all units of this complexity
 				for unit in unitSystem.values():
-					if unit.standard and unit.complexity==complexity:
-						#tries to put in as often as possible
-						while True:
-							if fits_in(unit,inputDimension,reciprocal):
-								inputDimension=dim_simplify(inputDimension/(unit.dim**reciprocal))
-								outputUnit*=unit**reciprocal
-								factor*=unit.factor**reciprocal
-								if inputDimension==S.One:
-									return (factor,outputUnit)
-							else:
-								break
+					if (not onlyBase) or isinstance(unit,BaseUnit):
+						if unit.standard and unit.complexity==complexity:
+							#tries to put in as often as possible
+							while True:
+								if fits_in(unit,inputDimension,reciprocal):
+									inputDimension=dim_simplify(inputDimension/(unit.dim**reciprocal))
+									outputUnit*=unit**reciprocal
+									factor*=unit.factor**reciprocal
+									if inputDimension==S.One:
+										return (factor,outputUnit)
+								else:
+									break
 
 				if reciprocal==S.One:
 					reciprocal=S.NegativeOne
@@ -82,9 +86,9 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None):
 					break
 		assert inputDimension==S.One
 	else:
-		factor, dim=parse_unit(outputUnit)
+		factor, dim=parse_unit(outputUnit,unitSystem)
 		if not inputDimension==dim:
-			raise ValueError("Unit %s does not fit to Dimension %s.",outputUnit,inputDimension)
+			raise ValueError("unit %s does not fit dimension %s." % (outputUnit,inputDimension))
 
 	return (factor,outputUnit)
 
@@ -135,12 +139,12 @@ class BaseUnit(Unit):
 	"""
 	all units forming the base unit system
 	"""
-	def __new__(cls,name,dim,standard=True):
+	def __new__(cls,name,dim):
 		self = Unit.__new__(cls, name)
 		self.dim=dim
 		self.factor=1
 		self.complexity=1
-		self.standard=standard
+		self.standard=True
 		return self
 
 class DerivedUnit(Unit):

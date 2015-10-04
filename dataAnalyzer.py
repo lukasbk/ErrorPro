@@ -1,3 +1,9 @@
+import fileio as io
+
+
+io.parse_file("example.dat")
+
+"""
 from units import parse_unit
 from quantities import *
 import gnuplot
@@ -5,15 +11,20 @@ import numpy as np
 import latexOutput as out
 import fileInput as inp
 
+
 data={}
-data["m"]=Measurement("m","Var1",[10,11,12],[1,2,3],"km/h")
+data["m"]=Measurement("m","Var1",[10,11,12],[1,2,3],"kg*m/s**2")
 print(data["m"].getDimension())
-data["n"]=Measurement("n","Var2",12,0.001,"m/s**2")
-data["b"]=Result("b","Var3","m/n",data)
+data["n"]=Measurement("n","Var2",12,0.001,"")
+data["b"]=Result("b","Var3","m*n",data)
+
+print(*data["m"].getResult())
+print(*data["b"].getResult(baseUnits=True))
 
 out.addQuantity(data["m"])
 out.addQuantity(data["n"])
 out.addQuantity(data["b"])
+"""
 
 #inp.readFiles("data")
 #for m in inp.measurements:
@@ -35,5 +46,5 @@ out.addQuantity(data["b"])
 #for m in inp.fits:
 #	gnuplot.fit(parse_expr(m["yData"]),parse_expr(m["fitFunction"]))
 
-out.save("test")
+#out.save("test")
 

@@ -46,6 +46,15 @@ for name in systemCopy:
 	if not name=="kg":
 		extend_by_prefixes(system[name],system)
 
-system["mg"]=	DerivedUnit("mg","1/1000000*kg",system,standard=False)
-system["g"]=	DerivedUnit("g","1/1000*kg",system,standard=False)
-system["Mg"]=	DerivedUnit("Mg","1000*kg",system,standard=False)
+system["pg"]=	DerivedUnit("pg","1e-15*kg",system,standard=False)
+system["ng"]=	DerivedUnit("ng","1e-12*kg",system,standard=False)
+system["mug"]=	DerivedUnit("mug","1e-9*kg",system,standard=False)
+system["mg"]=	DerivedUnit("mg","1e-6*kg",system,standard=False)
+system["cg"]=	DerivedUnit("cg","1e-5*kg",system,standard=False)
+system["dg"]=	DerivedUnit("dg","1e-4*kg",system,standard=False)
+system["g"]=	DerivedUnit("g","1e-3*kg",system,standard=False)
+system["dag"]=	DerivedUnit("dag","1e-2*kg",system,standard=False)
+system["hg"]=	DerivedUnit("hg","1e-1*kg",system,standard=False)
+system["Mg"]=	DerivedUnit("Mg","1e3*kg",system,standard=False)
+system["Gg"]=	DerivedUnit("Gg","1e6*kg",system,standard=False)
+system["Tg"]=	DerivedUnit("Tg","1e9*kg",system,standard=False)

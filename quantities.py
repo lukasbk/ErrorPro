@@ -10,14 +10,13 @@ from si import system as si
 # gewichtetes Mittel
 
 def parse_expr(expr,data):
-	expr=sym_parse_expr(expr)
-	for var in expr.free_symbols:
-		if not (var.name in data):
-			raise ValueError("Formelzeichen "+var.name+" ist nicht definiert.")
-		expr=expr.subs(var,data[var.name])
+	expr=sym_parse_expr(expr,local_dict=data)
+	for q in expr.free_symbols:
+		if not isinstance(q,Quantity):
+			raise ValueError("Symbol '%s' is not defined." % q.name)
 	return expr
 
-#intern: Fehlerformel
+#only for internal use
 def uncertaintyFormula(expr):
 	formula=0
 	for var in expr.free_symbols:
@@ -35,22 +34,36 @@ class Quantity(Symbol):
 	def getLongname(self):
 		return self._longname
 
-	def getResult(self,unit=None):
+	def getResult(self,unit=None,baseUnits=False):
+		"""
+		standard method to get value, uncertainty and unit of this quantity
+		If you don't specify anything, it will try to find the best unit by itself.
+		Alternatively, you can specify your own unit to convert to or demand only base units.
+		Returns (value,uncertainty,unit).
+		"""
 		if self._value==None:
 			raise RuntimeError("Value has not been calculated, yet.")
 		if self._uncertainty==None:
 			raise RuntimeError("Uncertainty has not been calculated, yet.")
 		if self._dim==None:
 			raise RuntimeError("Dimension has not been calculated, yet.")
-		factor,unit=convert_to_unit(self._dim,si,unit)
-		return (np.float_(factor)*self._value,np.float_(factor)*self._uncertainty,unit)
+		if not unit:
+			unit=self._standardUnit
+		factor,unit=convert_to_unit(self._dim,si,outputUnit=unit,onlyBase=baseUnits)
+		return (self._value/np.float_(factor),self._uncertainty/np.float_(factor),unit)
 
 	def getValue(self):
+		"""
+		method to get the raw value data in base units
+		"""
 		if self._value==None:
 			raise RuntimeError("Value has not been calculated, yet.")
 		return self._value
 	
 	def getUncertainty(self):
+		"""
+		method to get the raw uncertainty data in base units
+		"""
 		if self._uncertainty==None:
 			raise RuntimeError("Uncertainty has not been calculated, yet.")
 		return self._uncertainty
@@ -68,30 +81,37 @@ class Quantity(Symbol):
 		
 class Measurement(Quantity):
 
-	def __new__(cls, name, longname, value, uncertainty, unit):
+	def __new__(cls, name, longname, value, uncertainty, valueUnit, uncertUnit):
 		self=Quantity.__new__(cls,name,longname)
-		factor,self._dim=parse_unit(unit,si)
-
-		self._value=np.float_(value)*np.float_(factor)
-		self._uncertainty=np.float_(uncertainty)*np.float_(factor)
+		vFactor, self._dim = parse_unit(valueUnit,si)
+		uFactor, uDim = parse_unit(uncertUnit,si)
+		if not self._dim == uDim:
+			raise ValueError("value and uncertainty dimensions do not match\n%s\n%s" % (self._dim, uDim))
+		self._standardUnit=None
+		self._value=np.float_(value)*np.float_(vFactor)
+		self._uncertainty=np.float_(uncertainty)*np.float_(uFactor)
 		return self
 
 class Result(Quantity):
-	def __new__(cls, name, longname, term, data):
+	def __new__(cls, name, longname, term, standardUnit, data):
 		self=Quantity.__new__(cls,name,longname)
 		self._term=parse_expr(term,data)
+		if standardUnit:
+			self._standardUnit = standardUnit
+		else:
+			self._standardUnit = None
 		self.calculate()
 		return self
 
 	def calculate(self):
-		#Wert berechnen
+		#calculate value
 		calcFunction=lambdify(self._term.free_symbols,self._term)
 		values=[]
 		for var in self._term.free_symbols:
 			values.append(var.getValue())
 		self._value=calcFunction(*values)
 
-		#Fehler berechnen
+		#calculate uncertainty
 		integrand=0
 		for outerVar in self._term.free_symbols:
 			differential=diff(self._term,outerVar)
@@ -105,7 +125,7 @@ class Result(Quantity):
 
 		self._uncertainty=np.sqrt(integrand)
 
-		#Einheit berechnen
+		#calculate unit
 		dim=self._term
 		for var in self._term.free_symbols:
 			dim=dim.subs(var,var.getDimension())
@@ -141,7 +161,7 @@ class UnweightedMeanValue(Result):
 class FitParameter(Quantity):
 	def __new__(cls, name, longname,unit):
 		self=Quantity.__new__(cls,name,longname)
-		#TODO Einheiten überlegn
+		#TODO Einheiten überlegen
 		self._unit=unit
 		return self
 
