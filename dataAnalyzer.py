@@ -13,13 +13,13 @@ import fileInput as inp
 
 
 data={}
-data["m"]=Measurement("m","Var1",[10,11,12],[1,2,3],"kg*m/s**2")
+data["m"]=Measurement("m","Var1",[10,11,12],[1,2,3],"m/s","m/s")
 print(data["m"].getDimension())
-data["n"]=Measurement("n","Var2",12,0.001,"")
-data["b"]=Result("b","Var3","m*n",data)
+data["n"]=Measurement("n","Var2",12,0.001,"m","m")
+data["b"]=Result("b","Var3","m*n",None,data)
 
-print(*data["m"].getResult())
-print(*data["b"].getResult(baseUnits=True))
+print(*data["m"].getResult("km/h"))
+print(*data["b"].getResult())
 
 out.addQuantity(data["m"])
 out.addQuantity(data["n"])

@@ -2,7 +2,7 @@
 # another comment
   # an interesting comment
 {
-    x[1e3*N], "Some cool things"x_err[12*N]
+    x[1e3*N], "Some cool things" x_err[12*N]
     42 4
     43  5
 }
@@ -11,6 +11,6 @@
     45 5 # there may be a comment here...
     43  5}
 
-$ u = y*x [Mg*km/ms**2]
+$ u = y*x
 
 > print(data['u'].getResult())

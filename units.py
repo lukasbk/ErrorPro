@@ -6,8 +6,9 @@ from sympy.physics.unitsystems.dimensions import Dimension
 from sympy.parsing.sympy_parser import parse_expr
 
 #TODO
-#Measurement __new__ : auch numpy-Arrays erlauben
-
+#Dimensionsüberprüfung auch, wenn eine Größe keine Einheit hat
+#Fehler bei aktuellem dataAnalyzer.py
+#parse_unit factor durch subs berechnen
 
 def parse_unit(unit,unitSystem):
 	"""
