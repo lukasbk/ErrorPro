@@ -1,9 +1,9 @@
 import fileio as io
 
 
-io.parse_file("example.dat")
+#io.parse_file("example.dat")
 
-"""
+
 from units import parse_unit
 from quantities import *
 import gnuplot
@@ -48,3 +48,4 @@ out.addQuantity(data["b"])
 
 #out.save("test")
 
+"""

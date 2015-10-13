@@ -4,11 +4,8 @@ from sympy.functions import sign
 from sympy.physics.unitsystems.simplifiers import dim_simplify as sym_dim_simplify
 from sympy.physics.unitsystems.dimensions import Dimension
 from sympy.parsing.sympy_parser import parse_expr
+from sympy import sympify
 
-#TODO
-#Dimensionsüberprüfung auch, wenn eine Größe keine Einheit hat
-#Fehler bei aktuellem dataAnalyzer.py
-#parse_unit factor durch subs berechnen
 
 def parse_unit(unit,unitSystem):
 	"""
@@ -26,22 +23,15 @@ def parse_unit(unit,unitSystem):
 	else:
 		assert isinstance(unit,Unit)
 
-	#calculate factor
-	factor=unit
-	for var in unit.free_symbols:
-		exponent=factor.as_coeff_exponent(var)[1]
-		factor*=var.factor**exponent
-		factor/=var**exponent
-	if not factor.is_number:
-		raise ValueError("%s is not a valid unit string." % unitStr)
-
 	#calculate dimension
 	dim=unit
+	factor=unit
 	for var in unit.free_symbols:
 		exp=unit.as_coeff_exponent(var)[1]
 		if exp==0:
 			raise ValueError("%s is not a valid unit string." % unitStr)
 		dim=dim.subs(var,var.dim)
+		factor=factor.subs(var,var.factor)
 
 	return (factor,dim_simplify(dim))
 
@@ -55,7 +45,7 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
 
 	if outputUnit==None:
 		outputUnit=S.One
-		if inputDimension==S.One or inputDimension.is_dimensionless:
+		if inputDimension.is_dimensionless:
 			return (S.One,S.One)
 		assert isinstance(inputDimension,Dimension)
 		factor=1
@@ -76,7 +66,7 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
 									inputDimension=dim_simplify(inputDimension/(unit.dim**reciprocal))
 									outputUnit*=unit**reciprocal
 									factor*=unit.factor**reciprocal
-									if inputDimension==S.One:
+									if inputDimension.is_dimensionless:
 										return (factor,outputUnit)
 								else:
 									break
@@ -85,7 +75,7 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
 					reciprocal=S.NegativeOne
 				else:
 					break
-		assert inputDimension==S.One
+		assert inputDimension.is_dimensionless
 	else:
 		factor, dim=parse_unit(outputUnit,unitSystem)
 		if not inputDimension==dim:
@@ -114,10 +104,11 @@ def fits_in(unit,dimension,reciprocal):
 	return True
 
 def dim_simplify(expr):
+	expr=sympify(sym_dim_simplify(expr))
 	if expr.is_number:
-		return S.One
+		return Dimension()
 	else:
-		return sym_dim_simplify(expr)
+		return expr
 
 class Unit(Symbol):
 	"""

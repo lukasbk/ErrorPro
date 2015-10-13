@@ -11,6 +11,7 @@ python script to calculate physical quantities from data including units and unc
 - Performance-Verbesserungen / Calculate-Caching?
 - GnuPlot-Erweiterung
 
+
 # Run it
 
 To use it, you need python3, sympy and pdflatex. On Ubuntu:
@@ -25,6 +26,11 @@ sudo pip3 install sympy
 
 For pdflatex, you need some latex packages, I'm not sure.
 
+
+
+Windows
+
+Anaconda
 
 Then, run:
 
