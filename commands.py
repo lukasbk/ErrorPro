@@ -1,5 +1,3 @@
-from commands_calculations import *
-from commands_output import *
 from quantities import Quantity
 from units import parse_unit
 import numpy as np
@@ -12,13 +10,10 @@ class Command():
 		pass
 
 
-class SetValue(Command):
-	def __init__(self, name, longname, value, unit):
-		self.name = name
-		self.longname = longname
-		self.value = v
-		self.unit = unit
-	
+class Assignment(Command):
+	"""
+	Attributes: name, longname, value, valueUnit, uncertainty, uncertaintyUnit
+	"""
 	def execute(self,data,config):
 		factor, dim = parse_unit(self.unit)
 		if not data[name]:
@@ -30,9 +25,6 @@ class SetValue(Command):
 		
 		data[name].value=N(factor)*np.float_(value)
 
-class SetUncertainty(Command):
-	def __init__(self, name, value, unit, longname=""):
-		self.name=name
-		self.value=v
-		self.uncertainty=u
-	# ...
+class Formula(Command):
+	def execute():
+		pass
