@@ -55,12 +55,16 @@ class Assignment(Command):
 				calcFunction=lambdify(value_depend.free_symbols, value_depend)
 				depValues=[]
 				for var in value_depend.free_symbols:
+					if var.value == None:
+						raise RuntimeError ("quantity '%s' doesn't have a value, yet." % var.name)
 					depValues.append(var.value)
 				value = calcFunction(*depValues)
 
 				# calculate dimension from dependency
 				calculated_dim = value_depend
 				for var in value_depend.free_symbols:
+					if var.dim == None:
+						raise RuntimeError ("quantity '%s' doesn't have a dimension, yet." % var.name)
 					calculated_dim=calculated_dim.subs(var,var.dim)
 				calculated_dim = dim_simplify(calculated_dim)
 
@@ -107,15 +111,16 @@ class Assignment(Command):
 			integrand = 0
 			uncert_depend = 0
 			for varToDiff in value_depend.free_symbols:
-				differential = sympy.diff(value_depend,varToDiff)
-				uncert_depend += ( Symbol(varToDiff.name+"_err") * differential )**2
-				diffFunction = lambdify(differential.free_symbols,differential)
+				if not varToDiff.uncert == None:
+					differential = sympy.diff(value_depend,varToDiff)
+					uncert_depend += ( Symbol(varToDiff.name+"_err") * differential )**2
+					diffFunction = lambdify(differential.free_symbols,differential)
 
-				diffValues = []
-				for var in differential.free_symbols:
-					diffValues.append(var.value)
+					diffValues = []
+					for var in differential.free_symbols:
+						diffValues.append(var.value)
 
-				integrand += ( varToDiff.uncert*diffFunction(*diffValues) )**2
+					integrand += ( varToDiff.uncert*diffFunction(*diffValues) )**2
 
 			data[self.name].uncert_depend = sympy.sqrt (uncert_depend)
 			data[self.name].uncert = np.sqrt(integrand)
