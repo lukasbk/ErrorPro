@@ -9,7 +9,7 @@ def parse_expr(expr, data):
 	return expr
 
 class Quantity(Symbol):
-	def __new__(cls,name,longname):
+	def __new__(cls,name,longname=""):
 		self = Symbol.__new__(cls, name)
 		self.abbrev = name
 		self.name = name
