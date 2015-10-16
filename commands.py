@@ -17,13 +17,7 @@ class Assignment(Command):
 		if not data[name]:
 			data[name]=Quantity(self.name,self.longname)
 			# ...
-		else:
-			if self.longname:
-				data[name].longname=self.longname
-
-		data[name].value=N(factor)*np.float_(value)
-
-		#if Quantity doesn't exist, create it
+		#else: doesn't exist, create it
 
 		#if value and its unit is set
 			#parse value
