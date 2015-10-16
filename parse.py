@@ -35,7 +35,7 @@ class MultiAssignment(List):
     grammar = "{", attr("header",MultiAssignmentHeader), some(MultiAssignmentRow), "}"
 
 class Program(List):
-	grammar = maybe_some([Comment, SingleAssignment, MultiAssignment, Command])
+    grammar = maybe_some([Comment, SingleAssignment, MultiAssignment, Command])
 
 
 def parse_file(fileHandle):
