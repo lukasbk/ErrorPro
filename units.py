@@ -33,7 +33,7 @@ def parse_unit(unit,unitSystem):
 		dim=dim.subs(var,var.dim)
 		factor=factor.subs(var,var.factor)
 
-	return (factor,dim_simplify(dim))
+	return (factor,dim_simplify(dim),unit)
 
 
 def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
@@ -77,7 +77,7 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
 					break
 		assert inputDimension.is_dimensionless
 	else:
-		factor, dim=parse_unit(outputUnit,unitSystem)
+		factor, dim, unit=parse_unit(outputUnit,unitSystem)
 		if not inputDimension==dim:
 			raise ValueError("unit %s does not fit dimension %s." % (outputUnit,inputDimension))
 
@@ -153,7 +153,7 @@ class DerivedUnit(Unit):
 					raise ValueError("%s is not a unit." % u.name)
 		else:
 			self.dependency=dependency
-		
+
 		#calculate factor
 		self.factor=self.dependency
 		for var in self.dependency.free_symbols:

@@ -2,18 +2,21 @@ import unittest
 import units
 from si import system as si
 from sympy.physics.unitsystems.dimensions import Dimension
+from sympy import S
 
 class UnitsTestCase(unittest.TestCase):
 
     def test_units(self):
         #parse_unit
-        factor, dim = units.parse_unit("13e4*W*s",si)
+        factor, dim, unit = units.parse_unit("13e4*W*s",si)
         self.assertEqual(factor,130000)
         self.assertEqual(dim,Dimension(mass=1,length=2,time=-2))
+        self.assertEqual(unit,13e4*si["W"]*si["s"])
 
-        factor, dim = units.parse_unit("",si)
+        factor, dim, unit = units.parse_unit("",si)
         self.assertEqual(factor,1)
         self.assertEqual(dim,Dimension())
+        self.assertEqual(unit,S.One)
 
         self.assertRaises(ValueError, units.parse_unit, "N*m/z", si)
 
