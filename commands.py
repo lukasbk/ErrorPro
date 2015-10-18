@@ -144,11 +144,53 @@ class MeanValue(Command):
 	pass
 
 class Fit(Command):
-	def __init__(self,fit_function):
-		self.fit_function=fit_function
+	def __init__(self, x_data_str, y_data_str, fit_function_str, parameters_str):
+		self.x_data_str = x_data_str
+		self.y_data_str = y_data_str
+		self.fit_function_str = fit_function_str
+		self.parameters_str = parameters_str
 
-	def execute(self):
-		pass
+	def execute(self, data, config):
+		if not data[self.x_data_str]:
+			raise ValueError("quantity %s doesn't exist" % self.x_data_str)
+		if not data[self.y_data_str]:
+			raise ValueError("quantity %s doesn't exist" % self.y_data_str)
+
+		# get data quantities
+		x_data = data[self.x_data_str]
+		y_data = data[self.y_data_str]
+		# parse fit function
+		fit_function = parse_expr(self.fit_function_str, data)
+
+		# check if dimension fits
+		dim_func = fit_function
+		for var in fit_function.free_symbols:
+			dim_func = dim_func.subs(var, var.dim)
+		dim_func = dim_simplify(dim_func)
+		if not dim_func == y_data.dim:
+			raise RuntimeError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
+
+		# get parameters quantities
+		parameters = []
+		for p in self.parameters_str:
+			if not data[p]:
+				raise ValueError("quantity %s doesn't exist" % p)
+			parameters.append(data[p])
+
+		# fit
+		values, uncerts = config["fit_module"].fit(x_data, y_data, fit_function, parameters)
+
+
+		# save results
+		i = 0
+		for p in parameters:
+			p.value = values[i]
+			p.value_depend = None
+			p.uncert = uncerts[i]
+			p.uncert_depend = None
+			i += 1
+
+
 
 class Plot(Command):
 	pass

@@ -5,11 +5,17 @@ from si import system as si
 from sympy.physics.unitsystems.dimensions import Dimension
 from sympy import Symbol, S
 import numpy as np
+import scipy_fit
 
 class CommandsTestCase(unittest.TestCase):
 
-    def test_single_assignments(self):
-        config={"unit_system":si}
+    def test_commands(self):
+
+        config={"unit_system":si, "fit_module": scipy_fit}
+        data = {}
+        small=0.0000001
+
+        # test single Assignments
 
         a = commands.Assignment("r","Radius")
         a.value = "12"
@@ -17,27 +23,6 @@ class CommandsTestCase(unittest.TestCase):
         a.uncert = "1/1000"
         a.uncert_unit = "m"
 
-        b = commands.Assignment("h","Höhe")
-        b.value = "3"
-        b.value_unit = "dm"
-        b.uncert = "4"
-        b.uncert_unit = "cm"
-
-        c = commands.Assignment("V","Volumen")
-        c.value = "pi*r**2*h"
-
-        d = commands.Assignment("V","Vol2")
-        d.value = "50"
-        d.value_unit = "s"
-
-        e = commands.Assignment("V","Vol3")
-        e.value = "50"
-        e.value_unit = "s"
-        e.uncert = "3"
-        e.uncert_unit = "s"
-
-        data = {}
-        small=0.0000001
         a.execute(data,config)
         self.assertEqual(data["r"].name, "r")
         self.assertEqual(data["r"].longname, "Radius")
@@ -48,6 +33,14 @@ class CommandsTestCase(unittest.TestCase):
         self.assertTrue(abs(data["r"].uncert - 0.001) < small)
         self.assertEqual(data["r"].uncert_prefUnit, si["m"])
         self.assertEqual(data["r"].uncert_depend, None)
+
+
+        b = commands.Assignment("h","Höhe")
+        b.value = "3"
+        b.value_unit = "dm"
+        b.uncert = "4"
+        b.uncert_unit = "cm"
+
         b.execute(data,config)
         self.assertEqual(data["h"].name, "h")
         self.assertEqual(data["h"].longname, "Höhe")
@@ -58,6 +51,12 @@ class CommandsTestCase(unittest.TestCase):
         self.assertTrue(abs(data["h"].uncert - 0.04) < small)
         self.assertEqual(data["h"].uncert_prefUnit, si["cm"])
         self.assertEqual(data["h"].uncert_depend, None)
+
+        # test calculation
+
+        c = commands.Assignment("V","Volumen")
+        c.value = "pi*r**2*h"
+
         c.execute(data,config)
         self.assertEqual(data["V"].name, "V")
         self.assertEqual(data["V"].longname, "Volumen")
@@ -69,7 +68,21 @@ class CommandsTestCase(unittest.TestCase):
         self.assertEqual(data["V"].uncert_prefUnit, None)
         self.assertEqual(data["V"].uncert_depend, sympy.sqrt((Symbol("r_err",positive=True)*sympy.pi*2*data["r"]*data["h"])**2 + (sympy.pi*Symbol("h_err",positive=True)*data["r"]**2)**2))
 
+        # test dimension mismatch
+
+        d = commands.Assignment("V","Vol2")
+        d.value = "50"
+        d.value_unit = "s"
+
         self.assertRaises(RuntimeError, d.execute, data, config)
+
+        # test replacing quantity
+
+        e = commands.Assignment("V","Vol3")
+        e.value = "50"
+        e.value_unit = "s"
+        e.uncert = "3"
+        e.uncert_unit = "s"
 
         e.execute(data,config)
         self.assertEqual(data["V"].name, "V")
@@ -82,24 +95,50 @@ class CommandsTestCase(unittest.TestCase):
         self.assertEqual(data["V"].uncert_prefUnit, si["s"])
         self.assertEqual(data["V"].uncert_depend, None)
 
-    def test_multi_assignments(self):
-        data = {}
-        config = {"unit_system":si}
-        small=0.0000001
-        a = commands.Assignment("a")
-        a.value = ["12","13","14"]
-        a.uncert = ["1","0.4","1e-1"]
-        a.execute(data, config)
 
-        self.assertEqual(data["a"].name, "a")
-        self.assertEqual(data["a"].longname, "")
-        self.assertTrue((np.fabs(data["a"].value - np.float_([12,13,14])).all() < small).all())
-        self.assertEqual(data["a"].value_prefUnit, None)
-        self.assertEqual(data["a"].value_depend, None)
-        self.assertEqual(data["a"].dim, Dimension())
-        self.assertTrue((np.fabs(data["a"].uncert - np.float_([1,0.4,0.1])) < small).all())
-        self.assertEqual(data["a"].uncert_prefUnit, None)
-        self.assertEqual(data["a"].uncert_depend, None)
+        # test data set
+
+        f = commands.Assignment("y")
+        f.value = ["12","13","14"]
+        f.value_unit = "C"
+        f.uncert = ["1","0.4","1e-1"]
+        f.uncert_unit = "C"
+        f.execute(data, config)
+
+        self.assertEqual(data["y"].name, "y")
+        self.assertEqual(data["y"].longname, "")
+        self.assertTrue((np.fabs(data["y"].value - np.float_([12,13,14])).all() < small).all())
+        self.assertEqual(data["y"].value_prefUnit, si["C"])
+        self.assertEqual(data["y"].value_depend, None)
+        self.assertEqual(data["y"].dim, Dimension(current=1,time=1))
+        self.assertTrue((np.fabs(data["y"].uncert - np.float_([1,0.4,0.1])) < small).all())
+        self.assertEqual(data["y"].uncert_prefUnit, si["C"])
+        self.assertEqual(data["y"].uncert_depend, None)
+
+        # test fit
+
+        g = commands.Assignment("x")
+        g.value = ["1","2","3"]
+        g.value_unit = "A"
+        g.uncert = ["1","1","1"]
+        g.uncert_unit = "1e-1*A"
+        g.execute(data, config)
+
+        h = commands.Assignment("m")
+        h.value = "1"
+        h.value_unit = "s"
+        h.execute(data, config)
+
+        i = commands.Assignment("b")
+        i.value = "1"
+        i.value_unit = "C"
+        i.execute(data, config)
+
+        j = commands.Fit("x","y","m*x+b",["m","b"])
+        j.execute(data,config)
+
+        #TODO Assert fit parameters
+
 
 if __name__ == '__main__':
     unittest.main()
