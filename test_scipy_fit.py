@@ -3,6 +3,8 @@ import scipy_fit as sc
 from quantities import Quantity
 import numpy as np
 
+#TODO Test for start parameters and weighting y-uncertainties
+
 class UnitsTestCase(unittest.TestCase):
 
     def test_scipy_fit(self):

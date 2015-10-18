@@ -1,3 +1,4 @@
 import si
+import scipy_fit
 
-config = {"unitSystem":si.system}
+config = {"unit_system":si.system, "fit_module":scipy_fit}
