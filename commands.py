@@ -174,7 +174,7 @@ class Fit(Command):
 		parameters = []
 		for p in self.parameters_str:
 			if not data[p]:
-				raise ValueError("quantity %s doesn't exist" % p)
+				data[p] = Quantity(p)
 			parameters.append(data[p])
 
 		# fit
@@ -189,7 +189,6 @@ class Fit(Command):
 			p.uncert = uncerts[i]
 			p.uncert_depend = None
 			i += 1
-
 
 
 class Plot(Command):

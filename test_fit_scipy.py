@@ -1,5 +1,5 @@
 import unittest
-import scipy_fit as sc
+import fit_scipy as sc
 from quantities import Quantity
 import numpy as np
 
