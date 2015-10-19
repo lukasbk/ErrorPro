@@ -21,7 +21,7 @@ class Assignment(Command):
 		self.uncert = None
 		self.uncert_unit = None
 
-	def execute(self, data, config):
+	def execute(self, data, config, output):
 
 		if not self.name in data or (self.value and self.uncert):
 			data[self.name] = Quantity(self.name,self.longname)
@@ -144,13 +144,16 @@ class MeanValue(Command):
 	pass
 
 class Fit(Command):
+
+	#TODO Support für mehr als 1-dimensionale datasets
+
 	def __init__(self, x_data_str, y_data_str, fit_function_str, parameters_str):
 		self.x_data_str = x_data_str
 		self.y_data_str = y_data_str
 		self.fit_function_str = fit_function_str
 		self.parameters_str = parameters_str
 
-	def execute(self, data, config):
+	def execute(self, data, config, output):
 		if not data[self.x_data_str]:
 			raise ValueError("quantity %s doesn't exist" % self.x_data_str)
 		if not data[self.y_data_str]:
@@ -170,7 +173,7 @@ class Fit(Command):
 		if not dim_func == y_data.dim:
 			raise RuntimeError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
 
-		# get parameters quantities
+		# get parameter quantities
 		parameters = []
 		for p in self.parameters_str:
 			if not data[p]:
@@ -192,4 +195,23 @@ class Fit(Command):
 
 
 class Plot(Command):
-	pass
+	def __init__(self, x_quantity):
+		self.x_quantity = x_quantity
+		self.y_quantities = []
+		self.plot_functions = []
+
+	def execute(self, data, config, output):
+
+		# get quantity objects
+		x_quantity = data[x_quantity]
+		y_quantities = []
+		for q in self.y_quantities:
+			y_quantities.append(data[q])
+
+		# parse functions
+		plot_functions = []
+		for f in self.plot_functions:
+			plot_functions.append(parse_expr(f))
+
+		# plot
+		config["plot_module"].plot(x_quantity, y_quantities, plot_functions)

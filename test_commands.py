@@ -5,13 +5,13 @@ from si import system as si
 from sympy.physics.unitsystems.dimensions import Dimension
 from sympy import Symbol, S
 import numpy as np
-import scipy_fit
+import fit_scipy
 
 class CommandsTestCase(unittest.TestCase):
 
     def test_commands(self):
 
-        config={"unit_system":si, "fit_module": scipy_fit}
+        config={"unit_system":si, "fit_module": fit_scipy}
         data = {}
         small=0.0000001
 
@@ -138,6 +138,11 @@ class CommandsTestCase(unittest.TestCase):
         j.execute(data,config)
 
         #TODO Assert fit parameters
+        # delete the following
+        from output import Output
+        config["auto_results"]=True
+        o = Output("results")
+        o.save(data,config)
 
 
 if __name__ == '__main__':

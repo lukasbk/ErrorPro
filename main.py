@@ -1,4 +1,5 @@
 import si
-import scipy_fit
+import fit_scipy
+import plot_matplotlib
 
-config = {"unit_system":si.system, "fit_module":scipy_fit}
+config = {"unit_system":si.system, "fit_module":fit_scipy, "plot_module":plot_matplotlib, "directory":"results", "auto_csv":"results.csv"}
