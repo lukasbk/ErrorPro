@@ -1,5 +1,6 @@
 from sympy import Symbol
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
+from units import dim_simplify
 
 def parse_expr(expr, data):
 	expr=sym_parse_expr(expr,local_dict=data)
@@ -7,6 +8,12 @@ def parse_expr(expr, data):
 		if not isinstance(q,Quantity):
 			raise ValueError("Symbol '%s' is not defined." % q.name)
 	return expr
+
+def get_dimension(expr):
+	dim = expr
+	for var in expr.free_symbols:
+		dim.subs(var,var.dim)
+	return dim_simplify(dim)
 
 class Quantity(Symbol):
 	def __new__(cls,name,longname=""):

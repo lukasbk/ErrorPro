@@ -1,17 +1,20 @@
 import unittest
 import commands
 import sympy
-from si import system as si
 from sympy.physics.unitsystems.dimensions import Dimension
 from sympy import Symbol, S
+from si import system as si
 import numpy as np
 import fit_scipy
+from output import Output
 
 class CommandsTestCase(unittest.TestCase):
 
     def test_commands(self):
-
-        config={"unit_system":si, "fit_module": fit_scipy}
+        output = Output()
+        config = {"unit_system":"si",
+                  "fit_module":"scipy",
+                  "plot_module":"matplotlib"}
         data = {}
         small=0.0000001
 
@@ -23,7 +26,7 @@ class CommandsTestCase(unittest.TestCase):
         a.uncert = "1/1000"
         a.uncert_unit = "m"
 
-        a.execute(data,config)
+        a.execute(data,config,output)
         self.assertEqual(data["r"].name, "r")
         self.assertEqual(data["r"].longname, "Radius")
         self.assertTrue(abs(data["r"].value - 0.012) < small)
@@ -41,7 +44,7 @@ class CommandsTestCase(unittest.TestCase):
         b.uncert = "4"
         b.uncert_unit = "cm"
 
-        b.execute(data,config)
+        b.execute(data,config,output)
         self.assertEqual(data["h"].name, "h")
         self.assertEqual(data["h"].longname, "Höhe")
         self.assertTrue(abs(data["h"].value - 0.3) < small)
@@ -57,7 +60,7 @@ class CommandsTestCase(unittest.TestCase):
         c = commands.Assignment("V","Volumen")
         c.value = "pi*r**2*h"
 
-        c.execute(data,config)
+        c.execute(data,config,output)
         self.assertEqual(data["V"].name, "V")
         self.assertEqual(data["V"].longname, "Volumen")
         self.assertTrue(abs(data["V"].value - 0.0001357168) < small)
@@ -74,7 +77,7 @@ class CommandsTestCase(unittest.TestCase):
         d.value = "50"
         d.value_unit = "s"
 
-        self.assertRaises(RuntimeError, d.execute, data, config)
+        self.assertRaises(RuntimeError, d.execute, data, config, output)
 
         # test replacing quantity
 
@@ -84,7 +87,7 @@ class CommandsTestCase(unittest.TestCase):
         e.uncert = "3"
         e.uncert_unit = "s"
 
-        e.execute(data,config)
+        e.execute(data,config,output)
         self.assertEqual(data["V"].name, "V")
         self.assertEqual(data["V"].longname, "Vol3")
         self.assertTrue(abs(data["V"].value - 50) < small)
@@ -98,20 +101,20 @@ class CommandsTestCase(unittest.TestCase):
 
         # test data set
 
-        f = commands.Assignment("y")
+        f = commands.Assignment("y","Werte")
         f.value = ["12","13","14"]
         f.value_unit = "C"
-        f.uncert = ["1","0.4","1e-1"]
+        f.uncert = ["0.5","0.4","1e-1"]
         f.uncert_unit = "C"
-        f.execute(data, config)
+        f.execute(data, config,output)
 
         self.assertEqual(data["y"].name, "y")
-        self.assertEqual(data["y"].longname, "")
+        self.assertEqual(data["y"].longname, "Werte")
         self.assertTrue((np.fabs(data["y"].value - np.float_([12,13,14])).all() < small).all())
         self.assertEqual(data["y"].value_prefUnit, si["C"])
         self.assertEqual(data["y"].value_depend, None)
         self.assertEqual(data["y"].dim, Dimension(current=1,time=1))
-        self.assertTrue((np.fabs(data["y"].uncert - np.float_([1,0.4,0.1])) < small).all())
+        self.assertTrue((np.fabs(data["y"].uncert - np.float_([0.5,0.4,0.1])) < small).all())
         self.assertEqual(data["y"].uncert_prefUnit, si["C"])
         self.assertEqual(data["y"].uncert_depend, None)
 
@@ -122,28 +125,27 @@ class CommandsTestCase(unittest.TestCase):
         g.value_unit = "A"
         g.uncert = ["1","1","1"]
         g.uncert_unit = "1e-1*A"
-        g.execute(data, config)
+        g.execute(data, config,output)
 
         h = commands.Assignment("m")
         h.value = "1"
         h.value_unit = "s"
-        h.execute(data, config)
+        h.execute(data, config,output)
 
         i = commands.Assignment("b")
         i.value = "1"
         i.value_unit = "C"
-        i.execute(data, config)
+        i.execute(data, config, output)
 
         j = commands.Fit("x","y","m*x+b",["m","b"])
-        j.execute(data,config)
+        j.execute(data,config,output)
 
-        #TODO Assert fit parameters
-        # delete the following
-        from output import Output
-        config["auto_results"]=True
-        o = Output("results")
-        o.save(data,config)
+        # TODO fit-Assertions
 
+
+        k = commands.Plot()
+        k.quantity_pairs.append(("x","y"))
+        k.execute(data,config,output)
 
 if __name__ == '__main__':
     unittest.main()

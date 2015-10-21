@@ -17,11 +17,10 @@ def parse_unit(unit,unitSystem):
 			unit=S.One
 		else:
 			unit=parse_expr(unit,local_dict=unitSystem)
-		for u in unit.free_symbols:
-			if not isinstance(u,Unit):
-				raise ValueError("%s is not a unit." % u.name)
-	else:
-		assert isinstance(unit,Unit)
+
+	for u in unit.free_symbols:
+		if not isinstance(u,Unit):
+			raise ValueError("%s is not a unit." % u.name)
 
 	#calculate dimension
 	dim=unit

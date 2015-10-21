@@ -1,7 +1,7 @@
 #import units
 
 class Output:
-    def __init__(self, directory):
+    def __init__(self):
         self._files = []
         self._used_filenames = []
 

@@ -23,6 +23,8 @@ class Assignment(Command):
 
 	def execute(self, data, config, output):
 
+		unit_system = __import__(config["unit_system"]).system
+
 		if not self.name in data or (self.value and self.uncert):
 			data[self.name] = Quantity(self.name,self.longname)
 
@@ -34,7 +36,7 @@ class Assignment(Command):
 			value_depend = None
 			# parse value's unit if given
 			if not self.value_unit == None:
-				factor, value_dim, unit = parse_unit(self.value_unit, config["unit_system"])
+				factor, value_dim, unit = parse_unit(self.value_unit, unit_system)
 
 			if isinstance(self.value,list):
 				value = self.value
@@ -93,7 +95,7 @@ class Assignment(Command):
 			uncert_prefUnit = None
 			# parse uncertainty's unit if given
 			if not self.uncert_unit == None:
-				factor, uncert_dim, uncert_prefUnit = parse_unit(self.uncert_unit, config["unit_system"])
+				factor, uncert_dim, uncert_prefUnit = parse_unit(self.uncert_unit, unit_system)
 			# otherwise, set dimensionless
 			else:
 				factor = 1
@@ -154,6 +156,13 @@ class Fit(Command):
 		self.parameters_str = parameters_str
 
 	def execute(self, data, config, output):
+		if config["fit_module"] == "scipy":
+			import fit_scipy as fit_module
+		elif config["fit_module"] == "gnuplot":
+			import gnuplot as fit_module
+		else:
+			raise ValueError("no fit module called '%s'." % config["fit_module"])
+
 		if not data[self.x_data_str]:
 			raise ValueError("quantity %s doesn't exist" % self.x_data_str)
 		if not data[self.y_data_str]:
@@ -181,7 +190,7 @@ class Fit(Command):
 			parameters.append(data[p])
 
 		# fit
-		values, uncerts = config["fit_module"].fit(x_data, y_data, fit_function, parameters)
+		values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters)
 
 
 		# save results
@@ -195,23 +204,57 @@ class Fit(Command):
 
 
 class Plot(Command):
-	def __init__(self, x_quantity):
-		self.x_quantity = x_quantity
-		self.y_quantities = []
+	def __init__(self):
+		self.quantity_pairs = []
 		self.plot_functions = []
 
 	def execute(self, data, config, output):
 
-		# get quantity objects
-		x_quantity = data[x_quantity]
-		y_quantities = []
-		for q in self.y_quantities:
-			y_quantities.append(data[q])
+		#TODO plot functions
+
+		# get quantity objects and check dimension
+		quantity_pairs = []
+		xdim = None
+		ydim = None
+		for qpair_strs in self.quantity_pairs:
+			x_quantity = data[qpair_strs[0]]
+			y_quantity = data[qpair_strs[1]]
+			if xdim:
+				if not xdim == x_quantity.dim:
+					raise ValueError("dimension mismatch in plotting. %s != %s" %s (xdim, x_quantity.dim))
+			else:
+				xdim = x_quantity.dim
+			if ydim:
+				if not ydim == y_quantity.dim:
+					raise ValueError("dimension mismatch in plotting. %s != %s" %s (ydim, y_quantity.dim))
+			else:
+				ydim = y_quantity.dim
+			quantity_pairs.append((x_quantity,y_quantity))
+
 
 		# parse functions
 		plot_functions = []
 		for f in self.plot_functions:
 			plot_functions.append(parse_expr(f))
 
+		unit_system = __import__(config["unit_system"]).system
+
 		# plot
-		config["plot_module"].plot(x_quantity, y_quantities, plot_functions)
+		if config["plot_module"] == "matplotlib":
+			import matplot
+			matplot.plot(quantity_pairs, plot_functions, unit_system)
+
+class Set(Command):
+	def __init__(self, entry, value):
+		self.entry = entry
+		self.value = value
+
+	def execute(self, data, config, output):
+		config[self.entry] = self.value
+
+class PythonCode(Command):
+	def __init__(self, code):
+		self.code = code
+
+	def execute(self, data, config, output):
+		exec(self.code)
