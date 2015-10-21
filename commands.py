@@ -250,7 +250,12 @@ class Set(Command):
 		self.value = value
 
 	def execute(self, data, config, output):
-		config[self.entry] = self.value
+		if self.value.lower() == "on" or self.value.lower() == "true":
+			config[self.entry] = True
+		elif self.value.lower() == "off" or self.value.lower() == "false":
+			config[self.entry] = False
+		else:
+			config[self.entry] = self.value
 
 class PythonCode(Command):
 	def __init__(self, code):

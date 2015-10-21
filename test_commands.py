@@ -121,9 +121,9 @@ class CommandsTestCase(unittest.TestCase):
         # test fit
 
         g = commands.Assignment("x")
-        g.value = ["1","2","3"]
+        g.value = ["1","2","3.124987"]
         g.value_unit = "A"
-        g.uncert = ["1","1","1"]
+        g.uncert = ["1","1","0.056"]
         g.uncert_unit = "1e-1*A"
         g.execute(data, config,output)
 
@@ -143,9 +143,11 @@ class CommandsTestCase(unittest.TestCase):
         # TODO fit-Assertions
 
 
-        k = commands.Plot()
-        k.quantity_pairs.append(("x","y"))
-        k.execute(data,config,output)
+        config["directory"]="results"
+        config["auto_results"]="results.csv"
+        config["rounding"]=False
+        output.save(data, config)
+
 
 if __name__ == '__main__':
     unittest.main()

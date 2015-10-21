@@ -3,14 +3,16 @@ import parse
 import interpreter
 import output
 
-# standard configuration
+
 data = {}
 output = output.Output()
+# standard configuration
 config = {"unit_system":"si",
           "fit_module":"scipy",
           "plot_module":"matplotlib",
           "directory":"results",
-          "auto_csv":"results.csv"}
+          "auto_results":"results.ods",
+          "rounding":True}
 
 # parse
 syntax_trees = []
