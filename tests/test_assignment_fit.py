@@ -142,7 +142,7 @@ class CommandsTestCase(unittest.TestCase):
 
         # TODO fit-Assertions
 
-
+        # some manual output tests, can be removed
         config["directory"]="results"
         config["auto_results"]="results.csv"
         config["rounding"]=False

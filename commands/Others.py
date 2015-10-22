@@ -1,3 +1,10 @@
+class PythonCode():
+	def __init__(self, code):
+		self.code = code
+
+	def execute(self, data, config, output):
+		exec(self.code)
+
 class Set():
 	def __init__(self, entry, value):
 		self.entry = entry
