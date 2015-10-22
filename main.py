@@ -9,7 +9,7 @@ output = output.Output()
 config = {"unit_system":"si",
           "fit_module":"scipy",
           "plot_module":"matplotlib",
-          "directory":".",
+          "directory":"results",
           "auto_results":"results.ods",
           "rounding":True}
 

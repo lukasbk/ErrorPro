@@ -10,6 +10,8 @@ def interpret (syntacticProgram):
 		if syntacticCommand.type == "SingleAssignment":
 			command = commands.Assignment(syntacticCommand.name)
 			command.value = syntacticCommand.value
+			if hasattr(syntacticCommand, "longname"):
+				command.longname = syntacticCommand.longname
 			if hasattr(syntacticCommand, "unit"):
 				command.value_unit = syntacticCommand.unit
 				command.uncert_unit = syntacticCommand.unit
@@ -31,6 +33,8 @@ def interpret (syntacticProgram):
 					command.uncert_unit = header.unit
 				if hasattr(header, "uncertainty"):
 					command.uncert  = header.uncertainty
+				if hasattr(header, "longname"):
+					command.longname = header.longname
 				program.append(command)
 		elif syntacticCommand.type == "PythonCode":
 			program.append(commands.PythonCode(syntacticCommand))
