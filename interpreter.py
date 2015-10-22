@@ -9,13 +9,29 @@ def interpret (syntacticProgram):
 	for syntacticCommand in syntacticProgram:
 		if syntacticCommand.type == "SingleAssignment":
 			command = commands.Assignment(syntacticCommand.name)
-			command.value      = syntacticCommand.value
-			command.value_unit = syntacticCommand.unit
-			command.uncert     = syntacticCommand.uncertainty
+			command.value = syntacticCommand.value
+			if hasattr(syntacticCommand, "unit"):
+				command.value_unit = syntacticCommand.unit
+				command.uncert_unit = syntacticCommand.unit
+			if hasattr(syntacticCommand, "uncertainty"):
+				command.uncert = syntacticCommand.uncertainty
 			program.append(command)
 		elif syntacticCommand.type == "MultiAssignment":
-			#TODO
-			pass
+			# create one command for each column
+			for columnIndex in range(len(syntacticCommand[0])):
+				values = []
+				for row in syntacticCommand:
+					values.append(row[columnIndex])
+				header = syntacticCommand.header[columnIndex]
+
+				command = commands.Assignment(header.name)
+				command.value = values
+				if hasattr(header, "unit"):
+					command.value_unit  = header.unit
+					command.uncert_unit = header.unit
+				if hasattr(header, "uncertainty"):
+					command.uncert  = header.uncertainty
+				program.append(command)
 		elif syntacticCommand.type == "PythonCode":
 			program.append(commands.PythonCode(syntacticCommand))
 		elif syntacticCommand.type == "Function":
