@@ -7,9 +7,6 @@ class Unit(str):
 class Uncertainty(str):
     grammar = contiguous( "<",re.compile(r"[^>]+"), ">" )
 
-class Comment(str):
-    grammar = "#", restline, endl
-
 class Function(str):
     type = "Function"
     grammar = "$", name(), restline, endl
@@ -39,9 +36,11 @@ class MultiAssignment(List):
     grammar = "{", attr("header",MultiAssignmentHeader), some(MultiAssignmentRow), "}"
 
 class Program(List):
-    grammar = maybe_some([Comment, SingleAssignment, MultiAssignment, Function])
+    grammar = maybe_some([SingleAssignment, MultiAssignment, Function, PythonCode])
 
 
 def parse_file(fileHandle):
-	syntaxTree = parse(fileHandle,Program)
-	return syntaxTree
+    code = fileHandle.read()
+    code = re.sub("#.*$", "", code, 0, re.MULTILINE) # remove comments
+    syntaxTree = parse(code,Program)
+    return syntaxTree

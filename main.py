@@ -17,7 +17,7 @@ config = {"unit_system":"si",
 syntax_trees = []
 for fileName in sys.argv[1:]:
     fileHandle = open(fileName, 'r')
-    syntax_trees.append(parse.parse_file(fileHandle.read()))
+    syntax_trees.append(parse.parse_file(fileHandle))
 
 # interpret
 commands = []

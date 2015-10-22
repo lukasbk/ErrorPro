@@ -1,18 +1,21 @@
 import unittest
+import io
 import parse
 
 class ParserTestCase(unittest.TestCase):
 
     def test_parse(self):
-        p = parse.parse_file(
+        code = io.StringIO(
             "x = 12.5e-3 <0.001> [ms]\n" +
             "{\n" +
-            "  a[m] b[N*s]\n" +
+            "  a[m] b[N*s] #comment\n" +
             "  2.2  2.4e-1\n" +
             "  0.1\t0.2\n" +
             "}\n" +
             "$fit m*x1+b to (x1,x2) via m,b"
         )
+
+        p = parse.parse_file(code)
         self.assertEqual(p[0].name, "x")
         self.assertEqual(p[0].value, "12.5e-3 ")
         self.assertEqual(p[0].uncertainty, "0.001")
