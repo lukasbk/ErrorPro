@@ -1,0 +1,38 @@
+# Spule
+"Windungszahl" N_S = 1020
+"Durchmesser Spule" d_S = 233 [mm]
+"Widerstand Spule" R_S = 64.1 <0.05> [Ohm]
+
+"ohm'scher Widerstand" R_O = 10.1 <0.05> [ohm]
+"Kapazität Kondensator" C = 1.817 <0.0005> [muF]
+"Widerstand Amperemeter" R_A = 10.4 <0.05> [Ohm]
+
+"Gesamtwiderstand" R_ges = R_S + R_O + R_A
+
+{
+"Frequenz" f_I <0.5> [Hz],	"Strom" I_I <0.005> [mA],	"Spannung" U_I <0.005> [V]
+60	30.08	5.08
+100	19.83	5.12
+140	14.59	5.13
+180	11.48	5.13
+220	9.44	5.13
+260	8	5.13
+300	6.94	5.12
+340	6.12	5.12
+380	5.47	5.11
+420	4.94	5.1
+460	4.5	5.1
+}
+
+Z_0 = U_I / I_I [kOhm]
+f_sq = f_I**2
+Z_sq = Z_0**2
+
+m = 1 [Ohm**2*s**2]
+b = 1 [Ohm**2]
+$fit m*f_sq+b to (f_sq,Z_sq) via m,b
+
+"Induktivität L und R" L = sqrt(m)
+"Widerstand L und R" R = sqrt(b)
+
+#> import matplot; import si; matplot.plot([(data["f_sq"],data["Z_sq"])], [], si.system, show=True)

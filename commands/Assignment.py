@@ -19,6 +19,7 @@ class Assignment():
 
 	def execute(self, data, config, output):
 
+
 		unit_system = __import__(config["unit_system"]).system
 
 		if not self.name in data or (self.value and self.uncert):
@@ -38,14 +39,17 @@ class Assignment():
 				value = self.value
 			else:
 				value = parse_expr(self.value, data)
+
+			if not self.value_unit is None:
+				value_prefUnit = unit
+
 			# if it's a number
 			if isinstance(value,list) or value.is_number:
+
 				# if no unit given, set dimensionless
 				if self.value_unit is None:
 					factor = 1
 					value_dim = Dimension()
-				else:
-					value_prefUnit = unit
 
 				value=np.float_(factor)*np.float_(value)
 
@@ -134,6 +138,5 @@ class Assignment():
 
 		# check if uncertainty must be duplicated to adjust to value length
 		if isinstance(data[self.name].value, np.ndarray) and isinstance(data[self.name].uncert, np.float_):
-			uncert_arr = np.ndarray(data[self.name].value.shape)
-			uncert_arr = uncert_arr.fill(data[self.name].uncert)
+			uncert_arr = np.full(len(data[self.name].value),data[self.name].uncert)
 			data[self.name].uncert = uncert_arr

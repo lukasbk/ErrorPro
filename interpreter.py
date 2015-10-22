@@ -52,7 +52,9 @@ def interpret (syntacticProgram):
 				fitFunction = reMatch.group(1)
 				xData = reMatch.group(2)
 				yData = reMatch.group(3)
-				params = reMatch.group(4)
+				params = reMatch.group(4).split(",")
+				for i in range(0, len(params)):
+					params[i] = params[i].strip()
 				program.append(commands.Fit(fitFunction, xData, yData, params))
 			elif syntacticCommand.name == "set":
 				reMatch = re.match("(.*) (.*)", syntacticCommand)

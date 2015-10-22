@@ -4,7 +4,7 @@ class Fit():
 
 	#TODO Support für mehr als 1-dimensionale datasets
 
-	def __init__(self, x_data_str, y_data_str, fit_function_str, parameters_str):
+	def __init__(self, fit_function_str, x_data_str, y_data_str, parameters_str):
 		self.x_data_str = x_data_str
 		self.y_data_str = y_data_str
 		self.fit_function_str = fit_function_str
@@ -37,7 +37,7 @@ class Fit():
 		# get parameter quantities
 		parameters = []
 		for p in self.parameters_str:
-			if not data[p]:
+			if not p in data:
 				data[p] = Quantity(p)
 			parameters.append(data[p])
 

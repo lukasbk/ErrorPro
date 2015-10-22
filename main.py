@@ -2,6 +2,7 @@ import sys
 import parse
 import interpreter
 import output
+from os import path
 
 data = {}
 output = output.Output()
@@ -9,9 +10,16 @@ output = output.Output()
 config = {"unit_system":"si",
           "fit_module":"scipy",
           "plot_module":"matplotlib",
-          "directory":"results",
-          "auto_results":"results.ods",
-          "rounding":True}
+          "directory":".",
+          "auto_results":"results.csv",
+          "rounding":True
+          }
+
+if len(sys.argv) < 2:
+    raise ValueError("no input file specified.")
+
+# standard directory is dir of first interpreted file
+config["directory"] = path.dirname(sys.argv[1])
 
 # parse
 syntax_trees = []
@@ -28,4 +36,5 @@ for tree in syntax_trees:
 for c in commands:
     c.execute(data, config, output)
 
+# save
 output.save(data, config)

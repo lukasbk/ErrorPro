@@ -11,7 +11,7 @@ def fit(x_data, y_data, fit_function, parameters):
 	start_params = []
 	for p in parameters:
 		if p.value == None:
-			start_params.append(float_(1))
+			start_params.append(np.float_(1))
 		else:
 			if isinstance(p.value,np.ndarray):
 				raise ValueError("fit parameter '%s' is a data set." % p.name)

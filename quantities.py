@@ -3,7 +3,10 @@ from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from units import dim_simplify
 
 def parse_expr(expr, data):
-	expr=sym_parse_expr(expr,local_dict=data)
+	try:
+		expr=sym_parse_expr(expr,local_dict=data)
+	except(SyntaxError):
+		raise SyntaxError("error parsing term '%s'" % expr)
 	for q in expr.free_symbols:
 		if not isinstance(q,Quantity):
 			raise ValueError("Symbol '%s' is not defined." % q.name)
