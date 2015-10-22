@@ -11,6 +11,6 @@
     45 5 # there may be a comment here...
     43  5}
 
-$ u = y*x
+u = y*x
 
-> print(data['u'].getResult())
+> print(data['u'].value)

@@ -8,11 +8,12 @@ class ParserTestCase(unittest.TestCase):
         code = io.StringIO(
             "x = 12.5e-3 <0.001> [ms]\n" +
             "{\n" +
-            "  a[m] b[N*s] #comment\n" +
+            "  \"Long\" a[m], b[N*s] #comment\n" +
             "  2.2  2.4e-1\n" +
             "  0.1\t0.2\n" +
             "}\n" +
-            "$fit m*x1+b to (x1,x2) via m,b"
+            "$fit m*x1+b to (x1,x2) via m,b\n" +
+            "> print('Hello World')"
         )
 
         p = parse.parse_file(code)
@@ -21,6 +22,7 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(p[0].uncertainty, "0.001")
         self.assertEqual(p[0].unit, "ms")
         self.assertEqual(p[1].header[0].name, "a")
+        self.assertEqual(p[1].header[0].longname, "Long")
         self.assertEqual(p[1].header[0].unit, "m")
         self.assertEqual(p[1].header[1].name, "b")
         self.assertEqual(p[1].header[1].unit, "N*s")
@@ -30,6 +32,7 @@ class ParserTestCase(unittest.TestCase):
         self.assertEqual(p[1][1][1], "0.2")
         self.assertEqual(p[2].name, "fit")
         self.assertEqual(p[2], "m*x1+b to (x1,x2) via m,b")
+        self.assertEqual(p[3].type, "PythonCode")
 
 if __name__ == '__main__':
     unittest.main()

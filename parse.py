@@ -7,6 +7,9 @@ class Unit(str):
 class Uncertainty(str):
     grammar = contiguous( "<",re.compile(r"[^>]+"), ">" )
 
+class LongName(str):
+    grammar = contiguous( "\"",re.compile(r"[^\"]+"), "\"" )
+
 class Function(str):
     type = "Function"
     grammar = "$", name(), restline, endl
@@ -17,13 +20,13 @@ class PythonCode(str):
 
 class SingleAssignment():
     type = "SingleAssignment"
-    grammar = name(), "=", attr("value",re.compile(r"[^\[{<]+")), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit)), endl
+    grammar = optional(attr("longname", LongName)), name(), "=", attr("value",re.compile(r"[^\[{><]+")), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit)), endl
 
 class MultiAssignmentSpec():
-    grammar = name(), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit))
+    grammar = optional(attr("longname", LongName)), name(), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit))
 
 class MultiAssignmentHeader(List):
-    grammar = contiguous(csl(MultiAssignmentSpec, separator=omit(re.compile(r"[^\S\r\n]+"))))
+    grammar = csl(MultiAssignmentSpec)
 
 class MultiAssignmentEntry(str):
     grammar = re.compile(r"[^}\s]+")
