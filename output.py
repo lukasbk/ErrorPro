@@ -3,6 +3,7 @@ from itertools import zip_longest
 from units import convert_to_unit
 from sympy import S
 
+# TODO actually scientific notation should be used somehow
 
 # format quantity for output
 def format_quantity(q, unit_system, rounding):
@@ -11,34 +12,36 @@ def format_quantity(q, unit_system, rounding):
         description = q.longname + " " + description
 
     # find unit
+    # TODO outsource this calculation, as it's used very often
     factor, unit = convert_to_unit(q.dim, unit_system, outputUnit=q.value_prefUnit)
     factor = np.float_(factor)
     value = None if q.value is None else q.value / factor
     uncert = None if q.uncert is None else q.uncert / factor
 
-    # round value according to uncertainty (conversion to string)
-    if not (value is None or uncert is None):
-        if isinstance(value, np.ndarray):
-            value_str = []
-            uncert_str = []
-            for i in range(0,len(value)):
-                if rounding:
-                    v, u = round_accordingly(value[i], uncert[i])
-                else:
-                    np.set_printoptions(suppress=True)
-                    v = str(value[i])
-                    u = str(uncert[i])
-                    np.set_printoptions(suppress=False)
-                value_str.append(v)
-                uncert_str.append(u)
-        else:
-            if rounding:
-                value_str, uncert_str = round_accordingly(value, uncert)
+    # if it's a data set
+    if isinstance(value, np.ndarray):
+        value_str = []
+        uncert_str = []
+        for i in range(0,len(value)):
+            # round if possible and wanted
+            if rounding and not (value is None or uncert is None):
+                v, u = round_accordingly(value[i], uncert[i])
+            # don't round
             else:
-                np.set_printoptions(suppress=True)
-                value_str = str(value)
-                uncert_str = str(uncert)
-                np.set_printoptions(suppress=False)
+                v = "%.8f" % value[i] if value is not None else ""
+                u = "%.8f" % uncert[i] if uncert is not None else ""
+            value_str.append(v)
+            uncert_str.append(u)
+
+    # if it's a single value
+    else:
+        # round if possible and wanted
+        if rounding and not (value is None or uncert is None):
+            value_str, uncert_str = round_accordingly(value, uncert)
+        # don't round
+        else:
+            value_str = "%.8f" % value if value is not None else ""
+            uncert_str = "%.8f" % uncert if uncert is not None else ""
 
     # create unit string
     if unit == S.One:
@@ -64,6 +67,7 @@ def round_accordingly(value, uncertainty):
         precision=np.int_(uFirstDigitPos)
 
     uCeiled=np.ceil(uncertainty*10**(-precision))/10**(-precision)
+    # TODO np.round rounds down at exactly 0.5, not up!!
     vRounded=np.round(value,-precision)
 
     if precision>=0:

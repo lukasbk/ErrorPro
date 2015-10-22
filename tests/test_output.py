@@ -37,3 +37,15 @@ class OutputTestCase(unittest.TestCase):
         self.assertEqual(value_str, "0.00235")
         self.assertEqual(uncert_str, "0.00028")
         self.assertEqual(unit,"F")
+
+        q = Quantity("l")
+        q.value = np.float_(0.00452)
+        q.value_prefUnit = si["km"]
+        q.dim = Dimension(length=1)
+
+        description, value_str, uncert_str, unit = format_quantity(q, si, True)
+
+        self.assertEqual(description, "l")
+        self.assertEqual(value_str, "0.00000452")
+        self.assertEqual(uncert_str, "")
+        self.assertEqual(unit,"km")
