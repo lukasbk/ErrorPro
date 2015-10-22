@@ -9,14 +9,15 @@ output = output.Output()
 config = {"unit_system":"si",
           "fit_module":"scipy",
           "plot_module":"matplotlib",
-          "directory":"results",
+          "directory":".",
           "auto_results":"results.ods",
           "rounding":True}
 
 # parse
 syntax_trees = []
-for files in sys.argv:
-    syntax_trees.append(parse.parse_file())
+for fileName in sys.argv[1:]:
+    fileHandle = open(fileName, 'r')
+    syntax_trees.append(parse.parse_file(fileHandle.read()))
 
 # interpret
 commands = []
@@ -27,4 +28,4 @@ for tree in syntax_trees:
 for c in commands:
     c.execute(data, config, output)
 
-output.save()
+output.save(data, config)
