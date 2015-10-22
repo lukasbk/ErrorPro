@@ -4,23 +4,26 @@ import re
 class Unit(str):
     grammar = contiguous( "[",re.compile(r"[^\]]+"), "]" )
 
-class Error(str):
+class Uncertainty(str):
     grammar = contiguous( "<",re.compile(r"[^>]+"), ">" )
 
 class Comment(str):
     grammar = "#", restline, endl
 
-class Command(str):
-    grammar = "$", restline, endl
+class Function(str):
+    type = "Function"
+    grammar = "$", name(), restline, endl
 
 class PythonCode(str):
+    type = "PythonCode"
     grammar = ">", restline, endl
 
 class SingleAssignment():
-    grammar = name(), "=", attr("value",re.compile(r"[^\[<]+")), optional(attr("error", Error)), optional(attr("unit", Unit)), endl
+    type = "SingleAssignment"
+    grammar = name(), "=", attr("value",re.compile(r"[^\[<]+")), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit)), endl
 
 class MultiAssignmentSpec():
-    grammar = name(), optional(attr("error", Error)), optional(attr("unit", Unit))
+    grammar = name(), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit))
 
 class MultiAssignmentHeader(List):
     grammar = contiguous(csl(MultiAssignmentSpec, separator=omit(re.compile(r"[^\S\r\n]+"))))
@@ -32,10 +35,11 @@ class MultiAssignmentRow(List):
     grammar = contiguous(csl(MultiAssignmentEntry, separator=omit(re.compile(r"[^\S\r\n]+"))))
 
 class MultiAssignment(List):
+    type = "MultiAssignment"
     grammar = "{", attr("header",MultiAssignmentHeader), some(MultiAssignmentRow), "}"
 
 class Program(List):
-    grammar = maybe_some([Comment, SingleAssignment, MultiAssignment, Command])
+    grammar = maybe_some([Comment, SingleAssignment, MultiAssignment, Function])
 
 
 def parse_file(fileHandle):
