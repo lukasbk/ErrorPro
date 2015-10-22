@@ -31,7 +31,7 @@ class Assignment():
 			value_prefUnit = None
 			value_depend = None
 			# parse value's unit if given
-			if not self.value_unit == None:
+			if not self.value_unit is None:
 				factor, value_dim, unit = parse_unit(self.value_unit, unit_system)
 
 			if isinstance(self.value,list):
@@ -41,7 +41,7 @@ class Assignment():
 			# if it's a number
 			if isinstance(value,list) or value.is_number:
 				# if no unit given, set dimensionless
-				if self.value_unit == None:
+				if self.value_unit is None:
 					factor = 1
 					value_dim = Dimension()
 				else:
@@ -56,7 +56,7 @@ class Assignment():
 				calcFunction=lambdify(value_depend.free_symbols, value_depend)
 				depValues=[]
 				for var in value_depend.free_symbols:
-					if var.value == None:
+					if var.value is None:
 						raise RuntimeError ("quantity '%s' doesn't have a value, yet." % var.name)
 					depValues.append(var.value)
 				value = calcFunction(*depValues)
@@ -69,7 +69,7 @@ class Assignment():
 				value_dim = calculated_dim
 
 			# save things
-			if not data[self.name].uncert == None:
+			if not data[self.name].uncert is None:
 				if isinstance(value, np.ndarray) or isinstance(data[self.name].uncert, np.ndarray):
 					if not len(value) == len(data[self.name].uncert):
 						raise RuntimeError ("length of value %s doesn't fit length of uncertainty %s" % (len(value), len(data[self.name].uncert)))
@@ -85,7 +85,7 @@ class Assignment():
 		if self.uncert:
 			uncert_prefUnit = None
 			# parse uncertainty's unit if given
-			if not self.uncert_unit == None:
+			if not self.uncert_unit is None:
 				factor, uncert_dim, uncert_prefUnit = parse_unit(self.uncert_unit, unit_system)
 			# otherwise, set dimensionless
 			else:
@@ -102,7 +102,7 @@ class Assignment():
 			uncert = np.float_(factor)*np.float_(uncert)
 
 			# save things
-			if not data[self.name].uncert == None:
+			if not data[self.name].uncert is None:
 				if isinstance(uncert, np.ndarray) or isinstance(data[self.name].value, np.ndarray):
 					if not len(uncert) == len (data[self.name].value):
 						raise RuntimeError ("length of uncertainty %s doesn't fit length of value %s" % (len(uncert), len(data[self.name].value)))
@@ -118,7 +118,7 @@ class Assignment():
 			integrand = 0
 			uncert_depend = 0
 			for varToDiff in value_depend.free_symbols:
-				if not varToDiff.uncert == None:
+				if not varToDiff.uncert is None:
 					differential = sympy.diff(value_depend,varToDiff)
 					uncert_depend += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
 					diffFunction = lambdify(differential.free_symbols,differential)
@@ -131,3 +131,9 @@ class Assignment():
 
 			data[self.name].uncert_depend = sympy.sqrt (uncert_depend)
 			data[self.name].uncert = np.sqrt(integrand)
+
+		# check if uncertainty must be duplicated to adjust to value length
+		if isinstance(data[self.name].value, np.ndarray) and isinstance(data[self.name].uncert, np.float_):
+			uncert_arr = np.ndarray(data[self.name].value.shape)
+			uncert_arr = uncert_arr.fill(data[self.name].uncert)
+			data[self.name].uncert = uncert_arr
