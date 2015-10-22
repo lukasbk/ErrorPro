@@ -1,17 +1,13 @@
-from quantities import Quantity, parse_expr
-from units import dim_simplify, parse_unit
+from quantities import Quantity, parse_expr, get_dimension
+from units import parse_unit
 from sympy import Symbol
 from sympy.utilities.lambdify import lambdify
 from sympy.physics.unitsystems.dimensions import Dimension
 import sympy
 import numpy as np
 
-class Command():
-	def execute(self,data,config):
-		pass
 
-
-class Assignment(Command):
+class Assignment():
 
 	def __init__(self, name, longname=""):
 		self.name = name
@@ -66,12 +62,7 @@ class Assignment(Command):
 				value = calcFunction(*depValues)
 
 				# calculate dimension from dependency
-				calculated_dim = value_depend
-				for var in value_depend.free_symbols:
-					if var.dim == None:
-						raise RuntimeError ("quantity '%s' doesn't have a dimension, yet." % var.name)
-					calculated_dim=calculated_dim.subs(var,var.dim)
-				calculated_dim = dim_simplify(calculated_dim)
+				calculated_dim = get_dimension(value_depend)
 
 				if value_dim and not value_dim == calculated_dim:
 					raise RuntimeError ("given value dimension %s doesn't fit to dependency's dimension %s." % (value_dim, calculated_dim))
@@ -140,126 +131,3 @@ class Assignment(Command):
 
 			data[self.name].uncert_depend = sympy.sqrt (uncert_depend)
 			data[self.name].uncert = np.sqrt(integrand)
-
-
-class MeanValue(Command):
-	pass
-
-class Fit(Command):
-
-	#TODO Support für mehr als 1-dimensionale datasets
-
-	def __init__(self, x_data_str, y_data_str, fit_function_str, parameters_str):
-		self.x_data_str = x_data_str
-		self.y_data_str = y_data_str
-		self.fit_function_str = fit_function_str
-		self.parameters_str = parameters_str
-
-	def execute(self, data, config, output):
-		if config["fit_module"] == "scipy":
-			import fit_scipy as fit_module
-		elif config["fit_module"] == "gnuplot":
-			import gnuplot as fit_module
-		else:
-			raise ValueError("no fit module called '%s'." % config["fit_module"])
-
-		if not data[self.x_data_str]:
-			raise ValueError("quantity %s doesn't exist" % self.x_data_str)
-		if not data[self.y_data_str]:
-			raise ValueError("quantity %s doesn't exist" % self.y_data_str)
-
-		# get data quantities
-		x_data = data[self.x_data_str]
-		y_data = data[self.y_data_str]
-		# parse fit function
-		fit_function = parse_expr(self.fit_function_str, data)
-
-		# check if dimension fits
-		dim_func = fit_function
-		for var in fit_function.free_symbols:
-			dim_func = dim_func.subs(var, var.dim)
-		dim_func = dim_simplify(dim_func)
-		if not dim_func == y_data.dim:
-			raise RuntimeError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
-
-		# get parameter quantities
-		parameters = []
-		for p in self.parameters_str:
-			if not data[p]:
-				data[p] = Quantity(p)
-			parameters.append(data[p])
-
-		# fit
-		values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters)
-
-
-		# save results
-		i = 0
-		for p in parameters:
-			p.value = values[i]
-			p.value_depend = None
-			p.uncert = uncerts[i]
-			p.uncert_depend = None
-			i += 1
-
-
-class Plot(Command):
-	def __init__(self):
-		self.quantity_pairs = []
-		self.plot_functions = []
-
-	def execute(self, data, config, output):
-
-		#TODO plot functions
-
-		# get quantity objects and check dimension
-		quantity_pairs = []
-		xdim = None
-		ydim = None
-		for qpair_strs in self.quantity_pairs:
-			x_quantity = data[qpair_strs[0]]
-			y_quantity = data[qpair_strs[1]]
-			if xdim:
-				if not xdim == x_quantity.dim:
-					raise ValueError("dimension mismatch in plotting. %s != %s" %s (xdim, x_quantity.dim))
-			else:
-				xdim = x_quantity.dim
-			if ydim:
-				if not ydim == y_quantity.dim:
-					raise ValueError("dimension mismatch in plotting. %s != %s" %s (ydim, y_quantity.dim))
-			else:
-				ydim = y_quantity.dim
-			quantity_pairs.append((x_quantity,y_quantity))
-
-
-		# parse functions
-		plot_functions = []
-		for f in self.plot_functions:
-			plot_functions.append(parse_expr(f))
-
-		unit_system = __import__(config["unit_system"]).system
-
-		# plot
-		if config["plot_module"] == "matplotlib":
-			import matplot
-			matplot.plot(quantity_pairs, plot_functions, unit_system)
-
-class Set(Command):
-	def __init__(self, entry, value):
-		self.entry = entry
-		self.value = value
-
-	def execute(self, data, config, output):
-		if self.value.lower() == "on" or self.value.lower() == "true":
-			config[self.entry] = True
-		elif self.value.lower() == "off" or self.value.lower() == "false":
-			config[self.entry] = False
-		else:
-			config[self.entry] = self.value
-
-class PythonCode(Command):
-	def __init__(self, code):
-		self.code = code
-
-	def execute(self, data, config, output):
-		exec(self.code)

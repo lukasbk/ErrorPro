@@ -1,9 +1,28 @@
+import shlex, subprocess
 
 
-import pyGnuplot
+def plot(quantity_pairs, sym_functions, unit_system, show=True):
+    plotfile = 'tmp/gnuplot_tmp.plt'
 
 
+    code = r'''
+reset
+set term pngcairo enhanced
+set output '%(output)s'
+#set xlabel
+#set ylabel
+%(varDef)s
+%(function)s
+%(fit)s
+%(plot)s
+%(printParams)s
+'''
 
+    with open(dataFile,'w') as f:
+        f.write(data)
+
+    proc=subprocess.Popen(shlex.split('gnuplot '+plotfile))
+    proc.communicate()
 
 
 """

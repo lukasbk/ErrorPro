@@ -3,7 +3,6 @@ import parse
 import interpreter
 import output
 
-
 data = {}
 output = output.Output()
 # standard configuration
