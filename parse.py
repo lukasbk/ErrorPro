@@ -20,7 +20,7 @@ class PythonCode(str):
 
 class SingleAssignment():
     type = "SingleAssignment"
-    grammar = optional(attr("longname", LongName)), name(), "=", attr("value",re.compile(r"[^\[{><]+")), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit)), endl
+    grammar = optional(attr("longname", LongName)), name(), "=", attr("value",re.compile(r"[^\n\[{><]+")), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit)), endl
 
 class MultiAssignmentSpec():
     grammar = optional(attr("longname", LongName)), name(), optional(attr("uncertainty", Uncertainty)), optional(attr("unit", Unit))
