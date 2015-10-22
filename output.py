@@ -22,11 +22,23 @@ def format_quantity(q, unit_system, rounding):
             value_str = []
             uncert_str = []
             for i in range(0,len(value)):
-                v, u = round_accordingly(value[i], uncert[i])
+                if rounding:
+                    v, u = round_accordingly(value[i], uncert[i])
+                else:
+                    np.set_printoptions(suppress=True)
+                    v = str(value[i])
+                    u = str(uncert[i])
+                    np.set_printoptions(suppress=False)
                 value_str.append(v)
                 uncert_str.append(u)
         else:
-            value_str, uncert_str = round_accordingly(value, uncert)
+            if rounding:
+                value_str, uncert_str = round_accordingly(value, uncert)
+            else:
+                np.set_printoptions(suppress=True)
+                value_str = str(value)
+                uncert_str = str(uncert)
+                np.set_printoptions(suppress=False)
 
     # create unit string
     if unit == S.One:
@@ -109,8 +121,6 @@ class Output:
 
             # transpose array
             content = zip_longest(*content, fillvalue="")
-
-            print(content)
 
             # create string
             line_strs = []

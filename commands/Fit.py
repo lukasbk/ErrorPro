@@ -49,7 +49,7 @@ class Fit():
 		i = 0
 		for p in parameters:
 			p.value = values[i]
-			p.value_depend = None
+			p.value_depend = "fit"
 			p.uncert = uncerts[i]
-			p.uncert_depend = None
+			p.uncert_depend = "fit"
 			i += 1
