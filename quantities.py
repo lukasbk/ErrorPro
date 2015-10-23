@@ -1,7 +1,11 @@
 from sympy import Symbol
+import sympy
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
-from units import dim_simplify
+from units import dim_simplify, convert_to_unit
+from sympy.utilities.lambdify import lambdify
+import numpy as np
 
+# parses string to expression containing quantities
 def parse_expr(expr, data):
 	try:
 		expr=sym_parse_expr(expr,local_dict=data)
@@ -12,6 +16,7 @@ def parse_expr(expr, data):
 			raise ValueError("Symbol '%s' is not defined." % q.name)
 	return expr
 
+# returns dimension of expression containing quantities
 def get_dimension(expr):
 	dim = expr
 	for var in expr.free_symbols:
@@ -19,6 +24,45 @@ def get_dimension(expr):
 			raise RuntimeError ("quantity '%s' doesn't have a dimension, yet." % var.name)
 		dim = dim.subs(var,var.dim)
 	return dim_simplify(dim)
+
+# returns value and uncertainty according to unit
+def adjust_to_unit (q, unit_system, prefUnit=None):
+	if prefUnit is None:
+		prefUnit = q.value_prefUnit
+	factor, unit = convert_to_unit(q.dim, unit_system, outputUnit=prefUnit)
+	factor = np.float_(factor)
+	value = None if q.value is None else q.value / factor
+	uncert = None if q.uncert is None else q.uncert / factor
+	return (value, uncert, unit)
+
+# returns value of expression
+def get_value(expr):
+	calcFunction=lambdify(expr.free_symbols, expr)
+	depValues=[]
+	for var in expr.free_symbols:
+		if var.value is None:
+			raise RuntimeError ("quantity '%s' doesn't have a value, yet." % var.name)
+		depValues.append(var.value)
+	return calcFunction(*depValues)
+
+
+# returns uncertainty and uncertainty formula
+def get_uncertainty(expr):
+	integrand = 0
+	uncert_depend = 0
+	for varToDiff in expr.free_symbols:
+		if not varToDiff.uncert is None:
+			differential = sympy.diff(expr,varToDiff)
+			uncert_depend += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
+			diffFunction = lambdify(differential.free_symbols,differential)
+
+			diffValues = []
+			for var in differential.free_symbols:
+				diffValues.append(var.value)
+
+			integrand += ( varToDiff.uncert*diffFunction(*diffValues) )**2
+
+	return (np.sqrt(integrand),sympy.sqrt (uncert_depend))
 
 class Quantity(Symbol):
 	def __new__(cls,name,longname=""):

@@ -137,16 +137,11 @@ class CommandsTestCase(unittest.TestCase):
         i.value_unit = "C"
         i.execute(data, config, output)
 
-        j = commands.Fit("x","y","m*x+b",["m","b"])
+        j = commands.Fit("m*x+b","x","y",["m","b"])
         j.execute(data,config,output)
 
         # TODO fit-Assertions
 
-        # some manual output tests, can be removed
-        config["directory"]="results"
-        config["auto_results"]="results.csv"
-        config["rounding"]=False
-        output.save(data, config)
 
 
 if __name__ == '__main__':

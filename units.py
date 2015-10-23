@@ -103,6 +103,9 @@ def fits_in(unit,dimension,reciprocal):
 	return True
 
 def dim_simplify(expr):
+
+	# TODO implement own dim_simplify
+
 	expr=sympify(sym_dim_simplify(expr))
 	if expr.is_number:
 		return Dimension()

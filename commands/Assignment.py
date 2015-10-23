@@ -1,7 +1,6 @@
-from quantities import Quantity, parse_expr, get_dimension
+from quantities import Quantity, parse_expr, get_dimension, get_value, get_uncertainty
 from units import parse_unit
 from sympy import Symbol
-from sympy.utilities.lambdify import lambdify
 from sympy.physics.unitsystems.dimensions import Dimension
 import sympy
 import numpy as np
@@ -57,13 +56,7 @@ class Assignment():
 			else:
 				# calculate value from dependency
 				value_depend = value
-				calcFunction=lambdify(value_depend.free_symbols, value_depend)
-				depValues=[]
-				for var in value_depend.free_symbols:
-					if var.value is None:
-						raise RuntimeError ("quantity '%s' doesn't have a value, yet." % var.name)
-					depValues.append(var.value)
-				value = calcFunction(*depValues)
+				value = get_value(value_depend)
 
 				# calculate dimension from dependency
 				calculated_dim = get_dimension(value_depend)
@@ -118,23 +111,7 @@ class Assignment():
 
 		# if uncertainty can be calculated from dependency
 		elif value_depend:
-
-			integrand = 0
-			uncert_depend = 0
-			for varToDiff in value_depend.free_symbols:
-				if not varToDiff.uncert is None:
-					differential = sympy.diff(value_depend,varToDiff)
-					uncert_depend += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
-					diffFunction = lambdify(differential.free_symbols,differential)
-
-					diffValues = []
-					for var in differential.free_symbols:
-						diffValues.append(var.value)
-
-					integrand += ( varToDiff.uncert*diffFunction(*diffValues) )**2
-
-			data[self.name].uncert_depend = sympy.sqrt (uncert_depend)
-			data[self.name].uncert = np.sqrt(integrand)
+			data[self.name].uncert, data[self.name].uncert_depend = get_uncertainty(value_depend)
 
 		# check if uncertainty must be duplicated to adjust to value length
 		if isinstance(data[self.name].value, np.ndarray) and isinstance(data[self.name].uncert, np.float_):

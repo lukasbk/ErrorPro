@@ -3,12 +3,14 @@ from quantities import Quantity, parse_expr, get_dimension
 class Fit():
 
 	#TODO Support für mehr als 1-dimensionale datasets
+	#TODO if parameter not set, find out dimension
 
 	def __init__(self, fit_function_str, x_data_str, y_data_str, parameters_str):
 		self.x_data_str = x_data_str
 		self.y_data_str = y_data_str
 		self.fit_function_str = fit_function_str
 		self.parameters_str = parameters_str
+		self.weighted = None
 
 	def execute(self, data, config, output):
 		if config["fit_module"] == "scipy":
@@ -42,7 +44,7 @@ class Fit():
 			parameters.append(data[p])
 
 		# fit
-		values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters)
+		values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters, self.weighted)
 
 
 		# save results

@@ -2,7 +2,7 @@ from scipy.optimize import curve_fit
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 
-def fit(x_data, y_data, fit_function, parameters):
+def fit(x_data, y_data, fit_function, parameters, weighted=None):
 
 	args = [x_data]
 	args.extend(parameters)
@@ -17,6 +17,14 @@ def fit(x_data, y_data, fit_function, parameters):
 				raise ValueError("fit parameter '%s' is a data set." % p.name)
 			else:
 				start_params.append(p.value)
+
+	if weighted is False:
+		uncerts = None
+	else:
+		uncerts = y_data.uncert
+
+	if weighted is True and y_data.uncert is None:
+		raise RuntimeError("can't perform weighted fit because uncertainty of '%s' is not set." % y_data.name)
 
 	params_opt, params_covar = curve_fit (np_func,x_data.value,y_data.value,sigma=y_data.uncert,p0=start_params)
 	params_err = np.sqrt(np.diag(params_covar))

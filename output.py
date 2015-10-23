@@ -2,6 +2,7 @@ import numpy as np
 from itertools import zip_longest
 from units import convert_to_unit
 from sympy import S
+from quantities import adjust_to_unit
 
 # TODO actually scientific notation should be used somehow
 
@@ -12,11 +13,7 @@ def format_quantity(q, unit_system, rounding):
         description = q.longname + " " + description
 
     # find unit
-    # TODO outsource this calculation, as it's used very often
-    factor, unit = convert_to_unit(q.dim, unit_system, outputUnit=q.value_prefUnit)
-    factor = np.float_(factor)
-    value = None if q.value is None else q.value / factor
-    uncert = None if q.uncert is None else q.uncert / factor
+    value, uncert, unit = adjust_to_unit(q, unit_system)
 
     # if it's a data set
     if isinstance(value, np.ndarray):

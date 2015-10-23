@@ -1,40 +1,60 @@
+import plot
+from exceptions import *
+from quantities import parse_expr, get_dimension, Quantity
+from sympy import Dummy
+
 class Plot():
 	def __init__(self):
-		self.quantity_pairs = []
-		self.plot_functions = []
+		self.expr_pairs = []
+		self.show = None
+		self.save = None
 
 	def execute(self, data, config, output):
 
-		#TODO plot functions
+		if len(self.expr_pairs) == 0:
+			raise ValueError("nothing to plot specified.")
 
-		# get quantity objects and check dimension
-		quantity_pairs = []
-		xdim = None
-		ydim = None
-		for qpair_strs in self.quantity_pairs:
-			x_quantity = data[qpair_strs[0]]
-			y_quantity = data[qpair_strs[1]]
-			if xdim:
-				if not xdim == x_quantity.dim:
-					raise ValueError("dimension mismatch in plotting. %s != %s" %s (xdim, x_quantity.dim))
+		data_pairs = []
+		function_pairs = []
+		x_dim = None
+		y_dim = None
+		for expr_pair_str in self.expr_pairs:
+			# parse expressions
+			x = parse_expr(expr_pair_str[0], data)
+			y = parse_expr(expr_pair_str[1], data)
+
+			# check dimensions
+			if x_dim is None:
+				x_dim = get_dimension(x)
 			else:
-				xdim = x_quantity.dim
-			if ydim:
-				if not ydim == y_quantity.dim:
-					raise ValueError("dimension mismatch in plotting. %s != %s" %s (ydim, y_quantity.dim))
+				if not x_dim == get_dimension(x):
+					raise DimensionError("dimension mismatch\n%s != %s" % (x_dim, get_dimension(x)))
+			if y_dim is None:
+				y_dim = get_dimension(y)
 			else:
-				ydim = y_quantity.dim
-			quantity_pairs.append((x_quantity,y_quantity))
+				if not y_dim == get_dimension(y):
+					raise DimensionError("dimension mismatch\n%s != %s" % (y_dim, get_dimension(y)))
 
+			# if y contains x, it must be a function
+			if len(y.find(x)) > 0:
+				# check if x is only quantity or more complicated expression
+				if isinstance(x,Quantity):
+					function_pairs.append((x,y))
+				else:
+					#if it's an expression, replace by Dummy
+					dummy = Dummy("x")
+					function_pairs.append((dummy, y.subs(x,dummy)))
+					# TODO make sure, there's nothing of x left in y
+			# if it doesn't, it must be a data set
+			else:
+				data_pairs.append((x,y))
 
-		# parse functions
-		plot_functions = []
-		for f in self.plot_functions:
-			plot_functions.append(parse_expr(f))
+		# standard show/save behaviour
+		if self.show is None and self.save is None:
+			self.show = True
+		if self.show is None:
+			self.show = False
+		if self.save is None:
+			self.save = False
 
-		unit_system = __import__(config["unit_system"]).system
-
-		# plot
-		if config["plot_module"] == "matplotlib":
-			import matplot
-			matplot.plot(quantity_pairs, plot_functions, unit_system)
+		plot.plot(data_pairs, function_pairs, (x_dim, y_dim), config, show=self.show, save=self.save)

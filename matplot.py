@@ -1,86 +1,55 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from units import convert_to_unit
-from quantities import get_dimension
 from sympy.utilities.lambdify import lambdify
 
-def plot(quantity_pairs, sym_functions, unit_system, show=True):
+def plot(data_sets, functions, unit_system, show=True, x_label="", y_label=""):
+    """
+    'data_sets' and 'functions' must be lists of dictionaries:
+     data_set: {x_values, x_uncerts, y_values, y_uncerts, title}
+     function: {term, x_quantity} -> must be adjusted to unit choice already
+    """
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    # find units and factors
-    if len(quantity_pairs)>0:
-        x_factor, x_unit = convert_to_unit(quantity_pairs[0][0].dim, unit_system, outputUnit=quantity_pairs[0][0].value_prefUnit)
-        y_factor, y_unit = convert_to_unit(quantity_pairs[0][1].dim, unit_system, outputUnit=quantity_pairs[0][1].value_prefUnit)
-    else:
-        x_factor, x_unit = convert_to_unit(get_dimension(sym_functions[0]), unit_system)
-        y_factor, y_unit = convert_to_unit(get_dimension(sym_functions[1]), unit_system)
+    # plot data sets
+    min = None
+    max = None
+    for data_set in data_sets:
 
-    x_factor = np.float_(x_factor)
-    y_factor = np.float_(y_factor)
+        # find min and max for function plotting
+        min_here = np.amin(data_set["x_values"])
+        if min is None or min_here < min:
+            min = min_here
+        max_here = np.amax(data_set["x_values"])
+        if max is None or max_here > max:
+            max = max_here
 
-    # create arrays to plot
-    data_sets = []
-    functions = []
-
-    # data to plot
-    for qpair in quantity_pairs:
-        data_set = {}
-        data_set["x_value"] = None if qpair[0].value is None else qpair[0].value / x_factor
-        data_set["y_value"] = None if qpair[1].value is None else qpair[1].value / y_factor
-        data_set["x_uncert"] = None if qpair[0].uncert is None else qpair[0].uncert / x_factor
-        data_set["y_uncert"] = None if qpair[1].uncert is None else qpair[1].uncert / y_factor
-        data_set["x_label"] = (qpair[0].longname+" " if qpair[0].longname else "") + qpair[0].name
-        data_set["y_label"] = (qpair[1].longname+" " if qpair[1].longname else "") + qpair[1].name
-        data_sets.append(data_set)
-
-    # functions to plot
-    # TODO doesn't work like this... rethink it!
-    for f in sym_functions:
-        # check which x-quantity appears in function
-        for qpair in quantity_pairs:
-            if qpair[0] in f.free_symbols:
-                x_quantity = qpair[0]
-                break
-        else:
-            x_quantity = f.free_symbols[0]
-
-        # replace all other quantities by their value
-        actual_func = f
-        for q in f.free_symbols:
-            if not q == x_quantity:
-                actual_func = actual_func.subs(q,q.value)
-
-        # create numpy-function
-        functions.append(lambdify((x_quantity), actual_func, "numpy"))
-
-
-    # multiple datasets on one plot
-    if len(data_sets) > 1:
-        for data_set in data_sets:
-            ax.errorbar(data_set["x_value"],
-                        data_set["y_value"],
-                        xerr = data_set["x_uncert"],
-                        yerr = data_set["y_uncert"],
-                        c='r',
-                        marker="o",
-                        linestyle="None",
-                        label=data_set["y_label"])
-            plt.legend(loc='upper left')
-            plt.xlabel("["+str(x_unit)+"]")
-            plt.ylabel("["+str(y_unit)+"]")
-
-    # one dataset
-    elif len(data_sets)==1:
-        ax.errorbar(data_sets[0]["x_value"],
-                    data_sets[0]["y_value"],
-                    xerr = data_sets[0]["x_uncert"],
-                    yerr = data_sets[0]["y_uncert"],
+        # plot
+        ax.errorbar(data_set["x_values"],
+                    data_set["y_values"],
+                    xerr = data_set["x_uncerts"],
+                    yerr = data_set["y_uncerts"],
                     c='r',
                     marker="o",
-                    linestyle="None")
-        plt.xlabel(data_sets[0]["x_label"] + " ["+str(x_unit)+"]")
-        plt.ylabel(data_sets[0]["y_label"] + " ["+str(y_unit)+"]")
+                    linestyle="None",
+                    label=data_set["title"])
+        plt.legend(loc='upper left')
+
+    # standard min/max if there is no dataset to plot
+
+    min = 0
+    max = 10
+
+    # plot functions
+    for f in functions:
+        numpy_func = lambdify((f["x"]), f["term"], "numpy")
+        x = np.linspace(min,max,100) # 100 linearly spaced numbers
+        y = numpy_func(x)
+        ax.plot(x,y)
+
+
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
 
     if show:
         plt.show()
