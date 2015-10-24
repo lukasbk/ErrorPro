@@ -1,6 +1,6 @@
 from quantities import get_value, get_uncertainty, adjust_to_unit, get_dimension, Quantity
 from units import convert_to_unit
-from sympy import Dummy, S
+from sympy import S
 from exceptions import *
 
 def plot(expr_pairs, config, show=True, save=False):
@@ -39,7 +39,7 @@ def plot(expr_pairs, config, show=True, save=False):
                 raise DimensionError("dimension mismatch\n%s != %s" % (y_dim, get_dimension(y)))
 
     	# if y contains x, it must be a function
-        dummy = Dummy("x")
+        dummy = Quantity()
         rep_y = y.subs(x,dummy)
         if rep_y.has(dummy):
             # get titles
@@ -62,11 +62,6 @@ def plot(expr_pairs, config, show=True, save=False):
             # scale function to units
             y = y.subs(x,x*x_factor) / y_factor
 
-            # replace all other symbols by their value
-            for var in y.free_symbols:
-                if not var == x:
-                    y = y.subs(var, var.value)
-
             # if only one thing on plot, write labels to x-axis and y-axis
             if single_plot:
                 title = None
@@ -87,7 +82,7 @@ def plot(expr_pairs, config, show=True, save=False):
                 x_title = ((x.longname + " ") if x.longname else "") + str(x)
             else:
                 # dummy quantity for calculation
-                x = Quantity("")
+                x = Quantity()
                 x.value = get_value(expr_pair[0])
                 x.uncert = get_uncertainty(expr_pair[0])[0]
                 x.dim = x_dim
@@ -97,7 +92,7 @@ def plot(expr_pairs, config, show=True, save=False):
                 y_title = ((y.longname + " ") if y.longname else "") + str(y)
             else:
                 # dummy quantity for calculation
-                y = Quantity("")
+                y = Quantity()
                 y.value = get_value(expr_pair[1])
                 y.uncert = get_uncertainty(expr_pair[1])[0]
                 y.dim = y_dim
@@ -131,6 +126,9 @@ def plot(expr_pairs, config, show=True, save=False):
     # plot
     if config["plot_module"] == "matplotlib":
         import matplot
-        matplot.plot(data_sets, functions, unit_system, show=show, x_label=x_label, y_label=y_label)
+        matplot.plot(data_sets, functions, show=show, x_label=x_label, y_label=y_label)
+    elif config["plot_module"] == "gnuplot":
+        import gnuplot
+        gnuplot.plot(data_sets, functions, show=show, x_label=x_label, y_label=y_label)
     else:
         raise ValueError("There is not plot module called '%s'" % config["plot_module"])

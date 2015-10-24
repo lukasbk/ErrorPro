@@ -12,7 +12,7 @@ if __name__ == '__main__':
             "y":Quantity("y")
             }
     config = {
-                "plot_module":"matplotlib",
+                "plot_module":"gnuplot",
                 "unit_system":"si"
             }
     output = None
@@ -25,6 +25,6 @@ if __name__ == '__main__':
     data["y"].dim = Dimension(time=1)
 
     a = Plot()
-    a.expr_pairs.append(("x**2","y**2"))
-    a.expr_pairs.append(("x**2","3*x**2"))
+    a.expr_pairs.append(("x","y"))
+    a.expr_pairs.append(("x","3*x"))
     a.execute(data,config,output)

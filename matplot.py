@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sympy.utilities.lambdify import lambdify
 
-def plot(data_sets, functions, unit_system, show=True, x_label="", y_label=""):
+
+def plot(data_sets, functions, show=True, x_label="", y_label=""):
     """
     'data_sets' and 'functions' must be lists of dictionaries:
      data_set: {x_values, x_uncerts, y_values, y_uncerts, title}
@@ -45,6 +46,13 @@ def plot(data_sets, functions, unit_system, show=True, x_label="", y_label=""):
 
     # plot functions
     for f in functions:
+        term = f["term"]
+
+        # replace all other symbols by their value
+        for var in term.free_symbols:
+            if not var == f["x"]:
+                term = term.subs(var, var.value)
+
         numpy_func = lambdify((f["x"]), f["term"], "numpy")
         x = np.linspace(min,max,100)
         y = numpy_func(x)

@@ -1,64 +1,101 @@
 import shlex, subprocess
+from PIL import Image
 
+def plot(data_sets, functions, show=True, x_label="", y_label=""):
+    plotfile = 'tmp/gnuplot.plt'
+    outputfile = 'tmp/gnuplot.png'
+    datafile_beg = 'tmp/data'
 
-def plot(quantity_pairs, sym_functions, unit_system, show=True):
-    plotfile = 'tmp/gnuplot_tmp.plt'
-
-
+    # code for gnuplot.plt
     code = r'''
 reset
 set term pngcairo enhanced
 set output '%(output)s'
-#set xlabel
-#set ylabel
-%(varDef)s
-%(function)s
-%(fit)s
+%(x_label)s
+%(y_label)s
+%(var_defs)s
+%(functions)s
 %(plot)s
-%(printParams)s
 '''
+    var_defs_str = ""
+    functions_str = ""
+    plot_str = "plot "
+    first_plot = True
 
-    with open(dataFile,'w') as f:
-        f.write(data)
+    # labels
+    if x_label:
+        x_label = "set xlabel '"+x_label+"'"
+    if y_label:
+        y_label = "set ylabel '"+y_label+"'"
 
-    proc=subprocess.Popen(shlex.split('gnuplot '+plotfile))
+    # plot functions
+    function_counter = 0
+    for f in functions:
+        # save all values to gnuplot variables
+        fname = "f"+str(function_counter)
+        for var in f["term"].free_symbols:
+            if not var == f["x"]:
+                var_defs_str += var.name + " = " + str(var.value) + "\n"
+
+        # save functions
+        functions_str += fname+"("+f["x"].name+")"+" = " + str(f["term"]) + "\n"
+
+        # save plot commands
+        if not first_plot:
+            plot_str+=", "
+        plot_str += fname+"(x)"
+
+        # add title
+        if f["title"]:
+            plot_str += " title '"+f["title"]+"'"
+
+        first_plot = False
+        function_counter += 1
+
+    data_set_counter = 0
+    for data_set in data_sets:
+
+        # create data-string
+        data = ""
+        for line in range(0,len(data_set["x_values"])):
+            data += str(data_set["x_values"][line]) + " "
+            data += str(data_set["y_values"][line]) + " "
+            if not data_set["x_uncerts"] is None:
+                data += str(data_set["x_uncerts"][line]) + " "
+            if not data_set["y_uncerts"] is None:
+                data += str(data_set["y_uncerts"][line]) + " "
+            data += "\n"
+
+        # write to file
+        datafile = datafile_beg + str(data_set_counter)
+        with open(datafile,'w') as handle:
+            handle.write(data)
+
+        # save plot commands
+        if not first_plot:
+            plot_str+=", "
+        plot_str += "'" + datafile +"'"
+        if not data_set["x_uncerts"] is None and not data_set["y_uncerts"] is None:
+            plot_str += " with xyerrorbars"
+        elif not data_set["x_uncerts"] is None:
+            plot_str += " with xerrorbars"
+        elif not data_set["y_uncerts"] is None:
+            plot_str += " with yerrorbars"
+
+        # add title
+        if data_set["title"]:
+            plot_str += " title '"+data_set["title"]+"'"
+
+        first_plot = False
+        data_set_counter += 1
+
+
+    with open(plotfile,'w') as handle:
+        handle.write(code % {"output":outputfile,"x_label":x_label, "y_label": y_label, "var_defs": var_defs_str, "functions": functions_str, "plot": plot_str})
+
+    proc=subprocess.Popen(shlex.split('gnuplot "'+plotfile+'"'))
     proc.communicate()
 
-
-"""
-import subprocess as s
-import os
-import time
-
-
-f=open("gnutest","w")
-gp = s.Popen(["gnuplot"],stdout=s.PIPE)
-time.sleep(1)
-gp.stdout.write(bytes('m=2','UTF-8'))
-gp.stdout.write(bytes('print m','UTF-8'))
-#print(gp.stdout.read())
-time.sleep(1)
-#print(gp.stdout.read())
-gp.terminate()
-"""
-"""
-import subprocess
-proc = subprocess.Popen(['gnuplot','-p'],
-                        shell=True,
-                        stdin=subprocess.PIPE,
-                        stdout=subprocess.PIPE
-                        )
-proc.stdin.write(b'set term pngcairo\n')
-proc.stdin.write(b'set xrange [0:10]; set yrange [-2:2]\n')
-image=proc.communicate(b'plot sin(x)\nquit\n')
-"""
-#print("test")
-#image = proc.stdout.readline()
-#proc.communicate(b'quit\n')
-#print("test2")
-
-#image_file = open('output.png', 'w')
-#for line in image:
-#    if isinstance(line,bytes):
-#        image_file.write(str(line+b"\n"))
-#image_file.close()
+    if show:
+        img = Image.open(outputfile)
+        img.show()
