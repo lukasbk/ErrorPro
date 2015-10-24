@@ -6,12 +6,14 @@ def plot(data_sets, functions, unit_system, show=True, x_label="", y_label=""):
     """
     'data_sets' and 'functions' must be lists of dictionaries:
      data_set: {x_values, x_uncerts, y_values, y_uncerts, title}
-     function: {term, x_quantity} -> must be adjusted to unit choice already
+     function: {x, term, title} -> must be adjusted to unit choice already
     """
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     # plot data sets
+    legend = False
     min = None
     max = None
     for data_set in data_sets:
@@ -33,21 +35,25 @@ def plot(data_sets, functions, unit_system, show=True, x_label="", y_label=""):
                     marker="o",
                     linestyle="None",
                     label=data_set["title"])
-        plt.legend(loc='upper left')
+        if data_set["title"]:
+            legend = True
 
-    # standard min/max if there is no dataset to plot
-
-    min = 0
-    max = 10
+    if min is None or max is None:
+        # standard min/max if there is no dataset to plot
+        min = 0
+        max = 10
 
     # plot functions
     for f in functions:
         numpy_func = lambdify((f["x"]), f["term"], "numpy")
-        x = np.linspace(min,max,100) # 100 linearly spaced numbers
+        x = np.linspace(min,max,100)
         y = numpy_func(x)
-        ax.plot(x,y)
+        ax.plot(x,y,label=f["title"])
+        if f["title"]:
+            legend = True
 
-
+    if legend:
+        plt.legend(loc='upper left')
     plt.xlabel(x_label)
     plt.ylabel(y_label)
 

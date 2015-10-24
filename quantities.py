@@ -1,4 +1,4 @@
-from sympy import Symbol
+from sympy import Symbol, Dummy
 import sympy
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from units import dim_simplify, convert_to_unit
@@ -61,12 +61,20 @@ def get_uncertainty(expr):
 				diffValues.append(var.value)
 
 			integrand += ( varToDiff.uncert*diffFunction(*diffValues) )**2
+	if isinstance(integrand,np.ndarray):
+		if (integrand==0).all():
+			return (None,None)
+	elif integrand == 0:
+		return (None,None)
 
 	return (np.sqrt(integrand),sympy.sqrt (uncert_depend))
 
 class Quantity(Symbol):
-	def __new__(cls,name,longname=""):
-		self = Symbol.__new__(cls, name)
+	def __new__(cls,name="",longname=""):
+		if name == "":
+			self = Dummy.__new__(cls, "x")
+		else:
+			self = Symbol.__new__(cls, name)
 		self.abbrev = name
 		self.name = name
 		self.longname = longname
