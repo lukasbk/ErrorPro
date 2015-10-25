@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 10, 25, 14, 25, 22, 6)
+__version__ = (2015, 10, 25, 16, 47, 59, 6)
 
 __all__ = [
     'DatParser',
@@ -46,23 +46,35 @@ class DatParser(Parser):
         )
 
     @graken()
-    def _formula_without_brackets_(self):
-        self._pattern(r'[^=,\(\)\[\]<>\n]+')
+    def _subformula_without_brackets_(self):
+        self._pattern(r"[^=,\(\)\[\]<>\n']+")
+
+    @graken()
+    def _subformula_(self):
+        with self._choice():
+            with self._option():
+                with self._optional():
+                    self._subformula_without_brackets_()
+                self._token('(')
+                self._subformula_()
+                self._token(')')
+                with self._optional():
+                    self._subformula_without_brackets_()
+            with self._option():
+                self._subformula_without_brackets_()
+            self._error('no available options')
 
     @graken()
     def _formula_(self):
         with self._choice():
             with self._option():
-                with self._optional():
-                    self._formula_without_brackets_()
-                self._token('(')
-                self._formula_()
-                self._token(')')
-                with self._optional():
-                    self._formula_without_brackets_()
+                self._subformula_()
             with self._option():
-                self._formula_without_brackets_()
-            self._error('no available options')
+                self._token("'")
+                self._pattern(r"[^']*")
+                self.ast['@'] = self.last_node
+                self._token("'")
+            self._error("expecting one of: '")
 
     @graken()
     def _function_name_(self):
@@ -312,7 +324,10 @@ class DatParser(Parser):
 
 
 class DatSemantics(object):
-    def formula_without_brackets(self, ast):
+    def subformula_without_brackets(self, ast):
+        return ast
+
+    def subformula(self, ast):
         return ast
 
     def formula(self, ast):

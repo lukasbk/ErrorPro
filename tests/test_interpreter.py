@@ -41,7 +41,7 @@ class InterpreterTestCase(unittest.TestCase):
         )
         program = interpreter.interpret(ast)
         self.assertTrue(type(program[0]) is commands.Plot)
-        self.assertEqual(program[0].quantity_pairs, [['A1','A2'],['B1','B2']])
+        self.assertEqual(program[0].expr_pairs, [['A1','A2'],['B1','B2']])
 
     def test_assignment(self):
         ast = parse(
@@ -66,6 +66,16 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertEqual(program[0].name, 'F')
         self.assertEqual(program[0].value, 'a * (b+3)')
 
+    def test_assignment_formula_quoted(self):
+        ast = parse(
+            "\"Force\" F = 'a * [b+3]'"
+        )
+        program = interpreter.interpret(ast)
+        self.assertTrue(type(program[0]) is commands.Assignment)
+        self.assertEqual(program[0].longname, 'Force')
+        self.assertEqual(program[0].name, 'F')
+        self.assertEqual(program[0].value, 'a * [b+3]')
+
     def test_python_code(self):
         ast = parse(
             ">if var=True:\n"+
@@ -77,6 +87,16 @@ class InterpreterTestCase(unittest.TestCase):
             "if var=True:\n"+
             "    print('World')"
         )
+
+    def test_meanvalue(self):
+        ast = parse(
+            "meanvalue(\"Force\" F, [A,B])"
+        )
+        program = interpreter.interpret(ast)
+        self.assertTrue(type(program[0]) is commands.MeanValue)
+        self.assertEqual(program[0].longname,"Force")
+        self.assertEqual(program[0].quantity_to_assign,"F")
+        self.assertEqual(program[0].quantities,["A","B"])
 
     def test_multi_assignment(self):
         ast = parse(

@@ -52,9 +52,23 @@ def interpret (syntacticProgram):
 				name = syntacticCommand.parameters[0]
 				value = syntacticCommand.parameters[1]
 				program.append(commands.Set(name, value))
+			elif syntacticCommand.name == "meanvalue":
+				name = syntacticCommand.parameters[0]
+				longname = None
+				reMatch = re.match('"(.*)"[ \t]+([-_\w]+)', name)
+				if reMatch is not None:
+					longname = reMatch.group(1)
+					name = reMatch.group(2)
+				quantities = syntacticCommand.parameters[1]
+
+				command = commands.MeanValue(name)
+				command.longname = longname
+				command.quantities = quantities
+
+				program.append(command)
 			elif syntacticCommand.name == "plot":
 				command = commands.Plot()
-				command.quantity_pairs = syntacticCommand.parameters[0]
+				command.expr_pairs = syntacticCommand.parameters[0]
 				program.append(command)
 			else:
 				raise RuntimeError("Unknown Function '%s' " % syntacticCommand.name)
