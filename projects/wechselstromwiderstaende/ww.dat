@@ -9,7 +9,7 @@
 
 "Gesamtwiderstand" R_ges = R_S + R_O + R_A
 
-import("projects\wechselstromwiderstaende\data.dat")
+import("data.dat")
 
 Z_0 = U_I / I_I [kOhm]
 f_sq = f_I**2

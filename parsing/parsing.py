@@ -1,18 +1,27 @@
 from parsing.generated import DatParser
 from grako.buffering import Buffer
 import re
+import os.path as path
+import os
 
 
 IMPORT_RE = '^\s*import\s*\(\s*"(.*)"\s*\)\s*$'
 EOL_COMMENTS_RE = "#.*?$"
 
-def include_file(regexMatch):
-    f = open(regexMatch.group(1))
-    return f.read()
+def regex_callback(regexMatch):
+    return
+
+def get_code(filename, from_dir):
+    f = open(path.join(from_dir, filename))
+    code = f.read()
+    code = re.sub(IMPORT_RE, lambda match: get_code(match.group(1), path.dirname(path.abspath(filename))), code, 0, re.MULTILINE)
+    return code
+
+def parse_file(filename):
+    code = get_code(filename, os.getcwd())
+    return parse(code)
 
 def parse(code):
-    code = re.sub(IMPORT_RE, include_file, code, 0, re.MULTILINE)
-
     p = DatParser(
         whitespace=" \t",
         eol_comments_re=EOL_COMMENTS_RE
