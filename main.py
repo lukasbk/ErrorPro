@@ -1,5 +1,5 @@
 import sys
-import parse
+from parsing.parsing import parse
 import interpreter
 import output
 from os import path
@@ -25,7 +25,7 @@ config["directory"] = path.dirname(sys.argv[1])
 syntax_trees = []
 for fileName in sys.argv[1:]:
     fileHandle = open(fileName, 'r')
-    syntax_trees.append(parse.parse_file(fileHandle))
+    syntax_trees.append(parse(fileHandle.read()))
 
 # interpret
 commands = []
