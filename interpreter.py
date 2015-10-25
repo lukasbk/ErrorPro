@@ -54,7 +54,7 @@ def interpret (syntacticProgram):
 				program.append(commands.Set(name, value))
 			elif syntacticCommand.name == "plot":
 				command = commands.Plot()
-				command.quantity_pairs = syntacticCommand.parameters[0]
+				command.expr_pairs = syntacticCommand.parameters[0]
 				program.append(command)
 			else:
 				raise RuntimeError("Unknown Function '%s' " % syntacticCommand.name)
