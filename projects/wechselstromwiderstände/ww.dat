@@ -30,9 +30,9 @@ Z_sq = Z_0**2
 
 m = 1 [Ohm**2*s**2]
 b = 1 [Ohm**2]
-$fit m*f_sq+b to (f_sq,Z_sq) via m,b
+fit(m*f_sq+b, f_sq, Z_sq, [m,b])
 
 "Induktivität L und R" L = sqrt(m)
 "Widerstand L und R" R = sqrt(b)
 
-#> import matplot; import si; matplot.plot([(data["f_sq"],data["Z_sq"])], [], si.system, show=True)
+>import matplot; import si; matplot.plot([(data["f_sq"],data["Z_sq"])], [], si.system, show=True)

@@ -1,0 +1,31 @@
+formula_without_brackets = /[^=,\(\)\[\]<>\n]+/ ;
+formula = [ formula_without_brackets ] "(" formula ")" [ formula_without_brackets ] | formula_without_brackets ;
+
+function_name = /\w+/;
+parameter_name = /\w+/;
+parameter_value = formula | "[" [ @+:parameter_value { "," @+:parameter_value } ] "]";
+parameter = parameter_name "=" parameter_value | parameter_value ;
+parameters = [ @+:parameter { "," @+:parameter } ];
+function = name:function_name "(" parameters:parameters ")";
+
+variable_name = /[\w]+/;
+longname = '"' @:/[^\"]+/ '"';
+uncertainty = "<" @:formula ">";
+unit = "[" @:formula "]";
+
+assignment = [longname:longname] name:variable_name "=" value:formula [ uncertainty:uncertainty ] [ unit:unit ] ;
+
+whitespace = /[ \t\r\n]*/;
+
+multi_assignment_spec = [longname:longname] name:variable_name [ uncertainty:uncertainty ] [ unit:unit ];
+multi_assignment_header = @+:multi_assignment_spec { "," @+:multi_assignment_spec } "\n";
+multi_assignment_value = /[\w\.]+/;
+multi_assignment_row = { @+:multi_assignment_value }+ "\n";
+multi_assignment_rows = { @+:multi_assignment_row whitespace };
+multi_assignment = "{" whitespace header:multi_assignment_header whitespace rows:multi_assignment_rows whitespace "}";
+
+python_line = ">" @:/[^\n]*/ ("\n" | $);
+python_code = code:{python_line}+;
+
+command = @:( function | assignment | multi_assignment | python_code ) ("\n" | $);
+program = whitespace { @+:command whitespace } $;

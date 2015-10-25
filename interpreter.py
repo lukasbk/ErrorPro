@@ -7,23 +7,19 @@ def createAssignmentCommand(value, header):
 		name = name[:-4]
 		command = commands.Assignment(header.name)
 		command.uncert = value
-		if hasattr(header, "unit"):
-			command.uncert_unit = header.unit
-		if hasattr(header, "uncertainty"):
+		command.uncert_unit = header.unit
+		if header.uncertainty is not None:
 			raise RuntimeError("Variables with _err notation cannot use the <...> notation.")
-		if hasattr(header, "longname"):
+		if header.longname is not None:
 			raise RuntimeError("Variables with _err notation cannot have a long name.")
 	else:
 		command = commands.Assignment(header.name)
 		command.value = value
-		if hasattr(header, "longname"):
-			command.longname = header.longname
-		if hasattr(header, "unit"):
-			command.value_unit = header.unit
-		if hasattr(header, "uncertainty"):
-			command.uncert = header.uncertainty
-			if hasattr(header, "unit"):
-				command.uncert_unit = header.unit
+		command.longname = header.longname
+		command.value_unit = header.unit
+		command.uncert = header.uncertainty
+		if header.uncertainty is not None:
+			command.uncert_unit = header.unit
 	return command
 
 def interpret (syntacticProgram):
@@ -32,35 +28,34 @@ def interpret (syntacticProgram):
 	"""
 	program = []
 	for syntacticCommand in syntacticProgram:
-		if syntacticCommand.type == "SingleAssignment":
+		if syntacticCommand.parseinfo.rule == "assignment":
 			program.append(createAssignmentCommand(syntacticCommand.value, syntacticCommand))
-		elif syntacticCommand.type == "MultiAssignment":
+		elif syntacticCommand.parseinfo.rule == "multi_assignment":
 			# create one command for each column
 			for columnIndex in range(len(syntacticCommand.header)):
 				values = []
-				for row in syntacticCommand:
+				for row in syntacticCommand.rows:
 					values.append(row[columnIndex])
 				header = syntacticCommand.header[columnIndex]
 				program.append(createAssignmentCommand(values, header))
-		elif syntacticCommand.type == "PythonCode":
-			program.append(commands.PythonCode(syntacticCommand))
-		elif syntacticCommand.type == "Function":
+		elif syntacticCommand.parseinfo.rule == "python_code":
+			code = '\n'.join(syntacticCommand.code)
+			program.append(commands.PythonCode(code))
+		elif syntacticCommand.parseinfo.rule == "function":
 			if syntacticCommand.name == "fit":
-				reMatch = re.match("(.*) to \((.*),(.*)\) via (.*)", syntacticCommand)
-				if reMatch == None:
-					raise RuntimeError("Fit command has wrong format: '%s'" % syntacticCommand)
-				fitFunction = reMatch.group(1)
-				xData = reMatch.group(2)
-				yData = reMatch.group(3)
-				params = reMatch.group(4).split(",")
-				for i in range(0, len(params)):
-					params[i] = params[i].strip()
+				fitFunction = syntacticCommand.parameters[0]
+				xData = syntacticCommand.parameters[1]
+				yData = syntacticCommand.parameters[2]
+				params = syntacticCommand.parameters[3]
 				program.append(commands.Fit(fitFunction, xData, yData, params))
 			elif syntacticCommand.name == "set":
-				reMatch = re.match("(.*) (.*)", syntacticCommand)
-				if reMatch == None:
-					raise RuntimeError("Set command has wrong format: '%s'" % syntacticCommand)
-				program.append(commands.Set(reMatch.group(1), reMatch.group(2)))
+				name = syntacticCommand.parameters[0]
+				value = syntacticCommand.parameters[1]
+				program.append(commands.Set(name, value))
+			elif syntacticCommand.name == "plot":
+				command = commands.Plot()
+				command.quantity_pairs = syntacticCommand.parameters[0]
+				program.append(command)
 			else:
 				raise RuntimeError("Unknown Function '%s' " % syntacticCommand.name)
 		else:
