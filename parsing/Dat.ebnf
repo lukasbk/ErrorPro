@@ -1,5 +1,6 @@
-formula_without_brackets = /[^=,\(\)\[\]<>\n]+/ ;
-formula = [ formula_without_brackets ] "(" formula ")" [ formula_without_brackets ] | formula_without_brackets ;
+subformula_without_brackets = /[^=,\(\)\[\]<>\n']+/ ;
+subformula = [ subformula_without_brackets ] "(" subformula ")" [ subformula_without_brackets ] | subformula_without_brackets ;
+formula = subformula | "'" @:/[^']*/ "'" ;
 
 function_name = /\w+/;
 parameter_name = /\w+/;

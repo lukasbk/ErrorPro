@@ -14,7 +14,7 @@ def parse(code):
     return ast
 
 class DatSemantics(object):
-    def formula(self, ast):
+    def subformula(self, ast):
         if ast is None:
             return ast
         else:
