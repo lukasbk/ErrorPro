@@ -36,4 +36,4 @@ for c in commands:
     c.execute(data, config, output)
 
 # save
-output.save(data, config)
+output.generate(data, config)

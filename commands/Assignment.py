@@ -1,4 +1,5 @@
 from quantities import Quantity, parse_expr, get_dimension, get_value, get_uncertainty
+from exceptions import DimensionError
 from units import parse_unit
 from sympy import Symbol
 from sympy.physics.unitsystems.dimensions import Dimension
@@ -62,7 +63,7 @@ class Assignment():
 				calculated_dim = get_dimension(value_depend)
 
 				if value_dim and not value_dim == calculated_dim:
-					raise RuntimeError ("given value dimension %s doesn't fit to dependency's dimension %s." % (value_dim, calculated_dim))
+					raise DimensionError ("given value dimension %s doesn't fit to dependency's dimension %s." % (value_dim, calculated_dim))
 				value_dim = calculated_dim
 
 			# save things
@@ -74,7 +75,7 @@ class Assignment():
 			data[self.name].value_prefUnit = value_prefUnit
 			data[self.name].value_depend = value_depend
 			if data[self.name].dim and not data[self.name].dim == value_dim:
-				raise RuntimeError ("given value dimension %s doesn't fit to quantity's former dimension %s." % (value_dim, data[self.name].dim))
+				raise DimensionError ("given value dimension %s doesn't fit to quantity's former dimension %s." % (value_dim, data[self.name].dim))
 			data[self.name].dim = value_dim
 
 
@@ -105,7 +106,7 @@ class Assignment():
 						raise RuntimeError ("length of uncertainty %s doesn't fit length of value %s" % (len(uncert), len(data[self.name].value)))
 			data[self.name].uncert = uncert
 			if data[self.name].dim and not data[self.name].dim == uncert_dim:
-				raise RuntimeError("given uncertainty dimension %s doesn't fit to dimension %s." % (uncert_dim, data[self.name].dim))
+				raise DimensionError("given uncertainty dimension %s doesn't fit to dimension %s." % (uncert_dim, data[self.name].dim))
 			data[self.name].dim = uncert_dim
 			data[self.name].uncert_prefUnit = uncert_prefUnit
 

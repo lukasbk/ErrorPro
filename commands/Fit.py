@@ -1,8 +1,10 @@
 from quantities import Quantity, parse_expr, get_dimension
+from exceptions import DimensionError
+from plot import plot
 
 class Fit():
 
-	#TODO Support für mehr als 1-dimensionale datasets
+	#TODO Support fuer mehr als 1-dimensionale datasets
 	#TODO if parameter not set, find out dimension
 
 	def __init__(self, fit_function_str, x_data_str, y_data_str, parameters_str):
@@ -11,6 +13,7 @@ class Fit():
 		self.fit_function_str = fit_function_str
 		self.parameters_str = parameters_str
 		self.weighted = None
+		self.plot = False
 
 	def execute(self, data, config, output):
 		if config["fit_module"] == "scipy":
@@ -34,7 +37,7 @@ class Fit():
 		# check if dimension fits
 		dim_func = get_dimension(fit_function)
 		if not dim_func == y_data.dim:
-			raise RuntimeError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
+			raise DimensionError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
 
 		# get parameter quantities
 		parameters = []
@@ -55,3 +58,7 @@ class Fit():
 			p.uncert = uncerts[i]
 			p.uncert_depend = "fit"
 			i += 1
+
+		# plot
+		if self.plot:
+			plot([(x_data, y_data), (x_data, fit_function)], config, output, show=False, save=True)

@@ -12,8 +12,8 @@
 import("data.dat")
 
 Z_0 = U_I / I_I [kOhm]
-f_sq = f_I**2
-Z_sq = Z_0**2
+f_sq = f_I**2 [Hz**2]
+"Quadrierte Impedanz" Z_sq = Z_0**2
 
 m = 1 [Ohm**2*s**2]
 b = 1 [Ohm**2]

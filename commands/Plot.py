@@ -6,6 +6,8 @@ class Plot():
 		self.expr_pairs = []
 		self.show = None
 		self.save = None
+		self.xunit = None
+		self.yunit = None
 
 	def execute(self, data, config, output):
 
@@ -26,4 +28,4 @@ class Plot():
 		if self.save is None:
 			self.save = False
 
-		plot.plot(expr_pairs, config, show=self.show, save=self.save)
+		plot.plot(expr_pairs, config, output, show=self.show, save=self.save, xunit=self.xunit, yunit=self.yunit)

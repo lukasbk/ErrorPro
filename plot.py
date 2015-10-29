@@ -3,7 +3,7 @@ from units import convert_to_unit
 from sympy import S
 from exceptions import *
 
-def plot(expr_pairs, config, show=True, save=False):
+def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=None):
 
     # one or multiple things to plot
     if len(expr_pairs) > 1:
@@ -15,9 +15,6 @@ def plot(expr_pairs, config, show=True, save=False):
 
     x_dim = None
     y_dim = None
-
-    x_unit = None
-    y_unit = None
 
     data_sets = []
     functions = []
@@ -56,8 +53,8 @@ def plot(expr_pairs, config, show=True, save=False):
                 x = dummy
 
             # get factors
-            x_factor, x_unit = convert_to_unit(x_dim, unit_system, outputUnit=x_unit)
-            y_factor, y_unit = convert_to_unit(y_dim, unit_system, outputUnit=y_unit)
+            x_factor, xunit = convert_to_unit(x_dim, unit_system, outputUnit=xunit)
+            y_factor, yunit = convert_to_unit(y_dim, unit_system, outputUnit=yunit)
 
             # scale function to units
             y = y.subs(x,x*x_factor) / y_factor
@@ -65,8 +62,8 @@ def plot(expr_pairs, config, show=True, save=False):
             # if only one thing on plot, write labels to x-axis and y-axis
             if single_plot:
                 title = None
-                x_label = x_title + ("" if x_unit == S.One else " [" + str(x_unit) + "]")
-                y_label = y_title + ("" if y_unit == S.One else " [" + str(y_unit) + "]")
+                x_label = x_title + ("" if xunit == S.One else " [" + str(xunit) + "]")
+                y_label = y_title + ("" if yunit == S.One else " [" + str(yunit) + "]")
             # if more than one thing, use legend for title
             else:
                 title = y_title
@@ -100,15 +97,15 @@ def plot(expr_pairs, config, show=True, save=False):
 
 
             # get values and uncertainties all in one unit
-            x_values, x_uncerts, x_unit = adjust_to_unit(x, unit_system, prefUnit = x_unit)
-            y_values, y_uncerts, y_unit = adjust_to_unit(y, unit_system, prefUnit = y_unit)
+            x_values, x_uncerts, xunit = adjust_to_unit(x, unit_system, prefUnit = xunit)
+            y_values, y_uncerts, yunit = adjust_to_unit(y, unit_system, prefUnit = yunit)
 
 
             # if only one thing on plot, write labels to x-axis and y-axis
             if single_plot:
                 title = None
-                x_label = x_title + ("" if x_unit == S.One else " [" + str(x_unit) + "]")
-                y_label = y_title + ("" if y_unit == S.One else " [" + str(y_unit) + "]")
+                x_label = x_title + ("" if xunit == S.One else " [" + str(xunit) + "]")
+                y_label = y_title + ("" if yunit == S.One else " [" + str(yunit) + "]")
             # if more than one thing, use legend for title
             else:
                 title = y_title
@@ -117,18 +114,20 @@ def plot(expr_pairs, config, show=True, save=False):
 
 
 
-
     # if more than one thing on plot, write only units to axes
     if not single_plot:
-        x_label = ("" if x_unit == S.One else " [" + str(x_unit) + "]")
-        y_label = ("" if y_unit == S.One else " [" + str(y_unit) + "]")
+        x_label = ("" if xunit == S.One else "[" + str(xunit) + "]")
+        y_label = ("" if yunit == S.One else "[" + str(yunit) + "]")
 
     # plot
     if config["plot_module"] == "matplotlib":
-        import matplot
-        matplot.plot(data_sets, functions, show=show, x_label=x_label, y_label=y_label)
+        import plot_mat
+        out = plot_mat.plot(data_sets, functions, show=show, save=save, x_label=x_label, y_label=y_label)
     elif config["plot_module"] == "gnuplot":
-        import gnuplot
-        gnuplot.plot(data_sets, functions, show=show, x_label=x_label, y_label=y_label)
+        import plot_gnu
+        out = plot_gnu.plot(data_sets, functions, show=show, save=save, x_label=x_label, y_label=y_label)
     else:
         raise ValueError("There is not plot module called '%s'" % config["plot_module"])
+
+    if save:
+        output.addFiles(out)

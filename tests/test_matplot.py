@@ -1,4 +1,4 @@
-import matplot
+import plot_mat as matplot
 import numpy as np
 from sympy.physics.unitsystems.dimensions import Dimension
 from si import system as si

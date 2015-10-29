@@ -17,3 +17,11 @@ class Set():
 			config[self.entry] = False
 		else:
 			config[self.entry] = self.value
+
+def last_figure(output):
+	from matplot import Matplot
+	for i in range(0, len(output.files)):
+		f = output.files[ len(output.files) - i - 1 ]
+		if isinstance( f, Matplot):
+			return f.figure
+	return False
