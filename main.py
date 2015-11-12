@@ -10,7 +10,6 @@ output = output.Output()
 config = {"unit_system":"si",
           "fit_module":"scipy",
           "plot_module":"matplotlib",
-          "directory":".",
           "auto_results":"results.csv",
           "rounding":True
           }

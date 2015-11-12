@@ -130,4 +130,4 @@ def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=No
         raise ValueError("There is not plot module called '%s'" % config["plot_module"])
 
     if save:
-        output.addFiles(out)
+        output.addPlotFiles(out)

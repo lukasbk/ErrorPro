@@ -4,6 +4,7 @@ import numpy as np
 from quantities import Quantity
 from sympy.physics.unitsystems.dimensions import Dimension
 from si import system as si
+from output import Output
 
 class PlotTestCase(unittest.TestCase):
 
@@ -16,7 +17,7 @@ class PlotTestCase(unittest.TestCase):
                     "plot_module":"gnuplot",
                     "unit_system":"si"
                 }
-        output = None
+        output = Output()
 
         data["y"].value_prefUnit = si["ms"]
         data["x"].value = np.float_([0,1,2,3,4,5])

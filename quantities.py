@@ -70,6 +70,7 @@ def get_uncertainty(expr):
 	return (np.sqrt(integrand),sympy.sqrt (uncert_depend))
 
 class Quantity(Symbol):
+	quantity_count = 0
 	dummy_count = 1
 
 	def __new__(cls,name="",longname=""):
@@ -79,6 +80,10 @@ class Quantity(Symbol):
 			self = Dummy.__new__(cls, name)
 		else:
 			self = Symbol.__new__(cls, name)
+
+		self.count = Quantity.quantity_count
+		Quantity.quantity_count += 1
+
 		self.abbrev = name
 		self.name = name
 		self.longname = longname
