@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Module for representing python data structures using LaTeX.
 """
+from __future__ import print_function
+import sys
 import numpy as np
 import decimal as dec
 
@@ -505,3 +509,89 @@ def table_html(cols, fill='', just='c', vsep='|', hsep=None):
     table.append('</table>')
 
     return '\n'.join(table)
+
+def main(args):
+    """ Main function for script pytex.py
+
+    Argument args is list of arguments as optained by sys.argv.
+
+    If two numbers (floats) are given, they will be formatted to LaTeX code
+    using the first as value, the second as error.
+
+    Else a list of filenames is expected, preceeded by '-noerror <indices>'.
+    The files are expected to contain data columns. The columns are formatted
+    in the order they occur into a LaTeX table.
+    The errors for a column is expected to be in the next one (to the right)
+    in the same file.
+    Specify columns with no error using '-noerror' followed by the indices of
+    such columns. If no indices are specified but '-noerror' is given, no
+    column is used as error.
+
+    The output is returned via stdout and stderr.
+    """
+    if len(args) < 0 or args[1] == '-help':
+        print(help(main))
+        return
+
+    # index for parsing the args
+    idx = 1
+
+    noerr = set()
+    if '-noerr' in args:
+        noerr.add(-1) # -1 means 'all'
+        idx = args.index('-noerr')
+        idx += 1
+        while idx < len(args):
+            try:
+                noerr.add(int(args[idx]))
+                noerr.remove(-1)
+                idx += 1
+            except ValueError:
+                break
+
+    try:
+        # case two floats are given
+        val = float(args[idx])
+        err = float(args[idx + 1])
+        print(format_valerr(val, err))
+
+    except ValueError:
+        # case file names are given
+        fmatted = []
+        for fname in args[idx:]:
+            try:
+                data = np.loadtxt(fname, unpack=True)
+            except ValueError as verr:
+                #ve.args.append("\nIn file %s." % fname)
+                #ve.args[0] += "\nIn file %s." % fname
+                raise ValueError('Error parsing file %s:\n' % fname
+                                 + verr.args[0])
+
+            i = 0
+            while i < len(data):
+                if i in noerr or -1 in noerr:
+                    fmatted.append(
+                        align_num_list(data[i], math_env=True))
+                    i += 1
+                elif i == len(data) - 1:
+                    print("You might be missing a row of errors at the end of"
+                          "file %s. It will be formatted without one." % fname,
+                          file=sys.stderr)
+                    fmatted.append(
+                        align_num_list(data[i], math_env=True))
+                    i += 1
+                else:
+                    fmatted.append(format_valerr_list(data[i], data[i+1]))
+                    i += 2
+
+        print(table_latex(fmatted, vsep='|', hsep={0, -1}))
+
+
+if __name__ == '__main__':
+    try:
+        main(sys.argv)
+    except IOError as exc:
+        print("Could not find file %s." % exc.filename)
+        print("Use flag -help for help.")
+    except ValueError as exc:
+        print(exc)
