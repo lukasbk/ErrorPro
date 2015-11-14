@@ -1,12 +1,12 @@
 import shlex, subprocess
 from output import Files
-from PIL import Image
+import tempfile
 
 def plot(data_sets, functions, show, save, x_label="", y_label=""):
 
     gp = Gnuplot(data_sets, functions, x_label, y_label)
 
-    tmp_folder = 'tmp'
+    tmp_folder = tempfile.gettempdir()
 
     if show:
         gp.show = True
@@ -14,9 +14,7 @@ def plot(data_sets, functions, show, save, x_label="", y_label=""):
 
     if save:
         gp.show = False
-        return gp
-
-    return None
+    return gp
 
 
 class Gnuplot(Files):
@@ -26,6 +24,7 @@ class Gnuplot(Files):
         self.x_label = x_label
         self.y_label = y_label
         self.show = None # if True, will show plot in wxt, if False, will save plot to png
+        self.image_file = None
 
     def save(self, prefix, directory):
 
@@ -126,6 +125,4 @@ reset
         proc=subprocess.Popen(shlex.split("gnuplot '"+ directory + "/" + prefix + plotfile+"'"))
         proc.communicate()
 
-        if self.show:
-            img = Image.open(directory + "/" + prefix + outputfile)
-            img.show()
+        self.image_file = directory + "/" + prefix + outputfile

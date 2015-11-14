@@ -73,7 +73,7 @@ class Quantity(Symbol):
 	quantity_count = 0
 	dummy_count = 1
 
-	def __new__(cls,name="",longname=""):
+	def __new__(cls,name="",longname=None):
 		if name == "":
 			name = "Dummy_"+str(Quantity.dummy_count)
 			Quantity.dummy_count += 1

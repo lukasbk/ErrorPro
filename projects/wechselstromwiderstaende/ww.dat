@@ -9,7 +9,7 @@
 
 "Gesamtwiderstand" R_ges = R_S + R_O + R_A
 
-import("data.dat")
+>p.load("data.dat")
 
 Z_0 = U_I / I_I [kOhm]
 f_sq = f_I**2 [kHz**2]
@@ -17,13 +17,7 @@ f_sq = f_I**2 [kHz**2]
 
 m = 1 [Ohm**2*s**2]
 b = 1 [Ohm**2]
-fit(m*f_sq+b, f_sq, Z_sq, [m,b])
+>p.fit("m*f_sq+b", ("f_sq", "Z_sq"), ["m","b"])
 
 "Induktivität L und R" L = sqrt(m) [mH]
 "Widerstand L und R" R = sqrt(b)
-
-set(plot_module, gnuplot)
-plot([[f_sq,Z_sq],[f_sq,m*f_sq+b]],show=False)
-
->from sympy import latex
->print(latex(data["R_ges"].uncert_depend))

@@ -25,8 +25,7 @@ def fit(x_data, y_data, fit_function, parameters, weighted=None):
 
 	if weighted is True and y_data.uncert is None:
 		raise RuntimeError("can't perform weighted fit because uncertainty of '%s' is not set." % y_data.name)
-
-	params_opt, params_covar = curve_fit (np_func,x_data.value,y_data.value,sigma=y_data.uncert,p0=start_params)
+	params_opt, params_covar = curve_fit (np_func,x_data.value,y_data.value,sigma=uncerts,p0=start_params)
 	params_err = np.sqrt(np.diag(params_covar))
 
 	return (params_opt,params_err)

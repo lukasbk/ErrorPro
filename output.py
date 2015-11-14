@@ -121,11 +121,12 @@ class Output():
             i += 1
 
         # automatic csv file
-        unit_system = __import__(config["unit_system"]).system
-        with open(config["directory"] +"/"+ config["auto_results"],"w") as f:
-            writer = csv.writer(f, lineterminator='\n')
-            for line in arrange_data(data, unit_system):
-                writer.writerow( line )
+        if not config["auto_csv"] is None:
+            unit_system = __import__(config["unit_system"]).system
+            with open(config["directory"] +"/"+ config["auto_csv"],"w") as f:
+                writer = csv.writer(f, lineterminator='\n')
+                for line in arrange_data(data, unit_system):
+                    writer.writerow( line )
 
 
 class Files():

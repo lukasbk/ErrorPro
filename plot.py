@@ -131,3 +131,13 @@ def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=No
 
     if save:
         output.addPlotFiles(out)
+
+    # if gnuplot plot, show it
+    if config["plot_module"] == "gnuplot" and show:
+        try:
+            __IPYTHON__
+            from IPython.display import Image
+            return Image(out.image_file)
+        except NameError:
+            from PIL import Image
+            Image.open(out.image_file).show()

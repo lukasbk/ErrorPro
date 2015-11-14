@@ -7,9 +7,16 @@ import sympy
 import numpy as np
 
 
+class PythonCode():
+	def __init__(self, code):
+		self.code = code
+
+	def execute(self, p):
+		exec(self.code)
+
 class Assignment():
 
-	def __init__(self, name, longname=""):
+	def __init__(self, name, longname=None):
 		self.name = name
 		self.longname = longname
 		self.value = None
@@ -17,13 +24,13 @@ class Assignment():
 		self.uncert = None
 		self.uncert_unit = None
 
-	def execute(self, data, config, output):
+	def execute(self, p):
 
 
-		unit_system = __import__(config["unit_system"]).system
+		unit_system = __import__(p.config["unit_system"]).system
 
-		if not self.name in data or (self.value and self.uncert):
-			data[self.name] = Quantity(self.name,self.longname)
+		if not self.name in p.data or (self.value and self.uncert):
+			p.data[self.name] = Quantity(self.name,self.longname)
 
 		# if value is set
 		# find out exact value, its dependency, preferred unit and dimension
@@ -38,7 +45,7 @@ class Assignment():
 			if isinstance(self.value,list):
 				value = self.value
 			else:
-				value = parse_expr(self.value, data)
+				value = parse_expr(self.value, p.data)
 
 			if not self.value_unit is None:
 				value_prefUnit = unit
@@ -67,16 +74,16 @@ class Assignment():
 				value_dim = calculated_dim
 
 			# save things
-			if not data[self.name].uncert is None:
-				if isinstance(value, np.ndarray) or isinstance(data[self.name].uncert, np.ndarray):
-					if not len(value) == len(data[self.name].uncert):
-						raise RuntimeError ("length of value %s doesn't fit length of uncertainty %s" % (len(value), len(data[self.name].uncert)))
-			data[self.name].value = value
-			data[self.name].value_prefUnit = value_prefUnit
-			data[self.name].value_depend = value_depend
-			if data[self.name].dim and not data[self.name].dim == value_dim:
-				raise DimensionError ("given value dimension %s doesn't fit to quantity's former dimension %s." % (value_dim, data[self.name].dim))
-			data[self.name].dim = value_dim
+			if not p.data[self.name].uncert is None:
+				if isinstance(value, np.ndarray) or isinstance(p.data[self.name].uncert, np.ndarray):
+					if not len(value) == len(p.data[self.name].uncert):
+						raise RuntimeError ("length of value %s doesn't fit length of uncertainty %s" % (len(value), len(p.data[self.name].uncert)))
+			p.data[self.name].value = value
+			p.data[self.name].value_prefUnit = value_prefUnit
+			p.data[self.name].value_depend = value_depend
+			if p.data[self.name].dim and not p.data[self.name].dim == value_dim:
+				raise DimensionError ("given value dimension %s doesn't fit to quantity's former dimension %s." % (value_dim, p.data[self.name].dim))
+			p.data[self.name].dim = value_dim
 
 
 		# if uncertainty is set
@@ -94,27 +101,27 @@ class Assignment():
 			if isinstance(self.uncert, list):
 				uncert = self.uncert
 			else:
-				uncert = parse_expr(self.uncert, data)
+				uncert = parse_expr(self.uncert, p.data)
 			if not isinstance(self.uncert,list) and not uncert.is_number:
 				raise ValueError("uncertainty %s is not a number." % uncert)
 			uncert = np.float_(factor)*np.float_(uncert)
 
 			# save things
-			if not data[self.name].uncert is None:
-				if isinstance(uncert, np.ndarray) or isinstance(data[self.name].value, np.ndarray):
-					if not len(uncert) == len (data[self.name].value):
-						raise RuntimeError ("length of uncertainty %s doesn't fit length of value %s" % (len(uncert), len(data[self.name].value)))
-			data[self.name].uncert = uncert
-			if data[self.name].dim and not data[self.name].dim == uncert_dim:
-				raise DimensionError("given uncertainty dimension %s doesn't fit to dimension %s." % (uncert_dim, data[self.name].dim))
-			data[self.name].dim = uncert_dim
-			data[self.name].uncert_prefUnit = uncert_prefUnit
+			if not p.data[self.name].uncert is None:
+				if isinstance(uncert, np.ndarray) or isinstance(p.data[self.name].value, np.ndarray):
+					if not len(uncert) == len (p.data[self.name].value):
+						raise RuntimeError ("length of uncertainty %s doesn't fit length of value %s" % (len(uncert), len(p.data[self.name].value)))
+			p.data[self.name].uncert = uncert
+			if p.data[self.name].dim and not p.data[self.name].dim == uncert_dim:
+				raise DimensionError("given uncertainty dimension %s doesn't fit to dimension %s." % (uncert_dim, p.data[self.name].dim))
+			p.data[self.name].dim = uncert_dim
+			p.data[self.name].uncert_prefUnit = uncert_prefUnit
 
 		# if uncertainty can be calculated from dependency
 		elif value_depend:
-			data[self.name].uncert, data[self.name].uncert_depend = get_uncertainty(value_depend)
+			p.data[self.name].uncert, p.data[self.name].uncert_depend = get_uncertainty(value_depend)
 
 		# check if uncertainty must be duplicated to adjust to value length
-		if isinstance(data[self.name].value, np.ndarray) and isinstance(data[self.name].uncert, np.float_):
-			uncert_arr = np.full(len(data[self.name].value),data[self.name].uncert)
-			data[self.name].uncert = uncert_arr
+		if isinstance(p.data[self.name].value, np.ndarray) and isinstance(p.data[self.name].uncert, np.float_):
+			uncert_arr = np.full(len(p.data[self.name].value),p.data[self.name].uncert)
+			p.data[self.name].uncert = uncert_arr
