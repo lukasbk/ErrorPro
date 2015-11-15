@@ -1,8 +1,8 @@
 from quantities import Quantity, parse_expr, get_dimension
 from exceptions import DimensionError
-from plot import plot
+import plot as plotting
 from mean_value import mean_value
-from parsing.parsing import parse_file
+from parsing.parsing import parse_file, parse
 from quantities import adjust_to_unit
 import interpreter
 import output
@@ -48,6 +48,23 @@ class Project():
 
         # parse
         syntax_tree = parse_file(filename)
+
+        # interpret
+        commands = interpreter.interpret(syntax_tree)
+
+        # execute
+        for c in commands:
+            c.execute(self)
+
+    def code(self, code):
+        """ parses and executes code
+
+        Args:
+            code: string of code like in data file
+        """
+
+        # parse
+        syntax_tree = parse(code)
 
         # interpret
         commands = interpreter.interpret(syntax_tree)
@@ -162,7 +179,7 @@ class Project():
         if not yunit is None:
             yunit = parse_unit(yunit, unit_system)[2]
 
-        return plot(expr_pairs, self.config, self.output, show=show, save=save, xunit=xunit, yunit=yunit)
+        return plotting.plot(expr_pairs, self.config, self.output, show=show, save=save, xunit=xunit, yunit=yunit)
 
 
 
@@ -229,4 +246,4 @@ class Project():
 
 		# plot
         if plot:
-            plot([(x_data, y_data), (x_data, fit_function)], self.config, self.output, show=False, save=True)
+            return plotting.plot([(x_data, y_data), (x_data, fit_function)], self.config, self.output, show=True, save=False)

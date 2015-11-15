@@ -76,6 +76,7 @@ class Assignment():
 			# save things
 			if not p.data[self.name].uncert is None:
 				if isinstance(value, np.ndarray) or isinstance(p.data[self.name].uncert, np.ndarray):
+					# TODO len-Fehler
 					if not len(value) == len(p.data[self.name].uncert):
 						raise RuntimeError ("length of value %s doesn't fit length of uncertainty %s" % (len(value), len(p.data[self.name].uncert)))
 			p.data[self.name].value = value
