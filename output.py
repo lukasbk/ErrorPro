@@ -1,13 +1,72 @@
 import numpy as np
-from itertools import zip_longest
-from units import convert_to_unit
-from sympy import S
 from quantities import adjust_to_unit
+from itertools import zip_longest
+import csv
+from sympy import S
 
-# TODO actually scientific notation should be used somehow
+def arrange_data(data, unit_system):
+    # sort quantities by count
+    sorted_data = sorted(data.values(), key=lambda q:q.count)
 
-# format quantity for output
-def format_quantity(q, unit_system, rounding):
+    # group by length
+    data_by_length = {}
+    for q in sorted_data:
+        if isinstance(q.value, np.ndarray):
+            length = len(q.value)
+        else:
+            length = 1
+        if not length in data_by_length:
+            data_by_length[length] = []
+        data_by_length[length].append(q)
+
+    # find largest amount of quantities with one length (except for length 1)
+    max_quantities = 0
+    for length in data_by_length:
+        if not length == 1:
+            if len(data_by_length[length]) > max_quantities:
+                max_quantities = len(data_by_length[length])
+    columns = [[] for x in range(5 + max_quantities*2)]
+
+    # list single data on the left side
+    if 1 in data_by_length:
+        for q in data_by_length[1]:
+            description, value, uncert, unit = format_quantity(q, unit_system)
+            columns[0].append(description)
+            columns[1].append(value)
+            columns[2].append(uncert)
+            columns[3].append(unit)
+
+    # iterate data set length
+    for length in data_by_length:
+        if length == 1:
+            continue
+        q_counter = 0
+        # iterate quantities of one length
+        for q in data_by_length[length]:
+            description, value, uncert, unit = format_quantity(q, unit_system)
+            # list data sets on the right, grouped by length
+            columns[5 + q_counter*2].append(description + " [" + unit + "]")
+            columns[6 + q_counter*2].append("")
+            for i in range(0,len(value)):
+                columns[5 + q_counter*2].append(value[i])
+                columns[6 + q_counter*2].append(uncert[i])
+            columns[5 + q_counter*2].append("")
+            columns[6 + q_counter*2].append("")
+            q_counter += 1
+
+        # fill rest of columns with empty space
+        for c in range(6 + q_counter*2 + 1, len(columns)):
+            columns[c].extend([""] * (length+1))
+
+    # transpose array
+    return zip_longest(*columns, fillvalue="")
+
+
+
+def format_quantity(q, unit_system, rounding=False):
+
+    # TODO rounding, ...
+
     description = q.name
     if q.longname:
         description = q.longname + " " + description
@@ -20,25 +79,16 @@ def format_quantity(q, unit_system, rounding):
         value_str = []
         uncert_str = []
         for i in range(0,len(value)):
-            # round if possible and wanted
-            if rounding and not (value is None or uncert is None):
-                v, u = round_accordingly(value[i], uncert[i])
-            # don't round
-            else:
-                v = "%.8f" % value[i] if value is not None else ""
-                u = "%.8f" % uncert[i] if uncert is not None else ""
+            v = "%.8f" % value[i] if value is not None else ""
+
+            u = "%.8f" % uncert[i] if uncert is not None else ""
             value_str.append(v)
             uncert_str.append(u)
 
     # if it's a single value
     else:
-        # round if possible and wanted
-        if rounding and not (value is None or uncert is None):
-            value_str, uncert_str = round_accordingly(value, uncert)
-        # don't round
-        else:
-            value_str = "%.8f" % value if value is not None else ""
-            uncert_str = "%.8f" % uncert if uncert is not None else ""
+        value_str = "%.8f" % value if value is not None else ""
+        uncert_str = "%.8f" % uncert if uncert is not None else ""
 
     # create unit string
     if unit == S.One:
@@ -49,104 +99,39 @@ def format_quantity(q, unit_system, rounding):
     return (description, value_str, uncert_str, unit)
 
 
-
-# round value and uncertainty according to uncertainty
-def round_accordingly(value, uncertainty):
-
-    if uncertainty == 0:
-        return (str(value), str(uncertainty))
-
-    uFirstDigitPos=np.floor(np.log10(uncertainty))
-    uFirstDigit=np.floor(uncertainty*10**(-uFirstDigitPos))
-    if uFirstDigit<3:
-        precision=np.int_(uFirstDigitPos-1)
-    else:
-        precision=np.int_(uFirstDigitPos)
-
-    uCeiled=np.ceil(uncertainty*10**(-precision))/10**(-precision)
-    # TODO np.round rounds down at exactly 0.5, not up!!
-    vRounded=np.round(value,-precision)
-
-    if precision>=0:
-        viewPrecision="0"
-    else:
-        viewPrecision=str(-precision)
-    value_str = ("{v:."+viewPrecision+"f}").format(v=vRounded)
-    uncert_str = ("{u:."+viewPrecision+"f}").format(u=uCeiled)
-    return (value_str, uncert_str)
-
-
-
-class Output:
+class Output():
     def __init__(self):
-        self._files = []
-        self._used_filenames = []
+        self.plotfiles = []
+        self.latex_codes = []
 
+    def addLatexCode(self, code):
+        self.latex_codes.append(code)
 
-    def addFile(self, filename, content):
-        self._files.append((filename, content))
+    def addPlotFiles(self, files_obj):
+        self.plotfiles.append(files_obj)
 
-    def save(self, data, config):
+    def generate(self, data, config):
+        # save latex code to file
+        # TODO
 
-        unit_system = __import__(config["unit_system"]).system
-
-        # if activated, create automatic csv-file of results
-        # TODO use order from commands, not random order like it's now
-        if config["auto_results"]:
-
-            content = [[],[],[],[],[],[],[]]
-            content_str = ""
-            single_counter = 0
-            set_counter = 0
-            # iterate quantities
-            for q_name in data:
-                q = data[q_name]
-
-                description, value, uncert, unit = format_quantity(q, unit_system, config["rounding"])
-
-                # if it's a data set
-                if isinstance(value, list):
-                    content[5].append(description + " [" + unit + "]")
-                    content[6].append("")
-                    for i in range(0,len(value)):
-                        content[5].append(value[i])
-                        content[6].append(uncert[i])
-                    content[5].append("")
-                    content[6].append("")
-                # if it's single data
-                else:
-                    content[0].append(description)
-                    content[1].append(value)
-                    content[2].append(uncert)
-                    content[3].append(unit)
-
-            # transpose array
-            content = zip_longest(*content, fillvalue="")
-
-            # create string
-            line_strs = []
-            for line in content:
-                line_strs.append(",".join(line))
-            content_str = "\n".join(line_strs)
-
-            # save to file
-            self._make_file(config["auto_results"], content_str, config["directory"])
-
-        # save all registered files
-        for filename, content in self._files:
-            self._make_file(filename, content, config["directory"])
-
-    def _make_file(self, filename, content, directory):
-        # if filename already used, add number
-        ext_filename = filename
-        i = 2
-        while ext_filename in self._used_filenames:
-            filename_arr = filename.partition(".")
-            ext_filename = filename_arr[0] + "_" + i + filename_arr[1] + filename_arr[2]
+        # save plots and their source files
+        i = 1
+        for f_obj in self.plotfiles:
+            f_obj.save("plot"+str(i)+"_", config["directory"])
             i += 1
-        self._used_filenames.append(ext_filename)
 
-        # write contents to file
-        f = open(directory +"/"+ ext_filename,"w+")
-        f.write(content)
-        f.close()
+        # automatic csv file
+        if not config["auto_csv"] is None:
+            unit_system = __import__(config["unit_system"]).system
+            with open(config["directory"] +"/"+ config["auto_csv"],"w") as f:
+                writer = csv.writer(f, lineterminator='\n')
+                for line in arrange_data(data, unit_system):
+                    writer.writerow( line )
+
+
+class Files():
+    """
+    class to flexibly save files like gnuplot or matplotlib plots
+    """
+    def save(self, prefix, directory):
+        pass

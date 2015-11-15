@@ -10,8 +10,7 @@ output = output.Output()
 config = {"unit_system":"si",
           "fit_module":"scipy",
           "plot_module":"matplotlib",
-          "directory":".",
-          "auto_results":"results.csv",
+          "auto_csv":"results.csv",
           "rounding":True
           }
 
@@ -36,4 +35,4 @@ for c in commands:
     c.execute(data, config, output)
 
 # save
-output.save(data, config)
+output.generate(data, config)

@@ -2,6 +2,7 @@ import unittest
 import units
 from si import system as si
 from sympy.physics.unitsystems.dimensions import Dimension
+from exceptions import DimensionError
 from sympy import S
 
 class UnitsTestCase(unittest.TestCase):
@@ -34,7 +35,7 @@ class UnitsTestCase(unittest.TestCase):
         self.assertEqual(factor,1e-3)
         self.assertEqual(str(unit),"g*m/s**2")
 
-        self.assertRaises(ValueError, units.convert_to_unit, dim, si, outputUnit="J")
+        self.assertRaises(DimensionError, units.convert_to_unit, dim, si, outputUnit="J")
 
 if __name__ == '__main__':
     unittest.main()

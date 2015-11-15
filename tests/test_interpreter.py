@@ -22,41 +22,13 @@ class InterpreterTestCase(unittest.TestCase):
 
     def test_multiple_commands(self):
         ast = parse(
-            "x = 12.5e-3 <0.001> [ms] #Comment\n" +
+            "x = 12.5e-3 <0.001> [ms]\n#Comment\n" +
             "# Comment 2\n" +
-            "fit(m*x1+b,x1,x2,[m,b])\n"
+            ">fit('m*x1+b',('x1','x2'),['m','b'])\n"
         )
         program = interpreter.interpret(ast)
         self.assertTrue(type(program[0]) is commands.Assignment)
-        self.assertTrue(type(program[1]) is commands.Fit)
-
-    def test_set_function(self):
-        ast = parse(
-            "set(foo,bar)"
-        )
-        program = interpreter.interpret(ast)
-        self.assertTrue(type(program[0]) is commands.Set)
-        self.assertEqual(program[0].entry, 'foo')
-        self.assertEqual(program[0].value, 'bar')
-
-    def test_fit_function(self):
-        ast = parse(
-            "fit(m*x1+b,x1,x2,[m,b])"
-        )
-        program = interpreter.interpret(ast)
-        self.assertTrue(type(program[0]) is commands.Fit)
-        self.assertEqual(program[0].fit_function_str, 'm*x1+b')
-        self.assertEqual(program[0].x_data_str, 'x1')
-        self.assertEqual(program[0].y_data_str, 'x2')
-        self.assertEqual(program[0].parameters_str, ['m', 'b'])
-
-    def test_plot_function(self):
-        ast = parse(
-            "plot([[A1,A2],[B1,B2]])"
-        )
-        program = interpreter.interpret(ast)
-        self.assertTrue(type(program[0]) is commands.Plot)
-        self.assertEqual(program[0].expr_pairs, [['A1','A2'],['B1','B2']])
+        self.assertTrue(type(program[1]) is commands.PythonCode)
 
     def test_assignment(self):
         ast = parse(
@@ -102,16 +74,6 @@ class InterpreterTestCase(unittest.TestCase):
             "if var=True:\n"+
             "    print('World')"
         )
-
-    def test_meanvalue(self):
-        ast = parse(
-            "meanvalue(\"Force\" F, [A,B])"
-        )
-        program = interpreter.interpret(ast)
-        self.assertTrue(type(program[0]) is commands.MeanValue)
-        self.assertEqual(program[0].longname,"Force")
-        self.assertEqual(program[0].quantity_to_assign,"F")
-        self.assertEqual(program[0].quantities,["A","B"])
 
     def test_multi_assignment(self):
         ast = parse(

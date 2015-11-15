@@ -3,6 +3,7 @@ from sympy.core import Mul,Pow
 from sympy.functions import sign
 from sympy.physics.unitsystems.simplifiers import dim_simplify as sym_dim_simplify
 from sympy.physics.unitsystems.dimensions import Dimension
+from exceptions import DimensionError
 from sympy.parsing.sympy_parser import parse_expr
 from sympy import sympify
 
@@ -78,7 +79,7 @@ def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
 	else:
 		factor, dim, unit=parse_unit(outputUnit,unitSystem)
 		if not inputDimension==dim:
-			raise ValueError("unit %s does not fit dimension %s." % (outputUnit,inputDimension))
+			raise DimensionError("unit %s does not fit dimension %s." % (outputUnit,inputDimension))
 
 	return (factor,outputUnit)
 

@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
+from output import Files
 import numpy as np
 from sympy.utilities.lambdify import lambdify
 
 
-def plot(data_sets, functions, show=True, x_label="", y_label=""):
+def plot(data_sets, functions, show, save, x_label, y_label):
     """
     'data_sets' and 'functions' must be lists of dictionaries:
      data_set: {x_values, x_uncerts, y_values, y_uncerts, title}
@@ -53,7 +54,7 @@ def plot(data_sets, functions, show=True, x_label="", y_label=""):
             if not var == f["x"]:
                 term = term.subs(var, var.value)
 
-        numpy_func = lambdify((f["x"]), f["term"], "numpy")
+        numpy_func = lambdify((f["x"]), term, "numpy")
         x = np.linspace(min,max,100)
         y = numpy_func(x)
         ax.plot(x,y,label=f["title"])
@@ -62,8 +63,21 @@ def plot(data_sets, functions, show=True, x_label="", y_label=""):
 
     if legend:
         plt.legend(loc='upper left')
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
 
     if show:
         plt.show()
+
+    if save:
+        return Matplot("mp.png", fig)
+
+    return None
+
+class Matplot(Files):
+    def __init__(self, name, figure):
+        self.name = name
+        self.figure = figure
+
+    def save(self, prefix, directory):
+        self.figure.savefig(directory + "/" + prefix + self.name)
