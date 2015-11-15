@@ -38,5 +38,11 @@ class DatSemantics(object):
         else:
             return ''.join(ast)
 
+    def longname(self, ast):
+        if ast is None:
+            return ast
+        else:
+            return ''.join(ast).strip()
+
     def _default(self, ast):
         return ast

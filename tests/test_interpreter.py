@@ -60,6 +60,16 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertEqual(program[0].name, 'F')
         self.assertEqual(program[0].value, 'a * (b+3)')
 
+    def test_unquoted_longname(self):
+        ast = parse(
+            "My favorite väriable F = a * (b+3)"
+        )
+        program = interpreter.interpret(ast)
+        self.assertTrue(type(program[0]) is commands.Assignment)
+        self.assertEqual(program[0].longname, 'My favorite väriable')
+        self.assertEqual(program[0].name, 'F')
+        self.assertEqual(program[0].value, 'a * (b+3)')
+
     def test_assignment_formula_quoted(self):
         ast = parse(
             "\"Force\" F = 'a * [b+3]'"
