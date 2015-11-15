@@ -6,9 +6,31 @@ import io
 
 class InterpreterTestCase(unittest.TestCase):
 
+    def test_example(self):
+        a=("\n" +
+          "{\n" +
+          "p [m]\n" +
+          "4\n" +
+          "5\n" +
+          "6\n" +
+          "}\n" +
+          "\n" +
+          "# Bismut\n" +
+          "a=3")
+        ast = parse(a)
+        program = interpreter.interpret(ast)
+
+    def test_coordinated_brackets(self):
+        ast = parse(
+            "grad_Bi = (a1)*(a0)"
+        )
+        program = interpreter.interpret(ast)
+
+
     def test_multiple_commands(self):
         ast = parse(
-            "x = 12.5e-3 <0.001> [ms]\n" +
+            "x = 12.5e-3 <0.001> [ms]\n#Comment\n" +
+            "# Comment 2\n" +
             ">fit('m*x1+b',('x1','x2'),['m','b'])\n"
         )
         program = interpreter.interpret(ast)
@@ -35,6 +57,16 @@ class InterpreterTestCase(unittest.TestCase):
         program = interpreter.interpret(ast)
         self.assertTrue(type(program[0]) is commands.Assignment)
         self.assertEqual(program[0].longname, 'Force')
+        self.assertEqual(program[0].name, 'F')
+        self.assertEqual(program[0].value, 'a * (b+3)')
+
+    def test_unquoted_longname(self):
+        ast = parse(
+            "My favorite väriable F = a * (b+3)"
+        )
+        program = interpreter.interpret(ast)
+        self.assertTrue(type(program[0]) is commands.Assignment)
+        self.assertEqual(program[0].longname, 'My favorite väriable')
         self.assertEqual(program[0].name, 'F')
         self.assertEqual(program[0].value, 'a * (b+3)')
 

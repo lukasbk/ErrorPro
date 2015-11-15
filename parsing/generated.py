@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 10, 25, 16, 47, 59, 6)
+__version__ = (2015, 11, 15, 18, 25, 9, 6)
 
 __all__ = [
     'DatParser',
@@ -59,7 +59,7 @@ class DatParser(Parser):
                 self._subformula_()
                 self._token(')')
                 with self._optional():
-                    self._subformula_without_brackets_()
+                    self._subformula_()
             with self._option():
                 self._subformula_without_brackets_()
             self._error('no available options')
@@ -146,10 +146,22 @@ class DatParser(Parser):
 
     @graken()
     def _longname_(self):
-        self._token('"')
-        self._pattern(r'[^\"]+')
-        self.ast['@'] = self.last_node
-        self._token('"')
+        with self._choice():
+            with self._option():
+                self._token('"')
+                self._pattern(r'[^\"]+')
+                self.ast['@'] = self.last_node
+                self._token('"')
+            with self._option():
+
+                def block2():
+                    self._pattern(r'[^,\[\]=\(\)\{\}<>\s]+')
+                    self._pattern(r'[\t ]+')
+                    with self._if():
+                        self._pattern(r'[^,\[\]=\(\)\{\}<>\s]+')
+                self._closure(block2)
+                self.ast['@'] = self.last_node
+            self._error('expecting one of: " [^,\\[\\]=\\(\\)\\{\\}<>\\s]+')
 
     @graken()
     def _uncertainty_(self):
@@ -294,22 +306,25 @@ class DatParser(Parser):
         with self._group():
             with self._choice():
                 with self._option():
-                    self._function_()
-                with self._option():
                     self._assignment_()
+                with self._option():
+                    self._function_()
                 with self._option():
                     self._multi_assignment_()
                 with self._option():
                     self._python_code_()
                 self._error('no available options')
         self.ast['@'] = self.last_node
-        with self._group():
-            with self._choice():
-                with self._option():
-                    self._token('\n')
-                with self._option():
-                    self._check_eof()
-                self._error('expecting one of: \n')
+
+        def block2():
+            with self._group():
+                with self._choice():
+                    with self._option():
+                        self._token('\n')
+                    with self._option():
+                        self._check_eof()
+                    self._error('expecting one of: \n')
+        self._closure(block2)
 
     @graken()
     def _program_(self):
