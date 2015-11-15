@@ -1,6 +1,7 @@
 from sympy import Symbol, Dummy
 import sympy
-from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
+#from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
+from sympy import sympify
 from units import dim_simplify, convert_to_unit
 from sympy.utilities.lambdify import lambdify
 import numpy as np
@@ -8,9 +9,10 @@ import numpy as np
 # parses string to expression containing quantities
 def parse_expr(expr, data):
 	try:
-		expr=sym_parse_expr(expr,local_dict=data)
+		expr=sympify(expr,locals=data)
 	except(SyntaxError):
 		raise SyntaxError("error parsing term '%s'" % expr)
+
 	for q in expr.free_symbols:
 		if not isinstance(q,Quantity):
 			raise ValueError("Symbol '%s' is not defined." % q.name)
@@ -37,7 +39,7 @@ def adjust_to_unit (q, unit_system, prefUnit=None):
 
 # returns value of expression
 def get_value(expr):
-	calcFunction=lambdify(expr.free_symbols, expr)
+	calcFunction=lambdify(expr.free_symbols, expr, modules="numpy")
 	depValues=[]
 	for var in expr.free_symbols:
 		if var.value is None:
@@ -54,7 +56,7 @@ def get_uncertainty(expr):
 		if not varToDiff.uncert is None:
 			differential = sympy.diff(expr,varToDiff)
 			uncert_depend += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
-			diffFunction = lambdify(differential.free_symbols,differential)
+			diffFunction = lambdify(differential.free_symbols,differential, modules="numpy")
 
 			diffValues = []
 			for var in differential.free_symbols:
