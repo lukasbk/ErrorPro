@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 11, 15, 17, 23, 42, 6)
+__version__ = (2015, 11, 15, 17, 39, 20, 6)
 
 __all__ = [
     'DatParser',
@@ -59,7 +59,7 @@ class DatParser(Parser):
                 self._subformula_()
                 self._token(')')
                 with self._optional():
-                    self._subformula_without_brackets_()
+                    self._subformula_()
             with self._option():
                 self._subformula_without_brackets_()
             self._error('no available options')

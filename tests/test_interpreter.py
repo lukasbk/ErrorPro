@@ -20,6 +20,13 @@ class InterpreterTestCase(unittest.TestCase):
         ast = parse(a)
         program = interpreter.interpret(ast)
 
+    def test_coordinated_brackets(self):
+        ast = parse(
+            "grad_Bi = (a1)*(a0)"
+        )
+        program = interpreter.interpret(ast)
+
+
     def test_multiple_commands(self):
         ast = parse(
             "x = 12.5e-3 <0.001> [ms]\n#Comment\n" +
