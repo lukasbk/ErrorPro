@@ -6,10 +6,7 @@ import os
 
 
 IMPORT_RE = '^\s*import\s*\(\s*"(.*)"\s*\)\s*$'
-EOL_COMMENTS_RE = "#.*?$"
-
-def regex_callback(regexMatch):
-    return
+EOL_COMMENTS_RE = "#.*$"
 
 def get_code(filename, from_dir):
     f = open(path.join(from_dir, filename))
@@ -40,6 +37,12 @@ class DatSemantics(object):
             return ast
         else:
             return ''.join(ast)
+
+    def longname(self, ast):
+        if ast is None:
+            return ast
+        else:
+            return ''.join(ast).strip()
 
     def _default(self, ast):
         return ast
