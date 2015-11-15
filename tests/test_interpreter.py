@@ -6,9 +6,24 @@ import io
 
 class InterpreterTestCase(unittest.TestCase):
 
+    def test_example(self):
+        a=("\n" +
+          "{\n" +
+          "p [m]\n" +
+          "4\n" +
+          "5\n" +
+          "6\n" +
+          "}\n" +
+          "\n" +
+          "# Bismut\n" +
+          "a=3")
+        ast = parse(a)
+        program = interpreter.interpret(ast)
+
     def test_multiple_commands(self):
         ast = parse(
-            "x = 12.5e-3 <0.001> [ms]\n" +
+            "x = 12.5e-3 <0.001> [ms] #Comment\n" +
+            "# Comment 2\n" +
             "fit(m*x1+b,x1,x2,[m,b])\n"
         )
         program = interpreter.interpret(ast)

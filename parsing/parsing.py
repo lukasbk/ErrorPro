@@ -6,10 +6,7 @@ import os
 
 
 IMPORT_RE = '^\s*import\s*\(\s*"(.*)"\s*\)\s*$'
-EOL_COMMENTS_RE = "#.*?$"
-
-def regex_callback(regexMatch):
-    return
+EOL_COMMENTS_RE = "#.*$"
 
 def get_code(filename, from_dir):
     f = open(path.join(from_dir, filename))
