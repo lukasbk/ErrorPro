@@ -11,7 +11,7 @@ def createAssignmentCommand(value, header):
 		if header.uncertainty is not None:
 			raise RuntimeError("Variables with _err notation cannot use the <...> notation.")
 		if header.longname is not None:
-			raise RuntimeError("Variables with _err notation cannot have a long name.")
+			raise RuntimeError("Variables with _err notation cannot have a long name: %s"%header.longname)
 	else:
 		command = commands.Assignment(header.name)
 		command.value = value

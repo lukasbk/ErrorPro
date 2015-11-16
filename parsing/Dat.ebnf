@@ -10,7 +10,7 @@ parameters = [ @+:parameter { "," @+:parameter } ];
 function = name:function_name "(" parameters:parameters ")";
 
 variable_name = /[\w]+/;
-longname = '"' @:/[^\"]+/ '"' | @:{ /[^,\[\]=\(\)\{\}<>\s]+/ /[\t ]+/ &/[^,\[\]=\(\)\{\}<>\s]+/ } ;
+longname = '"' @:/[^\"]+/ '"' | @:{ /[^,\[\]=\(\)\{\}<>\s]+/ /[\t ]+/ &/[^,\[\]=\(\)\{\}<>\s]+/ }+ ;
 uncertainty = "<" @:formula ">";
 unit = "[" @:formula "]";
 

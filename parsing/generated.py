@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 11, 15, 18, 25, 9, 6)
+__version__ = (2015, 11, 16, 20, 21, 32, 0)
 
 __all__ = [
     'DatParser',
@@ -159,7 +159,8 @@ class DatParser(Parser):
                     self._pattern(r'[\t ]+')
                     with self._if():
                         self._pattern(r'[^,\[\]=\(\)\{\}<>\s]+')
-                self._closure(block2)
+                self._positive_closure(block2)
+
                 self.ast['@'] = self.last_node
             self._error('expecting one of: " [^,\\[\\]=\\(\\)\\{\\}<>\\s]+')
 
