@@ -3,7 +3,7 @@ from commands import *
 from quantities import *
 from output import Output
 import numpy as np
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
 from project import Project
 
 class MeanValueTestCase(unittest.TestCase):

@@ -2,7 +2,7 @@ import unittest
 from output import Output, format_quantity
 from quantities import Quantity
 import numpy as np
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
 from si import system as si
 
 # most not suitable for automated testing, so must be tested manually
