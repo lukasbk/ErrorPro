@@ -1,7 +1,7 @@
 import unittest
 import commands
 import sympy
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
 from exceptions import DimensionError
 from sympy import Symbol, S
 from si import system as si

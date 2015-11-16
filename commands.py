@@ -2,7 +2,7 @@ from quantities import Quantity, parse_expr, get_dimension, get_value, get_uncer
 from exceptions import DimensionError
 from units import parse_unit
 from sympy import Symbol
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
 import sympy
 import numpy as np
 

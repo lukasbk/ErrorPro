@@ -1,8 +1,8 @@
 from sympy import Symbol,N,S
 from sympy.core import Mul,Pow
 from sympy.functions import sign
-from sympy.physics.unitsystems.simplifiers import dim_simplify as sym_dim_simplify
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
+from dimensions.simplifiers import dim_simplify
 from exceptions import DimensionError
 from sympy.parsing.sympy_parser import parse_expr
 from sympy import sympify
@@ -102,16 +102,6 @@ def fits_in(unit,dimension,reciprocal):
 				return False
 
 	return True
-
-def dim_simplify(expr):
-
-	# TODO implement own dim_simplify
-
-	expr=sympify(sym_dim_simplify(expr))
-	if expr.is_number:
-		return Dimension()
-	else:
-		return expr
 
 class Unit(Symbol):
 	"""

@@ -1,7 +1,8 @@
 from sympy import Symbol, Dummy
 import sympy
 from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
-from units import dim_simplify, convert_to_unit
+from units import convert_to_unit
+from dimensions.simplifiers import dim_simplify
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 
