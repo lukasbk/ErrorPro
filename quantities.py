@@ -23,7 +23,7 @@ def parse_expr(expr, data):
 def get_dimension(expr):
 	dim = expr
 	for var in expr.free_symbols:
-		if var.dim == None:
+		if var.dim is None:
 			raise RuntimeError ("quantity '%s' doesn't have a dimension, yet." % var.name)
 		dim = dim.subs(var,var.dim)
 	return dim_simplify(dim)
