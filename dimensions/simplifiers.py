@@ -10,7 +10,7 @@ Several methods to simplify expressions involving unit objects.
 
 from __future__ import division
 
-from sympy import Add, Mul, Pow
+from sympy import Add, Mul, Pow, Symbol
 from sympy.core.compatibility import reduce
 from dimensions.dimensions import Dimension
 
@@ -27,6 +27,9 @@ def dim_simplify(expr):
 
     if isinstance(expr, Dimension):
         return expr
+
+    if isinstance(expr, Symbol):
+        raise ValueError("Dimension of Symbol %s cannot be determined"%expr.name)
 
     args = []
     for arg in expr.args:
