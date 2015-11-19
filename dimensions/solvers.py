@@ -61,10 +61,18 @@ def dim_solve(expr, dim = None, resolved=None):
 
 
 def dim_solve_global(expr, resolved={}):
-    for symbol in resolved:
-        expr = expr.subs(symbol, resolved[symbol])
+    expr = subs_symbols(expr, resolved)
 
     try:
         return dim_simplify(expr)
     except ValueError:
         return None
+
+def subs_symbols(expr, subs):
+    if isinstance(expr, Symbol) and expr.name in subs:
+        return subs[expr.name]
+
+    if hasattr(expr, "args"):
+        return expr.func(*[subs_symbols(arg, subs) for arg in expr.args])
+    else:
+        return expr
