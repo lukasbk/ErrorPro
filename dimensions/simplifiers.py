@@ -29,15 +29,15 @@ def dim_simplify(expr):
         return expr
 
     if isinstance(expr, Symbol):
-        raise ValueError("Dimension of Symbol %s cannot be determined"%expr.name)
+        return None
 
     args = []
     for arg in expr.args:
-        if isinstance(arg, (Mul, Pow, Add)):
+        if isinstance(arg, (Mul, Pow, Add, Symbol)):
             arg = dim_simplify(arg)
         args.append(arg)
 
-    if all([arg.is_number or (isinstance(arg, Dimension) and arg.is_dimensionless) for arg in args]):
+    if all([arg!=None and (arg.is_number or (isinstance(arg, Dimension) and arg.is_dimensionless)) for arg in args]):
         return Dimension({})
 
     if isinstance(expr, Pow):
@@ -46,13 +46,22 @@ def dim_simplify(expr):
         else:
             raise ValueError("Basis of Pow is not a Dimension: %s" % args[0])
     elif isinstance(expr, Add):
-        if (all(isinstance(arg, Dimension) for arg in args) or
-            all(arg.is_dimensionless for arg in args if isinstance(arg, Dimension))):
-            return reduce(lambda x, y: x.add(y), args)
+        dimargs = [arg for arg in args if isinstance(arg, Dimension)]
+        if (all(isinstance(arg, Dimension) or arg==None for arg in args) or
+            all(arg.is_dimensionless for arg in dimargs)):
+            if len(dimargs)>0:
+                return reduce(lambda x, y: x.add(y), dimargs)
+            else:
+                return Dimension({})
         else:
             raise ValueError("Dimensions cannot be added: %s" % expr)
     elif isinstance(expr, Mul):
-        args = [arg for arg in args if isinstance(arg, Dimension)]
-        return reduce(lambda x, y: x.mul(y), args)
+        result = Dimension({})
+        for arg in args:
+            if isinstance(arg, Dimension):
+                result = result.mul(arg)
+            elif arg == None:
+                return None
+        return result
 
     raise ValueError("Cannot be simplifed: %s", expr)

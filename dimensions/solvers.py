@@ -7,6 +7,9 @@ def dim_solve(expr, dim = None, resolved=None):
         resolved = {}
 
     if dim == None:
+        for arg in expr.args:
+            resolved = dim_solve(arg, None, resolved)
+
         if isinstance(expr, Add):
             for arg in expr.args:
                 argdim = dim_solve_global(arg, resolved)
@@ -55,24 +58,19 @@ def dim_solve(expr, dim = None, resolved=None):
 
         if isinstance(expr, Pow):
             if expr.args[1].is_number:
-                return dim_solve(expr.args[0], dim.pow(1/expr.args[1]), resolved)
+                return dim_solve(expr.args[0], dim.pow(1/expr.args[1]) if dim!=None else None, resolved)
             else:
                 return dim_solve(expr.args[0], Dimension({}), resolved)
 
-
 def dim_solve_global(expr, resolved={}):
     expr = subs_symbols(expr, resolved)
-
-    try:
-        return dim_simplify(expr)
-    except ValueError:
-        return None
+    return dim_simplify(expr)
 
 def subs_symbols(expr, subs):
     if isinstance(expr, Symbol) and expr.name in subs:
         return subs[expr.name]
 
-    if hasattr(expr, "args") and len(expr.args)>0:
-        return expr.func(*[subs_symbols(arg, subs) for arg in expr.args])
+    if hasattr(expr, "args") and len(expr.args)>0 and not isinstance(expr, Dimension):
+        return expr.func(*[subs_symbols(arg, subs) for arg in expr.args], evaluate=False)
     else:
         return expr
