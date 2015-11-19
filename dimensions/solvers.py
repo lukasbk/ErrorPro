@@ -72,7 +72,7 @@ def subs_symbols(expr, subs):
     if isinstance(expr, Symbol) and expr.name in subs:
         return subs[expr.name]
 
-    if hasattr(expr, "args"):
+    if hasattr(expr, "args") and len(expr.args)>0:
         return expr.func(*[subs_symbols(arg, subs) for arg in expr.args])
     else:
         return expr
