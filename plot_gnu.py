@@ -1,36 +1,35 @@
 import shlex, subprocess
-from output import Files
 import tempfile
+from IPython.display import Image
 
-def plot(data_sets, functions, show, save, x_label="", y_label=""):
+def plot(data_sets, functions, save=None, x_label="", y_label=""):
 
     gp = Gnuplot(data_sets, functions, x_label, y_label)
 
     tmp_folder = tempfile.gettempdir()
 
-    if show:
-        gp.show = True
-        gp.save("", tmp_folder)
+    if save is None:
+        gp.save("",tmp_folder)
+    else:
+        gp.save(save, ".")
 
-    if save:
-        gp.show = False
-    return gp
+    return Image(gp.image_file)
 
+# TODO Gnuplot class doesn't make sense anymore
 
-class Gnuplot(Files):
+class Gnuplot():
     def __init__(self, data_sets, functions, x_label, y_label):
         self.data_sets = data_sets
         self.functions = functions
         self.x_label = x_label
         self.y_label = y_label
-        self.show = None # if True, will show plot in wxt, if False, will save plot to png
         self.image_file = None
 
     def save(self, prefix, directory):
 
-        plotfile = 'gp.plt'
-        outputfile = 'gp.png'
-        datafile_base = 'data'
+        plotfile = '_gp.plt'
+        outputfile = '_gp.png'
+        datafile_base = '_data'
 
         # code for gnuplot.plt
         code = r'''
