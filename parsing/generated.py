@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 11, 16, 20, 21, 32, 0)
+__version__ = (2015, 11, 21, 10, 37, 4, 5)
 
 __all__ = [
     'DatParser',
@@ -202,7 +202,15 @@ class DatParser(Parser):
 
     @graken()
     def _whitespace_(self):
-        self._pattern(r'[ \t\r\n]*')
+
+        def block0():
+            with self._choice():
+                with self._option():
+                    self._token('\r')
+                with self._option():
+                    self._token('\n')
+                self._error('expecting one of: \n \r')
+        self._closure(block0)
 
     @graken()
     def _multi_assignment_spec_(self):
@@ -316,16 +324,13 @@ class DatParser(Parser):
                     self._python_code_()
                 self._error('no available options')
         self.ast['@'] = self.last_node
-
-        def block2():
-            with self._group():
-                with self._choice():
-                    with self._option():
-                        self._token('\n')
-                    with self._option():
-                        self._check_eof()
-                    self._error('expecting one of: \n')
-        self._closure(block2)
+        with self._group():
+            with self._choice():
+                with self._option():
+                    self._token('\n')
+                with self._option():
+                    self._check_eof()
+                self._error('expecting one of: \n')
 
     @graken()
     def _program_(self):

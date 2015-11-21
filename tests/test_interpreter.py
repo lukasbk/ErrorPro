@@ -7,7 +7,7 @@ import io
 class InterpreterTestCase(unittest.TestCase):
 
     def test_example(self):
-        a=("\n" +
+        a=("\n#bla\n" +
           "{\n" +
           "Zeit t <0.1> [s], Höhe h [m], h_err [dm]\n" +
           "4 5 6\n" +

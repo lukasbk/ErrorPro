@@ -16,7 +16,7 @@ unit = "[" @:formula "]";
 
 assignment = [longname:longname] name:variable_name "=" value:formula [ uncertainty:uncertainty ] [ unit:unit ] ;
 
-whitespace = /[ \t\r\n]*/;
+whitespace = { "\r" | "\n" };
 
 multi_assignment_spec = [longname:longname] name:variable_name [ uncertainty:uncertainty ] [ unit:unit ];
 multi_assignment_header = @+:multi_assignment_spec { "," @+:multi_assignment_spec } "\n";
@@ -28,5 +28,5 @@ multi_assignment = "{" whitespace header:multi_assignment_header whitespace rows
 python_line = ">" @:/[^\n]*/ ("\n" | $);
 python_code = code:{python_line}+;
 
-command = @:( assignment | function | multi_assignment | python_code ) {("\n" | $)};
+command = @:( assignment | function | multi_assignment | python_code ) ("\n" | $);
 program = whitespace { @+:command whitespace } $;
