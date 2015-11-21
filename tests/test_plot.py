@@ -2,7 +2,7 @@ import unittest
 from project import Project
 import numpy as np
 from quantities import Quantity
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
 from si import system as si
 from output import Output
 

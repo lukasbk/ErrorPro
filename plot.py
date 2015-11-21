@@ -3,7 +3,9 @@ from units import convert_to_unit
 from sympy import S
 from exceptions import *
 
-def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=None):
+def plot(expr_pairs, config, save=None, xunit=None, yunit=None, ignore_dim=False):
+
+    # TODO it should be possible to e.g. plot the function [t,2*r] if r depends on t
 
     # one or multiple things to plot
     if len(expr_pairs) > 1:
@@ -19,21 +21,26 @@ def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=No
     data_sets = []
     functions = []
 
+    if ignore_dim:
+        xunit = S.One
+        yunit = S.One
+
     for expr_pair in expr_pairs:
         x = expr_pair[0]
         y = expr_pair[1]
 
-        # check dimensions
-        if x_dim is None:
-            x_dim = get_dimension(x)
-        else:
-            if not x_dim == get_dimension(x):
-                raise DimensionError("dimension mismatch\n%s != %s" % (x_dim, get_dimension(x)))
-        if y_dim is None:
-            y_dim = get_dimension(y)
-        else:
-            if not y_dim == get_dimension(y):
-                raise DimensionError("dimension mismatch\n%s != %s" % (y_dim, get_dimension(y)))
+        if not ignore_dim:
+            # check dimensions
+            if x_dim is None:
+                x_dim = get_dimension(x)
+            else:
+                if not x_dim == get_dimension(x):
+                    raise DimensionError("dimension mismatch\n%s != %s" % (x_dim, get_dimension(x)))
+            if y_dim is None:
+                y_dim = get_dimension(y)
+            else:
+                if not y_dim == get_dimension(y):
+                    raise DimensionError("dimension mismatch\n%s != %s" % (y_dim, get_dimension(y)))
 
     	# if y contains x, it must be a function
         dummy = Quantity()
@@ -52,12 +59,13 @@ def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=No
                 y = rep_y
                 x = dummy
 
-            # get factors
-            x_factor, xunit = convert_to_unit(x_dim, unit_system, outputUnit=xunit)
-            y_factor, yunit = convert_to_unit(y_dim, unit_system, outputUnit=yunit)
+            if not ignore_dim:
+                # get factors
+                x_factor, xunit = convert_to_unit(x_dim, unit_system, outputUnit=xunit)
+                y_factor, yunit = convert_to_unit(y_dim, unit_system, outputUnit=yunit)
 
-            # scale function to units
-            y = y.subs(x,x*x_factor) / y_factor
+                # scale function to units
+                y = y.subs(x,x*x_factor) / y_factor
 
             # if only one thing on plot, write labels to x-axis and y-axis
             if single_plot:
@@ -95,10 +103,15 @@ def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=No
                 y.dim = y_dim
                 y_title = str(expr_pair[1])
 
-
-            # get values and uncertainties all in one unit
-            x_values, x_uncerts, xunit = adjust_to_unit(x, unit_system, prefUnit = xunit)
-            y_values, y_uncerts, yunit = adjust_to_unit(y, unit_system, prefUnit = yunit)
+            if ignore_dim:
+                x_values = x.value
+                x_uncerts = x.uncert
+                y_values = y.value
+                y_uncerts = y.uncert
+            else:
+                # get values and uncertainties all in one unit
+                x_values, x_uncerts, xunit = adjust_to_unit(x, unit_system, prefUnit = xunit)
+                y_values, y_uncerts, yunit = adjust_to_unit(y, unit_system, prefUnit = yunit)
 
 
             # if only one thing on plot, write labels to x-axis and y-axis
@@ -122,22 +135,9 @@ def plot(expr_pairs, config, output, show=True, save=False, xunit=None, yunit=No
     # plot
     if config["plot_module"] == "matplotlib":
         import plot_mat
-        out = plot_mat.plot(data_sets, functions, show=show, save=save, x_label=x_label, y_label=y_label)
+        return plot_mat.plot(data_sets, functions, save=save, x_label=x_label, y_label=y_label)
     elif config["plot_module"] == "gnuplot":
         import plot_gnu
-        out = plot_gnu.plot(data_sets, functions, show=show, save=save, x_label=x_label, y_label=y_label)
+        return plot_gnu.plot(data_sets, functions, save=save, x_label=x_label, y_label=y_label)
     else:
         raise ValueError("There is not plot module called '%s'" % config["plot_module"])
-
-    if save:
-        output.addPlotFiles(out)
-
-    # if gnuplot plot, show it
-    if config["plot_module"] == "gnuplot" and show:
-        try:
-            __IPYTHON__
-            from IPython.display import Image
-            return Image(out.image_file)
-        except NameError:
-            from PIL import Image
-            Image.open(out.image_file).show()

@@ -5,15 +5,15 @@ def createAssignmentCommand(value, header):
 	name = header.name
 	if name.endswith("_err"):
 		name = name[:-4]
-		command = commands.Assignment(header.name)
+		command = commands.Assignment(name)
 		command.uncert = value
 		command.uncert_unit = header.unit
 		if header.uncertainty is not None:
 			raise RuntimeError("Variables with _err notation cannot use the <...> notation.")
 		if header.longname is not None:
-			raise RuntimeError("Variables with _err notation cannot have a long name.")
+			raise RuntimeError("Variables with _err notation cannot have a long name: %s"%header.longname)
 	else:
-		command = commands.Assignment(header.name)
+		command = commands.Assignment(name)
 		command.value = value
 		command.longname = header.longname
 		command.value_unit = header.unit

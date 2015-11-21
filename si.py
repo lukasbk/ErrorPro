@@ -1,4 +1,4 @@
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
 from units import BaseUnit,DerivedUnit
 
 length=Dimension(length=1)

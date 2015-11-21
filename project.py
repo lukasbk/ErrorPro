@@ -5,7 +5,8 @@ from mean_value import mean_value
 from parsing.parsing import parse_file, parse
 from quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty
 from units import parse_unit
-from sympy.physics.unitsystems.dimensions import Dimension
+from dimensions.dimensions import Dimension
+from dimensions.solvers import dim_solve
 import interpreter
 import output
 from sympy import latex, Symbol, Function, Expr, S
@@ -16,7 +17,6 @@ import pytex
 class Project():
     def __init__(self):
         self.data = {}
-        self.output = output.Output()
         # standard configuration
         self.config = {"unit_system":"si",
                        "fit_module":"scipy",
@@ -27,7 +27,11 @@ class Project():
                        }
 
     def save(self):
-        self.output.generate(self.data, self.config)
+        unit_system = __import__(self.config["unit_system"]).system
+        if not self.config["auto_csv"] is None or self.config["auto_csv"]=="":
+            output.save_as_csv(self.data, unit_system, self.config["auto_csv"])
+
+        # TODO automatic uncertainty formulas file
 
     def set(self, entry, value):
         """ Change entry of configuration
@@ -76,39 +80,51 @@ class Project():
         for c in commands:
             c.execute(self)
 
-    def table(self, *quantities_str):
+    def table(self, *quantities):
+        """ shows table of all given quantities
+
+        Args:
+            quantities: can be strings of quantity name or Quantity objects
+        """
+
+        # TODO buttons to show either html table or latex code
+
         unit_system = __import__(self.config["unit_system"]).system
         cols = []
-        for q_name in quantities_str:
-            if not q_name in self.data:
-                raise RuntimeError("quantity '%s' is not defined." % q_name)
-            q = self.data[q_name]
+        for given_q in quantities:
+            q = parse_expr(given_q, self.data)
+            assert isinstance(q, Quantity)
+
             value, uncert, unit = adjust_to_unit(q, unit_system)
             header = (q.longname+" " if q.longname else "") + q.name + " [" + latex(unit) + "]"
             if uncert is None:
-                column = [header] + pytex.align_num_list(value)
+                if isinstance(value, np.ndarray):
+                    column = [header] + pytex.align_num_list(value)
+                else:
+                    column = [header,pytex.align_num(value)]
             else:
-                column = [header] + pytex.format_valerr_list(value,uncert)
+                if isinstance(value, np.ndarray):
+                    column = [header] + pytex.format_valerr_list(value,uncert)
+                else:
+                    column = [header,pytex.format_valerr(value,uncert)]
             cols.append(column)
 
         print(pytex.table_latex(cols))
         return render_latex(pytex.table_html(cols))
 
-    def formula(self, quantity_str, adjust=True):
+    def formula(self, quantity, adjust=True):
         """ returns uncertainty formula of quantity as latex code
 
         Args:
-            quantity_str: name of quantity
+            quantity: name of quantity or Quantity object
             adjust: if True, replaces "_err" suffix by "\sigma" function and adds equals sign in front
 
         Return:
             latex code string of uncertainty formula
         """
 
-        if not quantity_str in self.data:
-            raise RuntimeError("quantity '%s' is not defined." % quantity_str)
-
-        quantity = self.data[quantity_str]
+        quantity = parse_expr(quantity, self.data)
+        assert isinstance(quantity, Quantity)
 
         if quantity.uncert_depend is None:
             raise ValueError("quantity '%s' doesn't have an uncertainty formula.")
@@ -124,26 +140,32 @@ class Project():
                     if var.name[-4:] == "_err":
                         formula = formula.subs(var, sigma( Symbol(var.name[:-4], **var._assumptions)))
                 return latex(sigma(quantity)) + " = " + latex(formula)
-            self.output.addLatexCode(formula)
             return formula
 
-    def mean_value(self, quantity_to_assign_str, *quantities_str, weighted=None, longname=None):
+    def mean_value(self, quantity_to_assign, *quantities, weighted=None, longname=None):
         """ Calculates mean value of quantities and assigns it to new quantity
 
         Args:
-            quantity_to_assign_str: name of new mean value quantity
-            quantities_str: one or more names of quantities of which mean value shall be calculated
+            quantity_to_assign: name or quantity object of new mean value
+            quantities: one or more quantities names or objects of which mean value shall be calculated
             weighted: if True, will weight mean value by uncertainties (returns error if not possible)
                       if False, will not weight mean value by uncertainties
                       if None, will try to weight mean value, but if at least one uncertainty is not given, will not weight it
             longname: description for mean value quantity
         """
         # get quantities
-        quantities = []
-        for q in quantities_str:
-            if not q in self.data:
-                raise RuntimeError("quantity '%s' is not defined." % q)
-            quantities.append(self.data[q])
+        quantities_obj = []
+        for q in quantities:
+            q_obj = parse_expr(q, self.data)
+            assert isinstance(q_obj, Quantity)
+            quantities_obj.append(q_obj)
+
+        if isinstance(quantity_to_assign, str):
+            name = quantity_to_assign
+        elif isinstance(quantity_to_assign, Quantity):
+            name = quantity_to_assign.name
+        quantity_to_assign = Quantity(name, longname)
+        self.data[name] = quantity_to_assign
 
         # standard behaviour for "weighted"
         if weighted is True:
@@ -153,11 +175,10 @@ class Project():
         if weighted is None:
             weighted = True
 
-        self.data[quantity_to_assign_str] = Quantity(quantity_to_assign_str, longname)
-        mean_value(self.data[quantity_to_assign_str], quantities, weighted=weighted, force_weighted=force_weighted)
+        mean_value(quantity_to_assign, quantities_obj, weighted=weighted, force_weighted=force_weighted)
 
 
-    def plot(self, *expr_pairs_str, show=True, save=False, xunit=None, yunit=None):
+    def plot(self, *expr_pairs, save=None, xunit=None, yunit=None, ignore_dim=False):
         """ Plots data or functions
 
         Args:
@@ -169,27 +190,30 @@ class Project():
             yunit: unit on y-axis. if not given, will find unit on its own
         """
 
+        # TODO x- und y-range angeben
+
         unit_system = __import__(self.config["unit_system"]).system
 
-        if len(expr_pairs_str) == 0:#
+        if len(expr_pairs) == 0:#
             raise ValueError("nothing to plot specified.")
 
-        expr_pairs = []
+        expr_pairs_obj = []
 
-        for expr_pair_str in expr_pairs_str:
+        for expr_pair in expr_pairs:
             # parse expressions
-            expr_pairs.append( (parse_expr(expr_pair_str[0], self.data), parse_expr(expr_pair_str[1], self.data)) )
+            expr_pairs_obj.append( (parse_expr(expr_pair[0], self.data), parse_expr(expr_pair[1], self.data)) )
+
 
         if not xunit is None:
             xunit = parse_unit(xunit, unit_system)[2]
         if not yunit is None:
             yunit = parse_unit(yunit, unit_system)[2]
 
-        return plotting.plot(expr_pairs, self.config, self.output, show=show, save=save, xunit=xunit, yunit=yunit)
+        return plotting.plot(expr_pairs_obj, self.config, save=save, xunit=xunit, yunit=yunit, ignore_dim=ignore_dim)
 
 
 
-    def fit(self, fit_function_str, xydata_str, parameters_str, weighted=None, plot=False):
+    def fit(self, fit_function, xydata, parameters, weighted=None, plot=False, ignore_dim=False):
         """ fits function to data
 
         Args:
@@ -204,8 +228,6 @@ class Project():
 
 
         #TODO Support fuer mehr als 1-dimensionale datasets
-        #TODO xydata should also allow expressions
-        #TODO if parameter not set, find out dimension
 
         if self.config["fit_module"] == "scipy":
             import fit_scipy as fit_module
@@ -214,36 +236,66 @@ class Project():
         else:
             raise ValueError("no fit module called '%s'." % self.config["fit_module"])
 
-        if not self.data[xydata_str[0]]:
-            raise ValueError("quantity %s doesn't exist" % xydata_str[0])
-        if not self.data[xydata_str[1]]:
-            raise ValueError("quantity %s doesn't exist" % xydata_str[1])
+        # get parameter quantities
+        parameters_obj = []
+        for p in parameters:
+            if isinstance(p, str):
+                if not p in self.data:
+                    self.data[p] = Quantity(p)
+                    self.data[p].dim = Dimension()
+                parameters_obj.append(self.data[p])
+            elif isinstance(p, Quantity):
+                parameters_obj.append(p)
+            else:
+                raise TypeError("parameters can only be strings or Quantity objects")
+
+        # parse fit function
+        fit_function = parse_expr(fit_function, self.data)
 
         # get data quantities
-        x_data = self.data[xydata_str[0]]
-        y_data = self.data[xydata_str[1]]
-        # parse fit function
-        fit_function = parse_expr(fit_function_str, self.data)
+        x_data = parse_expr(xydata[0], self.data)
+        # if x-data is an expression
+        if not isinstance(x_data, Quantity):
+            dummy = Quantity()
+            fit_function = fit_function.subs(x_data,dummy)
+            dummy.value = get_value(x_data)
+            dummy.uncert = get_uncertainty(x_data)[0]
+            dummy.dim = get_dimension(x_data)
+            x_data = dummy
+        y_data = parse_expr(xydata[1], self.data)
+        # if y-data is an expression
+        if not isinstance(y_data, Quantity):
+            dummy = Quantity()
+            dummy.value = get_value(y_data)
+            dummy.uncert = get_uncertainty(y_data)[0]
+            dummy.dim = get_dimension(y_data)
+            y_data = dummy
 
         # check if dimension fits
-        dim_func = get_dimension(fit_function)
-        if not dim_func == y_data.dim:
-            raise DimensionError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
-
-        # get parameter quantities
-        parameters = []
-        for p in parameters_str:
-            if not p in self.data:
-                self.data[p] = Quantity(p)
-            parameters.append(self.data[p])
+        if not ignore_dim:
+            try:
+                dim_func = get_dimension(fit_function)
+            except ValueError:
+                dim_func = None
+            if not dim_func == y_data.dim:
+                # try to solve for dimensionless parameters
+                known_dimensions = {x_data.name: x_data.dim}
+                known_dimensions = dim_solve(fit_function, y_data.dim, known_dimensions)
+                for q_name in known_dimensions:
+                    if q_name in self.data:
+                        self.data[q_name].dim = known_dimensions[q_name]
+                dim_func = get_dimension(fit_function)
+                # if it still doesn't work, raise error
+                if not dim_func == y_data.dim:
+                    raise DimensionError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
 
         # fit
-        values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters, weighted)
+        values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters_obj, weighted)
 
 
         # save results
         i = 0
-        for p in parameters:
+        for p in parameters_obj:
             p.value = values[i]
             p.value_depend = "fit"
             p.uncert = uncerts[i]
@@ -252,21 +304,26 @@ class Project():
 
         # plot
         if plot:
-            return plotting.plot([(x_data, y_data), (x_data, fit_function)], self.config, self.output, show=True, save=False)
+            return plotting.plot([(x_data, y_data), (x_data, fit_function)], self.config)
 
 
-    def assign(self, name, longname=None, value=None, value_unit=None, uncert=None, uncert_unit=None, replace=False):
+    def assign(self, name, longname=None, value=None, uncert=None, unit=None, value_unit=None,  uncert_unit=None, replace=False):
         """ Assigns value and/or uncertainty to quantity
 
         Args:
             name: quantity name
             longname: description of quantity
             value: value to assign, can be expression, string, list or number
-            value_unit: value unit expression or string
             uncert: uncertainty to assign, can be expression, string, list or number, but mustn't depend on other quantities
+            unit: unit of both value and uncertainty, replaces 'value_unit' and 'uncert_unit' if given
+            value_unit: value unit expression or string
             uncert_unit: uncertainty unit expression or string
             replace: if True, will replace quantity instead of trying to keep data
         """
+
+        if not unit is None:
+            value_unit = unit
+            uncert_unit = unit
 
         unit_system = __import__(self.config["unit_system"]).system
 

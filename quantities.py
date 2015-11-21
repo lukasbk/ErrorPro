@@ -2,7 +2,8 @@ from sympy import Symbol, Dummy
 import sympy
 #from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from sympy import sympify
-from units import dim_simplify, convert_to_unit
+from units import convert_to_unit
+from dimensions.simplifiers import dim_simplify
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 
@@ -22,7 +23,7 @@ def parse_expr(expr, data):
 def get_dimension(expr):
 	dim = expr
 	for var in expr.free_symbols:
-		if var.dim == None:
+		if var.dim is None:
 			raise RuntimeError ("quantity '%s' doesn't have a dimension, yet." % var.name)
 		dim = dim.subs(var,var.dim)
 	return dim_simplify(dim)

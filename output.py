@@ -5,6 +5,15 @@ import csv
 from sympy import S
 
 def arrange_data(data, unit_system):
+    """ arranges all quantities in data in a 2-dimensional array in order to be presented in some sort of table file
+
+    Args:
+    data: dictionary containing quantities
+    unit_system
+
+    Returns: 2-dimensional array containing strings
+    """
+
     # sort quantities by count
     sorted_data = sorted(data.values(), key=lambda q:q.count)
 
@@ -63,9 +72,15 @@ def arrange_data(data, unit_system):
 
 
 
-def format_quantity(q, unit_system, rounding=False):
+def format_quantity(q, unit_system):
+    """ converts quantity data to strings
 
-    # TODO rounding, ...
+    Args:
+        q: quantity to format
+        unit_system
+
+    Returns: tuple of description, value, uncertainty and unit (as strings)
+    """
 
     description = q.name
     if q.longname:
@@ -79,16 +94,16 @@ def format_quantity(q, unit_system, rounding=False):
         value_str = []
         uncert_str = []
         for i in range(0,len(value)):
-            v = "%.8f" % value[i] if value is not None else ""
+            v = value[i] if value is not None else ""
 
-            u = "%.8f" % uncert[i] if uncert is not None else ""
+            u = uncert[i] if uncert is not None else ""
             value_str.append(v)
             uncert_str.append(u)
 
     # if it's a single value
     else:
-        value_str = "%.8f" % value if value is not None else ""
-        uncert_str = "%.8f" % uncert if uncert is not None else ""
+        value_str = value if value is not None else ""
+        uncert_str = uncert if uncert is not None else ""
 
     # create unit string
     if unit == S.One:
@@ -99,39 +114,11 @@ def format_quantity(q, unit_system, rounding=False):
     return (description, value_str, uncert_str, unit)
 
 
-class Output():
-    def __init__(self):
-        self.plotfiles = []
-        self.latex_codes = []
-
-    def addLatexCode(self, code):
-        self.latex_codes.append(code)
-
-    def addPlotFiles(self, files_obj):
-        self.plotfiles.append(files_obj)
-
-    def generate(self, data, config):
-        # save latex code to file
-        # TODO
-
-        # save plots and their source files
-        i = 1
-        for f_obj in self.plotfiles:
-            f_obj.save("plot"+str(i)+"_", config["directory"])
-            i += 1
-
-        # automatic csv file
-        if not config["auto_csv"] is None:
-            unit_system = __import__(config["unit_system"]).system
-            with open(config["directory"] +"/"+ config["auto_csv"],"w") as f:
-                writer = csv.writer(f, lineterminator='\n')
-                for line in arrange_data(data, unit_system):
-                    writer.writerow( line )
-
-
-class Files():
+def save_as_csv(data, unit_system, filename):
+    """ saves all quantities in data to a csv file
+    lists all single quantities on the left and all data sets on the right
     """
-    class to flexibly save files like gnuplot or matplotlib plots
-    """
-    def save(self, prefix, directory):
-        pass
+    with open(filename,"w") as f:
+        writer = csv.writer(f, lineterminator='\n')
+        for line in arrange_data(data, unit_system):
+            writer.writerow( line )

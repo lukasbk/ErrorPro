@@ -1,0 +1,37 @@
+# Angedacht ist, dass in extra Dateien vor allem Daten
+# eingegeben und kleine Rechnungen durchgeführt werden.
+
+Erdgravitation g = 9.81 <0.005> [m/s**2]
+
+# Fallexperiment
+# Fehler können in "<>"-Klammern angegeben werden oder mit dem Suffix "_err"
+{
+Zeit t <0.1> [s], Hoehe h [m], h_err [cm]
+0 80 50
+1 79 30
+2 76 80
+3 72 60
+4 65 70
+5 53 50
+6 37 30
+}
+
+# Dennoch kann auch jeglicher Python-Code mit ">" geschrieben werden.
+# Dann greift man mit "p" auf das Projekt zu.
+
+# Argumente: Fit-Funktion, x-y-Größen, Fit-Parameter
+>p.fit("g_real * (t-t0)**2 + c", ["t","h"], ["g_real","t0","c"])
+
+# Die Fit-Funktion bestimmt selbstständig die Dimensionen der Parameter.
+# Startwerte sind 1. Definiert man die Parameter aber vorher, können auch
+# andere angegeben werden.
+
+GravKonstante G = 6.67408 <0.00031> [1e-11*m**3/kg/s**2]
+Erdmasse M = 5.9722 <0.00005> [1e24*kg]
+
+# Gravitationsgesetz: G*m1*m2/r**2
+
+# Bei Berechnungen kann eine Einheit angegeben werden,
+# die dann bei Ausgaben praeferiert wird
+# (sonst würde es standardmäßig in "m" ausgegeben)
+Abstand r = sqrt(G*M/-g_real) [km]
