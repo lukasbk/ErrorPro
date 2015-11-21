@@ -93,9 +93,9 @@ class InterpreterTestCase(unittest.TestCase):
     def test_multi_assignment(self):
         ast = parse(
             "{\n" +
-            " F[N], s[m]\n" +
-            " 1.1 2\n" +
-            " 3 4\n"
+            " F[N], s[m], s_err[cm]\n" +
+            " 1.1 2 0.1\n" +
+            " 3 4 0.2\n"
             "}"
         )
         program = interpreter.interpret(ast)
@@ -105,6 +105,9 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertTrue(type(program[1]) is commands.Assignment)
         self.assertEqual(program[1].name, 's')
         self.assertEqual(program[1].value, ['2','4'])
+        self.assertTrue(type(program[2]) is commands.Assignment)
+        self.assertEqual(program[2].name, 's')
+        self.assertEqual(program[2].uncert, ['0.1','0.2'])
 
 if __name__ == '__main__':
     unittest.main()
