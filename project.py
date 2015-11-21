@@ -88,7 +88,6 @@ class Project():
         """
 
         # TODO buttons to show either html table or latex code
-        # TODO also allow quantities with single data (not data sets)
 
         unit_system = __import__(self.config["unit_system"]).system
         cols = []
@@ -281,7 +280,6 @@ class Project():
             if not dim_func == y_data.dim:
                 # try to solve for dimensionless parameters
                 known_dimensions = {x_data.name: x_data.dim}
-                from sympy import srepr
                 known_dimensions = dim_solve(fit_function, y_data.dim, known_dimensions)
                 for q_name in known_dimensions:
                     if q_name in self.data:

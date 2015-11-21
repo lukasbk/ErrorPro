@@ -1,8 +1,7 @@
-
-Erdgravitation g = 9.81 <0.005> [m/s**2]
-
 # Angedacht ist, dass in extra Dateien vor allem Daten
 # eingegeben und kleine Rechnungen durchgeführt werden.
+
+Erdgravitation g = 9.81 <0.005> [m/s**2]
 
 # Fallexperiment
 # Fehler können in "<>"-Klammern angegeben werden oder mit dem Suffix "_err"
