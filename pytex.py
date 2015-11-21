@@ -142,6 +142,9 @@ def repr_decimal(num, prec=None, rdg=None):
         String giving the decimal representation of num.
     """
     if prec is None:
+        # this is not very pretty.. Maybe there is a simpler way?
+        sgn = '-' * (num < 0)
+        num = abs(num)
         rep = repr(num)
         if 'e' in rep:
             digs, mag = rep.split('e')
@@ -152,14 +155,14 @@ def repr_decimal(num, prec=None, rdg=None):
                 mag += len(left) - 1
             else:
                 digsl = list(digs)
-                mag += len(digs)
+                mag += len(digs) - 1
             if mag >= 0:
-                return ''.join(digsl) + '0' * (mag - len(digsl) + 1)
+                return sgn + ''.join(digsl) + '0' * (mag - len(digsl) + 1)
             else:
-                left = '0.' + '0' * (-mag + 1)
-                return left + ''.join(digsl)
+                left = '0.' + '0' * (-mag - 1)
+                return sgn + left + ''.join(digsl)
         else:
-            return rep
+            return sgn + rep
 
     numd = round_to_mag(num, prec, rdg=rdg, use_dec=True)
     return format(numd, '.%if' % -prec if prec < 0 else '.0f')
