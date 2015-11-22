@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 11, 21, 10, 37, 4, 5)
+__version__ = (2015, 11, 22, 17, 31, 17, 6)
 
 __all__ = [
     'DatParser',
@@ -47,7 +47,7 @@ class DatParser(Parser):
 
     @graken()
     def _subformula_without_brackets_(self):
-        self._pattern(r"[^=,\(\)\[\]<>\n']+")
+        self._pattern(r"[^=,\(\)\[\]<>\n\r']+")
 
     @graken()
     def _subformula_(self):
@@ -201,15 +201,22 @@ class DatParser(Parser):
         )
 
     @graken()
+    def _newline_(self):
+        with self._optional():
+            with self._choice():
+                with self._option():
+                    self._token('\r\n')
+                with self._option():
+                    self._token('\n')
+                with self._option():
+                    self._token('\r')
+                self._error('expecting one of: \n \r \r\n')
+
+    @graken()
     def _whitespace_(self):
 
         def block0():
-            with self._choice():
-                with self._option():
-                    self._token('\r')
-                with self._option():
-                    self._token('\n')
-                self._error('expecting one of: \n \r')
+            self._newline_()
         self._closure(block0)
 
     @graken()
@@ -241,7 +248,7 @@ class DatParser(Parser):
             self._multi_assignment_spec_()
             self.ast.setlist('@', self.last_node)
         self._closure(block1)
-        self._token('\n')
+        self._newline_()
 
     @graken()
     def _multi_assignment_value_(self):
@@ -255,7 +262,7 @@ class DatParser(Parser):
             self.ast.setlist('@', self.last_node)
         self._positive_closure(block0)
 
-        self._token('\n')
+        self._newline_()
 
     @graken()
     def _multi_assignment_rows_(self):
@@ -286,28 +293,24 @@ class DatParser(Parser):
     @graken()
     def _python_line_(self):
         self._token('>')
-        self._pattern(r'[^\n]*')
+        self._pattern(r'[^\n\r]*')
         self.ast['@'] = self.last_node
-        with self._group():
-            with self._choice():
-                with self._option():
-                    self._token('\n')
-                with self._option():
-                    self._check_eof()
-                self._error('expecting one of: \n')
 
     @graken()
     def _python_code_(self):
-
-        def block1():
+        with self._group():
             self._python_line_()
-        self._positive_closure(block1)
+            self.ast.setlist('code', self.last_node)
 
-        self.ast['code'] = self.last_node
+            def block1():
+                self._newline_()
+                self._python_line_()
+                self.ast.setlist('code', self.last_node)
+            self._closure(block1)
 
         self.ast._define(
-            ['code'],
-            []
+            [],
+            ['code']
         )
 
     @graken()
@@ -327,10 +330,10 @@ class DatParser(Parser):
         with self._group():
             with self._choice():
                 with self._option():
-                    self._token('\n')
+                    self._newline_()
                 with self._option():
                     self._check_eof()
-                self._error('expecting one of: \n')
+                self._error('no available options')
 
     @graken()
     def _program_(self):
@@ -385,6 +388,9 @@ class DatSemantics(object):
         return ast
 
     def assignment(self, ast):
+        return ast
+
+    def newline(self, ast):
         return ast
 
     def whitespace(self, ast):
