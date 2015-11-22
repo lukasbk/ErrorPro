@@ -5,6 +5,15 @@ import commands
 import io
 
 class InterpreterTestCase(unittest.TestCase):
+    def test_pythoncode_combi(self):
+        a=(">bla\n"+
+           ">bla\n"+
+           "a=3")
+        ast = parse(a)
+        program = interpreter.interpret(ast)
+        self.assertTrue(type(program[0]) is commands.PythonCode)
+        self.assertEqual(program[0].code, "bla\nbla")
+        self.assertTrue(type(program[1]) is commands.Assignment)
 
     def test_example(self):
         a=("\n#bla\n" +
