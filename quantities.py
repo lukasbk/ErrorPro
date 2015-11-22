@@ -4,6 +4,7 @@ import sympy
 from sympy import sympify
 from units import convert_to_unit
 from dimensions.simplifiers import dim_simplify
+from dimensions.solvers import subs_symbols
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 
@@ -25,7 +26,7 @@ def get_dimension(expr):
 	for var in expr.free_symbols:
 		if var.dim is None:
 			raise RuntimeError ("quantity '%s' doesn't have a dimension, yet." % var.name)
-		dim = dim.subs(var,var.dim)
+		dim = subs_symbols(dim,{var.name:var.dim})
 	return dim_simplify(dim)
 
 # returns value and uncertainty according to unit

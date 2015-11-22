@@ -88,6 +88,7 @@ class Project():
         """
 
         # TODO buttons to show either html table or latex code
+        # TODO display units (not italic) and numbers (not \phantom) nicely
 
         unit_system = __import__(self.config["unit_system"]).system
         cols = []
@@ -96,7 +97,7 @@ class Project():
             assert isinstance(q, Quantity)
 
             value, uncert, unit = adjust_to_unit(q, unit_system)
-            header = (q.longname+" " if q.longname else "") + q.name + " [" + latex(unit) + "]"
+            header = (q.longname+" " if q.longname else "") + q.name + " [$" + latex(unit) + "$]"
             if uncert is None:
                 if isinstance(value, np.ndarray):
                     column = [header] + pytex.align_num_list(value)
@@ -208,7 +209,6 @@ class Project():
             xunit = parse_unit(xunit, unit_system)[2]
         if not yunit is None:
             yunit = parse_unit(yunit, unit_system)[2]
-
         return plotting.plot(expr_pairs_obj, self.config, save=save, xunit=xunit, yunit=yunit, ignore_dim=ignore_dim)
 
 
@@ -304,10 +304,10 @@ class Project():
 
         # plot
         if plot:
-            return plotting.plot([(x_data, y_data), (x_data, fit_function)], self.config)
+            return plotting.plot([(x_data, y_data), (x_data, fit_function)], self.config, ignore_dim=ignore_dim)
 
 
-    def assign(self, name, longname=None, value=None, uncert=None, unit=None, value_unit=None,  uncert_unit=None, replace=False):
+    def assign(self, name, longname=None, value=None, uncert=None, unit=None, value_unit=None,  uncert_unit=None, replace=False, ignore_dim=False):
         """ Assigns value and/or uncertainty to quantity
 
         Args:
@@ -319,6 +319,7 @@ class Project():
             value_unit: value unit expression or string
             uncert_unit: uncertainty unit expression or string
             replace: if True, will replace quantity instead of trying to keep data
+            ignore_dim: if True, will ignore calculated dimension and use given unit instead
         """
 
         if not unit is None:
@@ -361,11 +362,14 @@ class Project():
                 value = get_value(value_depend)
 
                 # calculate dimension from dependency
-                calculated_dim = get_dimension(value_depend)
-                if not value_dim is None and not calculated_dim == value_dim:
-                    raise DimensionError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
+                if not ignore_dim:
+                    calculated_dim = get_dimension(value_depend)
+                    if not value_dim is None and not calculated_dim == value_dim:
+                        raise DimensionError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
+                    elif value_dim is None:
+                        value_dim = calculated_dim
                 elif value_dim is None:
-                    value_dim = calculated_dim
+                    value_dim = S.One
 
             # if it's a number
             else:

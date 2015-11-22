@@ -3,6 +3,7 @@ from sympy.core import Mul,Pow
 from sympy.functions import sign
 from dimensions.dimensions import Dimension
 from dimensions.simplifiers import dim_simplify
+from dimensions.solvers import subs_symbols
 from exceptions import DimensionError
 from sympy.parsing.sympy_parser import parse_expr
 from sympy import sympify
@@ -30,7 +31,7 @@ def parse_unit(unit,unitSystem):
 		exp=unit.as_coeff_exponent(var)[1]
 		if exp==0:
 			raise ValueError("%s is not a valid unit string." % unitStr)
-		dim=dim.subs(var,var.dim)
+		dim=subs_symbols(dim,{var.name:var.dim})
 		factor=factor.subs(var,var.factor)
 
 	return (factor,dim_simplify(dim),unit)
@@ -158,7 +159,7 @@ class DerivedUnit(Unit):
 		#calculate dimension
 		dim=self.dependency
 		for var in self.dependency.free_symbols:
-			dim=dim.subs(var,var.dim)
+			dim=subs_symbols(dim,{var.name:var.dim})
 		self.dim=dim_simplify(dim)
 
 		#calculate complexity
