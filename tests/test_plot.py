@@ -4,7 +4,7 @@ import numpy as np
 from quantities import Quantity
 from dimensions.dimensions import Dimension
 from si import system as si
-from output import Output
+from matplotlib.figure import Figure
 
 class PlotTestCase(unittest.TestCase):
 
@@ -20,4 +20,7 @@ class PlotTestCase(unittest.TestCase):
         p.data["y"].value = np.float_([1,2.3,1.8,3.4,4.5,8])
         p.data["y"].dim = Dimension(time=1)
 
-        p.plot(("x","y"), show=False, save=False)
+        self.assertTrue(isinstance(p.plot(("x","y")), Figure))
+
+if __name__ == '__main__':
+    unittest.main()

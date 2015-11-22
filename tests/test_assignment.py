@@ -73,6 +73,8 @@ class AssignmentTestCase(unittest.TestCase):
         d = commands.Assignment("V","Vol2")
         d.value = "50"
         d.value_unit = "s"
+        d.uncert = "50"
+        d.uncert_unit = "A*s"
 
         self.assertRaises(DimensionError, d.execute, p)
 
@@ -81,8 +83,6 @@ class AssignmentTestCase(unittest.TestCase):
         e = commands.Assignment("V","Vol3")
         e.value = "50"
         e.value_unit = "s"
-        e.uncert = "3"
-        e.uncert_unit = "s"
 
         e.execute(p)
         self.assertEqual(p.data["V"].name, "V")
@@ -91,9 +91,9 @@ class AssignmentTestCase(unittest.TestCase):
         self.assertEqual(p.data["V"].value_prefUnit, si["s"])
         self.assertEqual(p.data["V"].value_depend, None)
         self.assertEqual(p.data["V"].dim, Dimension(time=1))
-        self.assertTrue(abs(p.data["V"].uncert - 3) < small)
-        self.assertEqual(p.data["V"].uncert_prefUnit, si["s"])
-        self.assertEqual(p.data["V"].uncert_depend, None)
+        self.assertTrue(p.data["V"].uncert is None)
+        self.assertTrue(p.data["V"].uncert_prefUnit is None)
+        self.assertTrue(p.data["V"].uncert_depend is None)
 
 
         # test p.data set

@@ -1,7 +1,6 @@
 import unittest
 from commands import *
 from quantities import *
-from output import Output
 import numpy as np
 from dimensions.dimensions import Dimension
 from project import Project
