@@ -5,4 +5,4 @@ numpy==1.10.1
 scipy==0.16.0
 sympy==0.7.6.1
 matplotlib==1.4.3
-mpmath==*
+mpmath==0.19
