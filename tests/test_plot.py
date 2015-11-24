@@ -1,11 +1,10 @@
-import unittest
+import matplotlib
+matplotlib.use('Agg') # For testing without GUIimport unittest
 from project import Project
 import numpy as np
 from quantities import Quantity
 from dimensions.dimensions import Dimension
 from si import system as si
-import matplotlib
-matplotlib.use('Agg') # For testing without GUI
 from matplotlib.figure import Figure
 
 class PlotTestCase(unittest.TestCase):
