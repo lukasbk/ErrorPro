@@ -18,13 +18,7 @@ before_install:
 install:
   - pip install grako
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy mpmath
-  # Coverage packages are on my binstar channel
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
 
 # Run test
 script:
-  - nosetests --with-cov --cov-config .coveragerc --logging-level=INFO
-
-# Calculate coverage
-after_success:
-  - coveralls --config_file .coveragerc
+  - nosetests
