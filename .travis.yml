@@ -23,7 +23,7 @@ install:
 
 # Run test
 script:
-  - nosetests --with-cov --cov Error-Pypagation --cov-config .coveragerc --logging-level=INFO
+  - nosetests --with-cov --cov-config .coveragerc --logging-level=INFO
 
 # Calculate coverage
 after_success:
