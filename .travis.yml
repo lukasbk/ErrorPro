@@ -16,8 +16,9 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - pip3 install grako
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy mpmath
+  - pip install grako
+  - pip3 install grako
 
 # Run test
 script:
