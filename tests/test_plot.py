@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use('Agg') # For testing without GUI
 import unittest
 from project import Project
 import numpy as np

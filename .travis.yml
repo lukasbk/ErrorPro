@@ -20,6 +20,11 @@ install:
   - pip install grako
   - pip3 install grako
 
+before_script:
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+
 # Run test
 script:
   - nosetests
