@@ -1,7 +1,7 @@
 import unittest
-from parsing.parsing import parse
-import interpreter
-import commands
+from errorpypagation.parsing.parsing import parse
+from errorpypagation import interpreter
+from errorpypagation import commands
 import io
 
 class InterpreterTestCase(unittest.TestCase):

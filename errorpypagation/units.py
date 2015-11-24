@@ -1,10 +1,10 @@
 from sympy import Symbol,N,S
 from sympy.core import Mul,Pow
 from sympy.functions import sign
-from dimensions.dimensions import Dimension
-from dimensions.simplifiers import dim_simplify
-from dimensions.solvers import subs_symbols
-from exceptions import DimensionError
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.dimensions.simplifiers import dim_simplify
+from errorpypagation.dimensions.solvers import subs_symbols
+from errorpypagation.exceptions import DimensionError
 from sympy.parsing.sympy_parser import parse_expr
 from sympy import sympify
 

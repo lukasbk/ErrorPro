@@ -1,18 +1,18 @@
-from quantities import Quantity, parse_expr, get_dimension
-from exceptions import DimensionError
-import plot as plotting
-from mean_value import mean_value
-from parsing.parsing import parse_file, parse
-from quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty
-from units import parse_unit
-from dimensions.dimensions import Dimension
-from dimensions.solvers import dim_solve
-import interpreter
-import output
+from errorpypagation.quantities import Quantity, parse_expr, get_dimension
+from errorpypagation.exceptions import DimensionError
+import errorpypagation.plot as plotting
+from errorpypagation.mean_value import mean_value
+from errorpypagation.parsing.parsing import parse_file, parse
+from errorpypagation.quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty
+from errorpypagation.units import parse_unit
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.dimensions.solvers import dim_solve
+from errorpypagation import interpreter
+from errorpypagation import output
 from sympy import latex, Symbol, Function, Expr, S
 import numpy as np
 from IPython.display import Latex as render_latex
-import pytex
+from errorpypagation import pytex
 
 class Project():
     def __init__(self):

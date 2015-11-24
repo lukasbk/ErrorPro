@@ -1,7 +1,7 @@
 import sys
-from parsing.parsing import parse_file
-import interpreter
-import output
+from errorpypagation.parsing.parsing import parse_file
+from errorpypagation import interpreter
+from errorpypagation import output
 from os import path
 
 data = {}

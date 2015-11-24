@@ -1,5 +1,5 @@
-from dimensions.dimensions import Dimension
-from units import BaseUnit,DerivedUnit
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.units import BaseUnit,DerivedUnit
 
 length=Dimension(length=1)
 time=Dimension(time=1)

@@ -1,8 +1,8 @@
-import plot_mat as matplot
+import errorpypagation.plot_mat as matplot
 import numpy as np
-from dimensions.dimensions import Dimension
-from si import system as si
-from quantities import Quantity
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.si import system as si
+from errorpypagation.quantities import Quantity
 
 
 # not suitable for automated testing, so must be tested manually

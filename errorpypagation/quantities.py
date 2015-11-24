@@ -2,9 +2,9 @@ from sympy import Symbol, Dummy
 import sympy
 #from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from sympy import sympify
-from units import convert_to_unit
-from dimensions.simplifiers import dim_simplify
-from dimensions.solvers import subs_symbols
+from errorpypagation.units import convert_to_unit
+from errorpypagation.dimensions.simplifiers import dim_simplify
+from errorpypagation.dimensions.solvers import subs_symbols
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 

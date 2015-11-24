@@ -1,7 +1,7 @@
-from quantities import get_value, get_uncertainty, adjust_to_unit, get_dimension, Quantity
-from units import convert_to_unit
+from errorpypagation.quantities import get_value, get_uncertainty, adjust_to_unit, get_dimension, Quantity
+from errorpypagation.units import convert_to_unit
 from sympy import S
-from exceptions import *
+from errorpypagation.exceptions import *
 
 def plot(expr_pairs, config, save=None, xunit=None, yunit=None, ignore_dim=False):
 
