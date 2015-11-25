@@ -1,7 +1,7 @@
 import unittest
-from dimensions.solvers import dim_solve, dim_solve_global
-from dimensions.simplifiers import dim_simplify
-from dimensions.dimensions import Dimension
+from errorpypagation.dimensions.solvers import dim_solve, dim_solve_global
+from errorpypagation.dimensions.simplifiers import dim_simplify
+from errorpypagation.dimensions.dimensions import Dimension
 from sympy import Symbol, Add, Mul, Pow, sin, sympify
 
 class DimensionTestCase(unittest.TestCase):

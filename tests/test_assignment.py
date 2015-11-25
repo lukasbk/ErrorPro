@@ -1,13 +1,13 @@
 import unittest
-import commands
+from errorpypagation import commands
 import sympy
-from dimensions.dimensions import Dimension
-from exceptions import DimensionError
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.exceptions import DimensionError
 from sympy import Symbol, S
-from si import system as si
+from errorpypagation.si import system as si
 import numpy as np
-import fit_scipy
-from project import Project
+from errorpypagation import fit_scipy
+from errorpypagation.project import Project
 
 class AssignmentTestCase(unittest.TestCase):
 
