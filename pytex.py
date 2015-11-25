@@ -43,14 +43,17 @@ def magnitude(num):
         of num. For example:
         magnitude(array([12.1, 0.02, -2.1])) returns array([1, -2, 0]).
     """
+    # because of float encoding, mag(.1) would be -1
+    # if floats were not incremented
     if isinstance(num, np.ndarray):
         mag = np.zeros(len(num), int)
-        mag[num != 0] = np.ceil(np.log10(abs(num[num != 0]))) - 1
+        mag[num != 0] = np.ceil(np.log10(abs(
+            num[num != 0] + sys.float_info.epsilon ))) - 1
         return mag
     elif num == 0:
         return 0
     else:
-        return int(np.ceil(np.log10(abs(num))) - 1)
+        return int(np.ceil(np.log10(abs(num + sys.float_info.epsilon))) - 1)
 
 
 def prec_by_err(err, small_dig=ERR_SMALL_DIG):
@@ -79,9 +82,9 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
     Returns:
         dec.Decimal or flaot: Number rounded to order of magnitude mag.
     """
-    numd = dec.Decimal(repr(num))
 
     if rdg is None:
+        numd = dec.Decimal(repr(num))
         magd = dec.Decimal('1e%i' % mag)
         res = numd.quantize(magd, rounding='ROUND_HALF_UP')
     else:
@@ -93,6 +96,11 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
             raise TypeError("valid values for rdg are:\n"
                             "None: half up, 'UP': up, 'DOWN': down.")
 
+        # handle some nasty problems due float encoding
+        if rdg == 'UP':
+            numd = dec.Decimal(repr(num - sys.float_info.epsilon))
+        if rdg == 'DOWN':
+            numd = dec.Decimal(repr(num + sys.float_info.epsilon))
         if numd == numd.quantize(dec.Decimal('1e%i' % mag), sec):
             res = numd
         else:
