@@ -1,3 +1,5 @@
+# Magnetfeldstärke-Messungen
+
 {
 "Position" r_08 [mm], "Flussdichte" B_08 [T]
 48 0.347
@@ -38,16 +40,27 @@
 290 2.636
 }
 
-m_08 = 1 [T/mm]
-m_10 = 1 [T/mm]
-m_12 = 1 [T/mm]
-m_14 = 1 [T/mm]
-b_08 = 1 [T]
-b_10 = 1 [T]
-b_12 = 1 [T]
-b_14 = 1 [T]
+{ # Gewichte von Mn zu verschiedenen Magnetfeldern
+m_08 [g], m_10 [g], m_12 [g], m_14 [g]
+0.72    0.7221  0.7266  0.7314
+0.7199  0.7238  0.7278  0.7317
+0.7199  0.7238  0.7273  0.731
+}
 
->p.fit("m_08*r_08+b_08",["r_08","B_08"],["m_08","b_08"],weighted=False)
->p.fit("m_10*r_10+b_10",["r_10","B_10"],["m_10","b_10"],weighted=False)
->p.fit("m_12*r_12+b_12",["r_12","B_12"],["m_12","b_12"],weighted=False)
->p.fit("m_14*r_14+b_14",["r_14","B_14"],["m_14","b_14"],weighted=False)
+>p.mean_value("m_08_m", "m_08")
+>p.mean_value("m_10_m", "m_10")
+>p.mean_value("m_12_m", "m_12")
+>p.mean_value("m_14_m", "m_14")
+
+>p.fit("grad_08*r_08+b",["r_08","B_08"],["grad_08","b"])
+B_08_sp = grad_08 * p_Mn_m + b
+F_08 = (m0_Mn_m - m_08_m)*g
+>p.fit("grad_10*r_10+b",["r_10","B_10"],["grad_10","b"])
+B_10_sp = grad_10 * p_Mn_m + b
+F_10 = (m0_Mn_m - m_10_m)*g
+>p.fit("grad_12*r_12+b",["r_12","B_12"],["grad_12","b"])
+B_12_sp = grad_12 * p_Mn_m + b
+F_12 = (m0_Mn_m - m_12_m)*g
+>p.fit("grad_14*r_14+b",["r_14","B_14"],["grad_14","b"])
+B_14_sp = grad_14 * p_Mn_m + b
+F_14 = (m0_Mn_m - m_14_m)*g

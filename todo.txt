@@ -2,26 +2,24 @@
 TODO
 
 normales Zeug:
-- dim_simplify und dim_solve
-- auto Fehlerformeln
-- Jupyter Ausgaben checken
-- Ausgabe Latex: Quantity header, units, Ausgabe Output
-- auto generate output (kein kontinuierlicher Plot-Counter?)
-  oder: save-Funktion, die alles speichert???
+- Ausgaben schöner machen:
+  - Jupyter: Quantities einzeln (Rundung mit pytex), Tabellen
+  - csv-file
+  - ...
+- Auto Fehlerformeln-Datei
+
+- auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
+- kurze Fehlerausgabe mit Button zum Ausklappen
 
 am Ende:
 - Anleitung
 - setup.py und Kram im pythonpath testen
 - Python 2? Im CIP-Pool?
 
-Kleinigkeiten:
-- ignore_dim für's Plotten
-- matplot muss figure zurückgeben
-- Quantities schön ausgeben
-- Möglichkeit, Dimensionen zu ignorieren?
-- auto create fit parameters
-- project-Methoden sollten auch nicht-Strings annehmen
-
 Alex:
 - angenehmere Syntax-Fehler-Ausgabe?
-- dim_solve exp, sin, ...?
+
+Mathis:
+- Pytex-Fehler:
+pytex.align_num(1.256e-06)
+\phantom{+} 0.00000001256

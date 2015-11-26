@@ -1,8 +1,8 @@
-mu0 = 4*pi*10**(-7)
-"Stromstaerke" I = 1.2 [A]
+mu0 = 4*pi*1e-7 [N/A**2]
+Stromstaerke I = 1.2 [A]
 
 {
-"Position" p [mm],	"Flussdichte" B [T]
+Position p [mm],	Flussdichte B [T]
 80	0.352
 75	0.379
 70	0.401
@@ -20,29 +20,31 @@ mu0 = 4*pi*10**(-7)
 }
 
 
-
+# Bismut
 m_Bi = 0.000955 [kg]
 rho_Bi = 9780 [kg/m**3]
 {
-"Position" p_Bi [mm],	"ohne Magnetf" m0_Bi,	"Bei 1.2 A" mI_Bi
+Position p_Bi [mm],	ohne Magnetf m0_Bi [g],	Bei 1.2 A mI_Bi [g]
 35.5	1.1235	1.116
 35	1.123	1.116
 35.5	1.1234	1.1163
 }
 
+# Mangan
 m_Mn = 0.000549 [kg]
 rho_Mn = 7430 [kg/m**3]
 {
-"Position" p_Mn [mm],	"ohne Magnetf" m0_Mn,	"Bei 1.2 A" mI_Mn
+Position p_Mn [mm],	ohne Magnetf m0_Mn [g],	"Bei 1.2 A" mI_Mn [g]
 58.5	0.7137	0.7269
 58	0.7137	0.7271
 57.5	0.7136	0.7273
 }
 
+# Tantal
 m_Ta = 0.000351 [kg]
 rho_Ta = 16650 [kg/m**3]
 {
-"Position" p_Ta [mm],	"ohne Magnetf" m0_Ta,	"Bei 1.2 A" mI_Ta
+Position p_Ta [mm],	ohne Magnetf m0_Ta [g],	Bei 1.2 A mI_Ta [g]
 46	0.5204	0.522
 46	0.52	0.5226
 45.5	0.52	0.5224
@@ -65,6 +67,6 @@ rho_Ta = 16650 [kg/m**3]
 
 g = 9.81 [m/s**2]
 
-"Kraftdifferenz" F_Bi = (m0_Bi_m - mI_Bi_m) * g
-"Kraftdifferenz" F_Mn = (m0_Mn_m - mI_Mn_m) * g
-"Kraftdifferenz" F_Ta = (m0_Ta_m - mI_Ta_m) * g
+Kraftdifferenz F_Bi = (m0_Bi_m - mI_Bi_m) * g
+Kraftdifferenz F_Mn = (m0_Mn_m - mI_Mn_m) * g
+Kraftdifferenz F_Ta = (m0_Ta_m - mI_Ta_m) * g
