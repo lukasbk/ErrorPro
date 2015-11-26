@@ -1,25 +1,23 @@
 
 TODO
 
-normales Zeug:
-- Ausgaben schöner machen:
-  - Jupyter: Quantities einzeln (Rundung mit pytex), Tabellen
-  - csv-file
-  - ...
-- Auto Fehlerformeln-Datei
+1. Priorität
+ - M> fit: sollte Parameter-Ergebnisse ausgeben
+ - M> plot: Plot nicht zweimal ausgeben
+ - M> flexible Fehlerausgabe, Formelausgabe
+ - gnuplot: keine doppelten Variablendefinitionen
+ - M> gute Einzel-Quantities-Ausgabe
+ - help für ganzes Projekt / vllt. einfach bei "help()"?
+ - im CIP-Pool testen
+ - A> einfache Installation
 
-- auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
-- kurze Fehlerausgabe mit Button zum Ausklappen
-
-am Ende:
+2. Priorität
 - Anleitung
-- setup.py und Kram im pythonpath testen
-- Python 2? Im CIP-Pool?
+- Möglichkeit, mehrere quantities zu einem data set zu vereinen
+- Fehlerformel-Datei
+- tests:
+  - assign: dim_ignore mit extra Einheit
+- auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
 
-Alex:
-- angenehmere Syntax-Fehler-Ausgabe?
-
-Mathis:
-- Pytex-Fehler:
-pytex.align_num(1.256e-06)
-\phantom{+} 0.00000001256
+3. Priorität
+- Umgang mit mehrdimensionalen Arrays

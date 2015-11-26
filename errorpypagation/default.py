@@ -2,7 +2,7 @@ from errorpypagation.project import Project
 from IPython.core.magic import register_cell_magic
 import pydoc
 
-p = Project()
+default_project = Project()
 
 def wrappedHelpText (wrappedFunc):
     def decorator (f):
@@ -12,40 +12,40 @@ def wrappedHelpText (wrappedFunc):
 
 @register_cell_magic
 def calc(line, cell):
-    p.calc(cell)
+    default_project.calc(cell)
 
-@wrappedHelpText(p.save)
+@wrappedHelpText(default_project.save)
 def save(*args, **kwargs):
-    return p.save(*args, **kwargs)
+    return default_project.save(*args, **kwargs)
 
-@wrappedHelpText(p.set)
+@wrappedHelpText(default_project.set)
 def set(*args, **kwargs):
-    return p.set(*args, **kwargs)
+    return default_project.set(*args, **kwargs)
 
-@wrappedHelpText(p.load)
+@wrappedHelpText(default_project.load)
 def load(*args, **kwargs):
-    return p.load(*args, **kwargs)
+    return default_project.load(*args, **kwargs)
 
-@wrappedHelpText(p.table)
+@wrappedHelpText(default_project.table)
 def table(*args, **kwargs):
-    return p.table(*args, **kwargs)
+    return default_project.table(*args, **kwargs)
 
-@wrappedHelpText(p.formula)
+@wrappedHelpText(default_project.formula)
 def formula(*args, **kwargs):
-    return p.formula(*args, **kwargs)
+    return default_project.formula(*args, **kwargs)
 
-@wrappedHelpText(p.mean_value)
+@wrappedHelpText(default_project.mean_value)
 def mean_value(*args, **kwargs):
-    return p.mean_value(*args, **kwargs)
+    return default_project.mean_value(*args, **kwargs)
 
-@wrappedHelpText(p.plot)
+@wrappedHelpText(default_project.plot)
 def plot(*args, **kwargs):
-    return p.plot(*args, **kwargs)
+    return default_project.plot(*args, **kwargs)
 
-@wrappedHelpText(p.fit)
+@wrappedHelpText(default_project.fit)
 def fit(*args, **kwargs):
-    return p.fit(*args, **kwargs)
+    return default_project.fit(*args, **kwargs)
 
-@wrappedHelpText(p.assign)
+@wrappedHelpText(default_project.assign)
 def assign(*args, **kwargs):
-    return p.assign(*args, **kwargs)
+    return default_project.assign(*args, **kwargs)
