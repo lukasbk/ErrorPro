@@ -1,10 +1,19 @@
 import unittest
-from dimensions.solvers import dim_solve, dim_solve_global
-from dimensions.simplifiers import dim_simplify
-from dimensions.dimensions import Dimension
-from sympy import Symbol, Add, Mul, Pow, sympify
+from errorpypagation.dimensions.solvers import dim_solve, dim_solve_global
+from errorpypagation.dimensions.simplifiers import dim_simplify
+from errorpypagation.dimensions.dimensions import Dimension
+from sympy import Symbol, Add, Mul, Pow, sin, sympify
 
 class DimensionTestCase(unittest.TestCase):
+
+    def test_sin(self):
+        L = Dimension({"length":1})
+        solution = dim_solve(
+            sin(Symbol("x"))*Symbol("y"),
+            L
+        )
+        self.assertEqual(solution["x"], Dimension({}))
+        self.assertEqual(solution["y"], L)
 
     def test_dim_solve_global(self):
         self.assertEqual(dim_solve_global(Symbol('x'), {'x':Dimension({})}),Dimension({}))

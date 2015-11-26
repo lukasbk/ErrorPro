@@ -1,9 +1,9 @@
 import unittest
-from project import Project
+from errorpypagation.project import Project
 import numpy as np
-from quantities import Quantity
-from dimensions.dimensions import Dimension
-from si import system as si
+from errorpypagation.quantities import Quantity
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.si import system as si
 from matplotlib.figure import Figure
 
 class PlotTestCase(unittest.TestCase):

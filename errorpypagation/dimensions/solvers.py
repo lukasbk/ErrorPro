@@ -1,12 +1,16 @@
-from sympy import Symbol, Add, Mul, Pow
-from dimensions.dimensions import Dimension
-from dimensions.simplifiers import dim_simplify
+from sympy import Symbol, Add, Mul, Pow, Function
+from errorpypagation.dimensions.dimensions import Dimension
+from errorpypagation.dimensions.simplifiers import dim_simplify
 
 def dim_solve(expr, dim = None, resolved=None):
     if resolved is None:
         resolved = {}
 
     if dim == None:
+        if isinstance(expr,Function):
+            for arg in expr.args:
+                resolved = dim_solve(arg, Dimension({}), resolved)
+
         for arg in expr.args:
             resolved = dim_solve(arg, None, resolved)
 
@@ -19,16 +23,25 @@ def dim_solve(expr, dim = None, resolved=None):
         return resolved
 
     else:
+
+        if isinstance(expr,Function):
+            if dim.is_dimensionless:
+                for arg in expr.args:
+                    resolved = dim_solve(arg, Dimension({}), resolved)
+                return resolved
+            else:
+                raise ValueError("Expression %s is dimensionless and not of calculated Dimension %s"%(expr, dim))
+
         if isinstance(expr, Dimension):
             if expr == dim:
                 return resolved
             else:
-                raise ValueError()
+                raise ValueError("Dimensions do not match: expected %s, found %s"%(expr, dim))
 
         if isinstance(expr, Symbol):
             if expr.name in resolved:
                 if resolved[expr.name] != dim:
-                    raise ValueError()
+                    raise ValueError("Dimension of %s cannot be resolved."%expr.name)
             else:
                 resolved[expr.name] = dim
             return resolved
@@ -61,6 +74,8 @@ def dim_solve(expr, dim = None, resolved=None):
                 return dim_solve(expr.args[0], dim.pow(1/expr.args[1]) if dim!=None else None, resolved)
             else:
                 return dim_solve(expr.args[0], Dimension({}), resolved)
+
+    return resolved
 
 def dim_solve_global(expr, resolved={}):
     expr = subs_symbols(expr, resolved)

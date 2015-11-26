@@ -1,9 +1,9 @@
 import unittest
-import fit_scipy as sc
-from quantities import Quantity
+import errorpypagation.fit_scipy as sc
+from errorpypagation.quantities import Quantity
 import numpy as np
-from project import Project
-import commands
+from errorpypagation.project import Project
+from errorpypagation import commands
 
 #TODO Test for start parameters and weighting y-uncertainties
 
