@@ -1,27 +1,23 @@
 
 TODO
 
-normales Zeug:
-- dim_simplify und dim_solve
-- auto Fehlerformeln
-- Jupyter Ausgaben checken
-- Ausgabe Latex: Quantity header, units, Ausgabe Output
-- auto generate output (kein kontinuierlicher Plot-Counter?)
-  oder: save-Funktion, die alles speichert???
+1. Priorität
+ - M> fit: sollte Parameter-Ergebnisse ausgeben
+ - M> plot: Plot nicht zweimal ausgeben
+ - M> flexible Fehlerausgabe, Formelausgabe
+ - gnuplot: keine doppelten Variablendefinitionen
+ - M> gute Einzel-Quantities-Ausgabe
+ - help für ganzes Projekt / vllt. einfach bei "help()"?
+ - im CIP-Pool testen
+ - A> einfache Installation
 
-am Ende:
+2. Priorität
 - Anleitung
-- setup.py und Kram im pythonpath testen
-- Python 2? Im CIP-Pool?
+- Möglichkeit, mehrere quantities zu einem data set zu vereinen
+- Fehlerformel-Datei
+- tests:
+  - assign: dim_ignore mit extra Einheit
+- auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
 
-Kleinigkeiten:
-- ignore_dim für's Plotten
-- matplot muss figure zurückgeben
-- Quantities schön ausgeben
-- Möglichkeit, Dimensionen zu ignorieren?
-- auto create fit parameters
-- project-Methoden sollten auch nicht-Strings annehmen
-
-Alex:
-- angenehmere Syntax-Fehler-Ausgabe?
-- dim_solve exp, sin, ...?
+3. Priorität
+- Umgang mit mehrdimensionalen Arrays

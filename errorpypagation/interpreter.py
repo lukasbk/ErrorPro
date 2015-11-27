@@ -1,4 +1,4 @@
-import commands
+from errorpypagation import commands
 import re
 
 def createAssignmentCommand(value, header):

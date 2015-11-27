@@ -1,4 +1,4 @@
-from parsing.generated import DatParser
+from errorpypagation.parsing.generated import DatParser
 from grako.buffering import Buffer
 import re
 import os.path as path
