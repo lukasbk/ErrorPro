@@ -1,19 +1,91 @@
+# maybe from errorpypagation import * ?
 from errorpypagation.quantities import Quantity, parse_expr, get_dimension
 from errorpypagation.exceptions import DimensionError
 import errorpypagation.plot as plotting
 from errorpypagation.mean_value import mean_value
 from errorpypagation.parsing.parsing import parse_file, parse
-from errorpypagation.quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty
+from errorpypagation.quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty, qtable
 from errorpypagation.units import parse_unit
 from errorpypagation.dimensions.dimensions import Dimension
 from errorpypagation.dimensions.solvers import dim_solve
 from errorpypagation import interpreter
 from errorpypagation import output
-from sympy import latex, Symbol, Function, Expr, S
+from sympy import latex, Symbol, Function, Expr, S, sympify
 import numpy as np
 from IPython.display import Latex as render_latex
 from errorpypagation import pytex
 from importlib import import_module
+
+def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
+    """ Represent quantites in a table.
+
+    Args:
+        quantities: List of quantity objects.
+        html: If True, output will be formatted to be displayable html.
+            Else, LaTeX and html code is returned in a tuple.
+        maxcols:
+            Maximum number of columns. Table will be split.
+        u_sys: String specifying unit system.
+
+    Returns:
+        String of html code (html=True) or tuple (LaTeX table, html table).
+    """
+
+    if len(quantities) == 0:
+        return 'No quantities selected.'
+
+    # this does not look like a neat solution...
+    unit_system = import_module("errorpypagation." + u_sys).system
+    cols = []
+    if html:
+        if not maxcols:
+            maxcols = len(quantities)
+
+        def chunks(l):
+            for i in range(0, len(quantities), maxcols):
+                yield l[i:i+maxcols]
+
+        html = []
+        ltx = []
+        for chunk in chunks(quantities):
+            print(chunk)
+            l, h = qtable(*chunk, html=False, maxcols=None)
+            html.append(h)
+            ltx.append(l)
+
+        htmlb, htmlc = pytex.hide_div('Data', ''.join(html))
+        ltxb, ltxc = pytex.hide_div('LaTeX', ''.join(ltx))
+
+        res = 'Displaying: %s<div width=20px/>%s%s<hr/>%s<br>%s' % (
+            ', '.join('$%s$' % latex(q) for q in quantities),
+            htmlb, ltxb, htmlc, ltxc)
+
+        return res
+
+    for quant in quantities:
+        assert isinstance(quant, Quantity)
+
+        value, uncert, unit = adjust_to_unit(quant, unit_system)
+
+        header = quant.longname + ' ' if quant.longname else ''
+        header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
+            latex(quant), latex(unit))
+
+        column = [header]
+        if uncert is None:
+            if isinstance(value, np.ndarray):
+                column.extend(pytex.align_num_list(value))
+            else:
+                column.append(pytex.align_num(value))
+        else:
+            if isinstance(value, np.ndarray):
+                column.extend(pytex.format_valerr_list(value,uncert))
+            else:
+                column.append(pytex.format_valerr(value,uncert))
+        cols.append(column)
+
+    return (pytex.table_latex(cols), pytex.table_html(cols))
+
 
 class Project():
     def __init__(self):
@@ -28,12 +100,14 @@ class Project():
                        }
 
     def save(self):
-        unit_system = import_module("errorpypagation." + self.config["unit_system"]).system
+        unit_system = import_module(
+            "errorpypagation." + self.config["unit_system"]).system
         if not self.config["auto_csv"] is None or self.config["auto_csv"]=="":
             output.save_as_csv(self.data, unit_system, self.config["auto_csv"])
 
         # TODO automatic uncertainty formulas file
 
+    # rename to config? A little bit more specific...
     def set(self, entry, value):
         """ Change entry of configuration
 
@@ -43,7 +117,8 @@ class Project():
 
         Currently usable entries:
             "plot_module": "gnuplot" or "matplotlib"
-            "auto_csv": filename of automatic csv results file, None if not wanted
+            "auto_csv": filename of automatic csv results file,
+                None if not wanted
 
         """
         self.config[entry] = value
@@ -81,38 +156,6 @@ class Project():
         for c in commands:
             c.execute(self)
 
-    def table(self, *quantities):
-        """ shows table of all given quantities
-
-        Args:
-            quantities: can be strings of quantity name or Quantity objects
-        """
-
-        # TODO buttons to show either html table or latex code
-        # TODO display units (not italic) and numbers (not \phantom) nicely
-
-        unit_system = import_module("errorpypagation." + self.config["unit_system"]).system
-        cols = []
-        for given_q in quantities:
-            q = parse_expr(given_q, self.data)
-            assert isinstance(q, Quantity)
-
-            value, uncert, unit = adjust_to_unit(q, unit_system)
-            header = (q.longname+" " if q.longname else "") + q.name + " [$" + latex(unit) + "$]"
-            if uncert is None:
-                if isinstance(value, np.ndarray):
-                    column = [header] + pytex.align_num_list(value)
-                else:
-                    column = [header,pytex.align_num(value)]
-            else:
-                if isinstance(value, np.ndarray):
-                    column = [header] + pytex.format_valerr_list(value,uncert)
-                else:
-                    column = [header,pytex.format_valerr(value,uncert)]
-            cols.append(column)
-
-        print(pytex.table_latex(cols))
-        return render_latex(pytex.table_html(cols))
 
     def formula(self, quantity, adjust=True):
         """ returns uncertainty formula of quantity as latex code
@@ -491,3 +534,19 @@ class Project():
         if isinstance(self.data[name].value, np.ndarray) and isinstance(self.data[name].uncert, np.float_):
             uncert_arr = np.full(len(self.data[name].value),self.data[name].uncert)
             self.data[name].uncert = uncert_arr
+
+    def table(self, *quantities, maxcols=5, latexonly=False):
+        u_sys = self.config["unit_system"]
+        quants = [self[quant] for quant in quantities]
+        if latexonly:
+            return qtable(*quants, html=False, maxcols=maxcols, u_sys=u_sys)[0]
+        else:
+            return render_latex(qtable(*quants, maxcols=maxcols, u_sys=u_sys))
+
+    def _repr_html_(self):
+        u_sys = self.config["unit_system"]
+        quantities = list(self.data.values())
+        return qtable(*quantities, u_sys=u_sys)
+
+    def __getitem__(self, qname):
+        return parse_expr(qname, self.data)

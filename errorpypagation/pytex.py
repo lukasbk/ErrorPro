@@ -595,6 +595,29 @@ def main(args):
 
         print(table_latex(fmatted, vsep='|', hsep={0, -1}))
 
+JS_HIDE = ('var e = document.getElementById("d%s").style;'
+           'if (e.display=="none"){e.display="block";}'
+           'else {e.display="none";}')
+HIDE_BUTTON = ('<button onclick=\'%s\'>%s</button>') % (JS_HIDE, '%s')
+HIDE_DIV = '<div id="d%s" style="display:%s"> %s </div>'
+HIDE_COUNT = 0 # id's of divs must be uniqe
+
+def hide_div(name, content, hide=True):
+    """ Generate hidable div and corresponding button.
+
+    Args:
+        name: String for button name.
+        content: String to hide/unhide in div.
+
+    Returns: tuple (<button-string>, <div-string>).
+    """
+    global HIDE_COUNT
+    HIDE_COUNT += 1
+
+    display = 'none' if hide else 'block'
+    return (HIDE_BUTTON % (HIDE_COUNT, name),
+            HIDE_DIV % (HIDE_COUNT, display, content))
+
 
 if __name__ == '__main__':
     try:
