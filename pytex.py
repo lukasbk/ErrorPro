@@ -92,19 +92,17 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
             prim, sec = 'ROUND_UP', 'ROUND_DOWN'
         elif rdg == 'DOWN':
             prim, sec = 'ROUND_DOWN', 'ROUND_UP'
-        else:
-            raise TypeError("valid values for rdg are:\n"
-                            "None: half up, 'UP': up, 'DOWN': down.")
 
         # handle some nasty problems due float encoding
         if rdg == 'UP':
             numd = dec.Decimal(repr(num - sys.float_info.epsilon))
-        if rdg == 'DOWN':
+        elif rdg == 'DOWN':
             numd = dec.Decimal(repr(num + sys.float_info.epsilon))
-        if numd == numd.quantize(dec.Decimal('1e%i' % mag), sec):
-            res = numd
         else:
-            res = numd.quantize(dec.Decimal('1e%i' % mag), prim)
+            raise TypeError("valid values for rdg are:\n"
+                            "None: half up, 'UP': up, 'DOWN': down.")
+
+        res = numd.quantize(dec.Decimal('1e%i' % mag), prim)
 
     if use_dec:
         return res
