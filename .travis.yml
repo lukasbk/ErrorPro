@@ -17,7 +17,7 @@ before_install:
 # Install packages
 install:
   - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose sympy mpmath ipython
-  - pip3 install grako
+  - pip install grako
 
 before_script:
   # GUI for matplotlib tests
