@@ -10,14 +10,14 @@ def read(fname):
 
 setup(
     name = "errorpro",
-    version = "0.0.1",
+    version = "0.0.2",
     author = "Lukas Bentkamp",
     author_email = "lukas.bentkamp@mailbox.org",
     description = ("calculates physical quantities from data including units and error propagation."),
     license = "BSD",
     keywords = "error uncertainty propagation units physics",
     url = "http://github.com/lukasbentkamp/ErrorPro",
-    download_url = 'https://github.com/lukasbentkamp/ErrorPro/tarball/0.0.1',
+    download_url = 'https://github.com/lukasbentkamp/ErrorPro/tarball/0.0.2',
     packages=['errorpro'],
     long_description=read('README.rst'),
     classifiers=[
