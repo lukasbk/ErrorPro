@@ -19,7 +19,7 @@ setup(
     url = "http://github.com/lukasbentkamp/ErrorPro",
     download_url = 'https://github.com/lukasbentkamp/ErrorPro/tarball/0.0.1',
     packages=['errorpro'],
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
