@@ -1,5 +1,5 @@
 =================
-Error Pypagation
+ErrorPro
 =================
 
-calculates physical quantities from data including units and uncertainty propagation.
+calculates physical quantities from data including units and error propagation.
