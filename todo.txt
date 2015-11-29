@@ -2,14 +2,12 @@
 TODO
 
 1. Priorität
- - M> fit: sollte Parameter-Ergebnisse ausgeben
  - M> plot: Plot nicht zweimal ausgeben
- - M> flexible Fehlerausgabe, Formelausgabe, Tabellenausgabe
+ - M> flexible Fehlerausgabe, Formelausgabe
  - gnuplot: keine doppelten Variablendefinitionen
- - M> gute Einzel-Quantities-Ausgabe
- - help für ganzes Projekt / vllt. einfach bei "help()"?
- - im CIP-Pool testen
- - A> einfache Installation
+ - Rundungstests
+
+
 
 2. Priorität
 - Anleitung
@@ -17,6 +15,8 @@ TODO
 - Fehlerformel-Datei
 - tests:
   - assign: dim_ignore mit extra Einheit
+- neat solution für SI-System-Import
+- Alles kommentieren
 - auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
 
 3. Priorität

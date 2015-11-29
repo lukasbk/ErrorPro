@@ -100,6 +100,8 @@ class Project():
                        }
 
     def save(self):
+        """ saves data to csv file
+        """
         unit_system = import_module(
             "errorpro." + self.config["unit_system"]).system
         if not self.config["auto_csv"] is None or self.config["auto_csv"]=="":
@@ -261,22 +263,19 @@ class Project():
         """ fits function to data
 
         Args:
-            fit_function_str: function to fit, e.g. "n*t**2 + m*t + b"
-            xydata_str: pair of x-quantity and y-quantity of data to fit to, e.g. ["t","U"]
-            parameters_str: list of parameters in fit function, e.g. ["n","m","b"]
+            fit_function: function to fit, e.g. "n*t**2 + m*t + b"
+            xydata: pair of x-quantity and y-quantity of data to fit to, e.g. ["t","U"]
+            parameters: list of parameters in fit function, e.g. ["n","m","b"]
             weighted: if True, will weight fit by uncertainties (returns error if not possible)
                       if False, will not weight fit by uncertainties
                       if None, will try to weight fit, but if at least one uncertainty is not given, will not weight it
             plot: Bool, if data and fit function should be plotted
+            ignore_dim: if True, will ignore dimensions and just calculate in base units instead
         """
 
 
-        #TODO Support fuer mehr als 1-dimensionale datasets
-
         if self.config["fit_module"] == "scipy":
             import errorpro.fit_scipy as fit_module
-        elif self.config["fit_module"] == "gnuplot":
-            import errorpro.gnuplot as fit_module
         else:
             raise ValueError("no fit module called '%s'." % self.config["fit_module"])
 
@@ -349,6 +348,8 @@ class Project():
         # plot
         if plot:
             return plotting.plot([(x_data, y_data), (x_data, fit_function)], self.config, ignore_dim=ignore_dim)
+        else:
+            return self.table(*parameters_obj)
 
 
     def assign(self, name, longname=None, value=None, uncert=None, unit=None, value_unit=None,  uncert_unit=None, replace=False, ignore_dim=False):

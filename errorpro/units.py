@@ -13,6 +13,9 @@ def parse_unit(unit,unitSystem):
 	"""
 	parses a unit string or unit expression and returns (factor,dimension)
 	where factor is the correction factor to get to the base unit system
+
+	Returns:
+	tuple of factor, dimension and unit
 	"""
 	if isinstance(unit,str):
 		if unit=="":
