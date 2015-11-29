@@ -1,19 +1,19 @@
-# maybe from errorpypagation import * ?
-from errorpypagation.quantities import Quantity, parse_expr, get_dimension
-from errorpypagation.exceptions import DimensionError
-import errorpypagation.plot as plotting
-from errorpypagation.mean_value import mean_value
-from errorpypagation.parsing.parsing import parse_file, parse
-from errorpypagation.quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty, qtable
-from errorpypagation.units import parse_unit
-from errorpypagation.dimensions.dimensions import Dimension
-from errorpypagation.dimensions.solvers import dim_solve
-from errorpypagation import interpreter
-from errorpypagation import output
+# maybe from errorpro import * ?
+from errorpro.quantities import Quantity, parse_expr, get_dimension
+from errorpro.exceptions import DimensionError
+import errorpro.plot as plotting
+from errorpro.mean_value import mean_value
+from errorpro.parsing.parsing import parse_file, parse
+from errorpro.quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty, qtable
+from errorpro.units import parse_unit
+from errorpro.dimensions.dimensions import Dimension
+from errorpro.dimensions.solvers import dim_solve
+from errorpro import interpreter
+from errorpro import output
 from sympy import latex, Symbol, Function, Expr, S, sympify
 import numpy as np
 from IPython.display import Latex as render_latex
-from errorpypagation import pytex
+from errorpro import pytex
 from importlib import import_module
 
 def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
@@ -35,7 +35,7 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
         return 'No quantities selected.'
 
     # this does not look like a neat solution...
-    unit_system = import_module("errorpypagation." + u_sys).system
+    unit_system = import_module("errorpro." + u_sys).system
     cols = []
     if html:
         if not maxcols:
@@ -101,7 +101,7 @@ class Project():
 
     def save(self):
         unit_system = import_module(
-            "errorpypagation." + self.config["unit_system"]).system
+            "errorpro." + self.config["unit_system"]).system
         if not self.config["auto_csv"] is None or self.config["auto_csv"]=="":
             output.save_as_csv(self.data, unit_system, self.config["auto_csv"])
 
@@ -237,7 +237,7 @@ class Project():
 
         # TODO x- und y-range angeben
 
-        unit_system = import_module("errorpypagation." + self.config["unit_system"]).system
+        unit_system = import_module("errorpro." + self.config["unit_system"]).system
 
         if len(expr_pairs) == 0:#
             raise ValueError("nothing to plot specified.")
@@ -274,9 +274,9 @@ class Project():
         #TODO Support fuer mehr als 1-dimensionale datasets
 
         if self.config["fit_module"] == "scipy":
-            import errorpypagation.fit_scipy as fit_module
+            import errorpro.fit_scipy as fit_module
         elif self.config["fit_module"] == "gnuplot":
-            import errorpypagation.gnuplot as fit_module
+            import errorpro.gnuplot as fit_module
         else:
             raise ValueError("no fit module called '%s'." % self.config["fit_module"])
 
@@ -370,7 +370,7 @@ class Project():
             value_unit = unit
             uncert_unit = unit
 
-        unit_system = import_module("errorpypagation." + self.config["unit_system"]).system
+        unit_system = import_module("errorpro." + self.config["unit_system"]).system
 
         if value is None and uncert is None:
             raise ValueError("At least either value or uncertainty must be specified.")

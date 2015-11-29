@@ -1,8 +1,8 @@
 import unittest
-from errorpypagation import units
-from errorpypagation.si import system as si
-from errorpypagation.dimensions.dimensions import Dimension
-from errorpypagation.exceptions import DimensionError
+from errorpro import units
+from errorpro.si import system as si
+from errorpro.dimensions.dimensions import Dimension
+from errorpro.exceptions import DimensionError
 from sympy import S
 
 class UnitsTestCase(unittest.TestCase):

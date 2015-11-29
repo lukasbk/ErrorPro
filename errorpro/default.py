@@ -1,4 +1,4 @@
-from errorpypagation.project import Project
+from errorpro.project import Project
 from IPython.core.magic import register_cell_magic
 import pydoc
 

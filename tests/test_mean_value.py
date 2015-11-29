@@ -1,9 +1,9 @@
 import unittest
-from errorpypagation.commands import *
-from errorpypagation.quantities import *
+from errorpro.commands import *
+from errorpro.quantities import *
 import numpy as np
-from errorpypagation.dimensions.dimensions import Dimension
-from errorpypagation.project import Project
+from errorpro.dimensions.dimensions import Dimension
+from errorpro.project import Project
 
 class MeanValueTestCase(unittest.TestCase):
 

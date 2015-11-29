@@ -1,7 +1,7 @@
-from errorpypagation.quantities import get_value, get_uncertainty, adjust_to_unit, get_dimension, Quantity
-from errorpypagation.units import convert_to_unit
+from errorpro.quantities import get_value, get_uncertainty, adjust_to_unit, get_dimension, Quantity
+from errorpro.units import convert_to_unit
 from sympy import S
-from errorpypagation.exceptions import *
+from errorpro.exceptions import *
 from importlib import import_module
 
 def plot(expr_pairs, config, save=None, xunit=None, yunit=None, ignore_dim=False):
@@ -14,7 +14,7 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, ignore_dim=False
     else:
         single_plot = True
 
-    unit_system = import_module("errorpypagation." + config["unit_system"]).system
+    unit_system = import_module("errorpro." + config["unit_system"]).system
 
     x_dim = None
     y_dim = None
@@ -135,10 +135,10 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, ignore_dim=False
 
     # plot
     if config["plot_module"] == "matplotlib":
-        from errorpypagation import plot_mat
+        from errorpro import plot_mat
         return plot_mat.plot(data_sets, functions, save=save, x_label=x_label, y_label=y_label)
     elif config["plot_module"] == "gnuplot":
-        from errorpypagation import plot_gnu
+        from errorpro import plot_gnu
         return plot_gnu.plot(data_sets, functions, save=save, x_label=x_label, y_label=y_label)
     else:
         raise ValueError("There is not plot module called '%s'" % config["plot_module"])

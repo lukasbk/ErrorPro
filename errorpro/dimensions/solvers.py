@@ -1,6 +1,6 @@
 from sympy import Symbol, Add, Mul, Pow, Function
-from errorpypagation.dimensions.dimensions import Dimension
-from errorpypagation.dimensions.simplifiers import dim_simplify
+from errorpro.dimensions.dimensions import Dimension
+from errorpro.dimensions.simplifiers import dim_simplify
 
 def dim_solve(expr, dim = None, resolved=None):
     if resolved is None:

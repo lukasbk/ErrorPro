@@ -4,7 +4,7 @@ TODO
 1. Priorität
  - M> fit: sollte Parameter-Ergebnisse ausgeben
  - M> plot: Plot nicht zweimal ausgeben
- - M> flexible Fehlerausgabe, Formelausgabe
+ - M> flexible Fehlerausgabe, Formelausgabe, Tabellenausgabe
  - gnuplot: keine doppelten Variablendefinitionen
  - M> gute Einzel-Quantities-Ausgabe
  - help für ganzes Projekt / vllt. einfach bei "help()"?

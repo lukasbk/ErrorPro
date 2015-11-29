@@ -2,12 +2,12 @@ from sympy import Symbol, Dummy
 import sympy
 #from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
 from sympy import sympify, latex
-from errorpypagation.units import convert_to_unit
-from errorpypagation.dimensions.simplifiers import dim_simplify
-from errorpypagation.dimensions.solvers import subs_symbols
+from errorpro.units import convert_to_unit
+from errorpro.dimensions.simplifiers import dim_simplify
+from errorpro.dimensions.solvers import subs_symbols
 from sympy.utilities.lambdify import lambdify
 import numpy as np
-from errorpypagation import pytex
+from errorpro import pytex
 from importlib import import_module
 
 # parses string to expression containing quantities
@@ -127,7 +127,7 @@ def qtable(*quantities, html=True, maxcols=5, u_sys='si'):
         return 'No quantities selected.'
 
     # this does not look like a neat solution...
-    unit_system = import_module("errorpypagation." + u_sys).system
+    unit_system = import_module("errorpro." + u_sys).system
     cols = []
     if html:
         if not maxcols:

@@ -12,7 +12,7 @@ from __future__ import division
 
 from sympy import Add, Mul, Pow, Symbol
 from sympy.core.compatibility import reduce
-from errorpypagation.dimensions.dimensions import Dimension
+from errorpro.dimensions.dimensions import Dimension
 
 
 def dim_simplify(expr):

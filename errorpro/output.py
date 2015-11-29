@@ -1,5 +1,5 @@
 import numpy as np
-from errorpypagation.quantities import adjust_to_unit
+from errorpro.quantities import adjust_to_unit
 from itertools import zip_longest
 import csv
 from sympy import S

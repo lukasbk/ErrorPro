@@ -1,8 +1,8 @@
 from numpy import *
 from scipy.stats import t as student_t
 import numpy as np
-from errorpypagation.quantities import Quantity
-from errorpypagation.exceptions import DimensionError
+from errorpro.quantities import Quantity
+from errorpro.exceptions import DimensionError
 
 def mean_value(quantity_to_assign, quantities, weighted, force_weighted):
 	# put all values and uncertainties into arrays

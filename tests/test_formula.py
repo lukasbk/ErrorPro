@@ -1,7 +1,7 @@
 import unittest
-from errorpypagation.quantities import Quantity
+from errorpro.quantities import Quantity
 from sympy import Symbol
-from errorpypagation.project import Project
+from errorpro.project import Project
 
 class FormulaTestCase(unittest.TestCase):
 
