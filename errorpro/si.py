@@ -33,6 +33,7 @@ system["Wb"]=	DerivedUnit("Wb","V*s",system)
 system["T"]=	DerivedUnit("T","Wb/m**2",system)
 system["H"]=	DerivedUnit("H","Wb/A",system)
 
+system["deg"]=	DerivedUnit("deg","2*pi/360",system,standard=False)
 system["min"]=	DerivedUnit("min","60*s",system,standard=False)
 system["h"]=	DerivedUnit("h","3600*s",system,standard=False)
 system["d"]=	DerivedUnit("d","24*3600*s",system,standard=False)

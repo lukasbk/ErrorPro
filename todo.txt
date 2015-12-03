@@ -1,13 +1,20 @@
 
 TODO
 
+- concat-Funktion zum Aneinanderreihen von Quantities
+- automatisch matplotlib inline
+
+Von Swantje:
+ - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
+ - Damit klarkommen, dass scipy-Fit auch keinen/unendliche Fehler ausgeben kann..
+ - \phantom{0} erscheint manchmal in HTML-Ausgabe
+ - scipy-Fit ausführlich testen
+
 1. Priorität
  - M> plot: Plot nicht zweimal ausgeben
  - M> flexible Fehlerausgabe, Formelausgabe
  - gnuplot: keine doppelten Variablendefinitionen
  - Rundungstests
-
-
 
 2. Priorität
 - Anleitung
