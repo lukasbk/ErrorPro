@@ -3,6 +3,7 @@ TODO
 
 - concat-Funktion zum Aneinanderreihen von Quantities
 - automatisch matplotlib inline
+- ranges beim Plotten
 
 Von Swantje:
  - Formula ohne doppelte Backslashes
