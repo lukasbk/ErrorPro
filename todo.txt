@@ -5,6 +5,7 @@ TODO
 - automatisch matplotlib inline
 
 Von Swantje:
+ - Formula ohne doppelte Backslashes
  - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
  - Damit klarkommen, dass scipy-Fit auch keinen/unendliche Fehler ausgeben kann..
  - \phantom{0} erscheint manchmal in HTML-Ausgabe
