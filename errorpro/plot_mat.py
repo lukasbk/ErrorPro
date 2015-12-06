@@ -3,7 +3,7 @@ import numpy as np
 from sympy.utilities.lambdify import lambdify
 
 
-def plot(data_sets, functions, save=None, x_label="", y_label=""):
+def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", y_label=""):
     """ plots data and functions with matplotlib
 
     Args:
@@ -37,15 +37,17 @@ def plot(data_sets, functions, save=None, x_label="", y_label=""):
                     data_set["y_values"],
                     xerr = data_set["x_uncerts"],
                     yerr = data_set["y_uncerts"],
-                    c='r',
                     marker="o",
                     linestyle="None",
                     label=data_set["title"])
         if data_set["title"]:
             legend = True
 
+    if not xrange is None:
+        min = xrange[0]
+        max = xrange[1]
     if min is None or max is None:
-        # standard min/max if there is no dataset to plot
+        # standard min/max if no xrange and no data set
         min = 0
         max = 10
 
@@ -69,8 +71,12 @@ def plot(data_sets, functions, save=None, x_label="", y_label=""):
         plt.legend(loc='upper left')
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
+    if not xrange is None:
+        ax.set_xlim(xrange)
+    if not yrange is None:
+        ax.set_ylim(yrange)
 
     if not save is None:
         fig.savefig(save)
 
-    return fig
+    #return fig

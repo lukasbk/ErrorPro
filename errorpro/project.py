@@ -1,19 +1,10 @@
-# maybe from errorpro import * ?
-from errorpro.quantities import Quantity, parse_expr, get_dimension
-from errorpro.exceptions import DimensionError
-import errorpro.plot as plotting
-from errorpro.mean_value import mean_value
-from errorpro.parsing.parsing import parse_file, parse
-from errorpro.quantities import adjust_to_unit, parse_expr, get_value, get_dimension, get_uncertainty, qtable
-from errorpro.units import parse_unit
+from errorpro import exceptions, interpreter, mean_value, output, plotting, pytex, quantities, units
+from errorpro.parsing.parsing import parse, parse_file
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.solvers import dim_solve
-from errorpro import interpreter
-from errorpro import output
 from sympy import latex, Symbol, Function, Expr, S, sympify
 import numpy as np
 from IPython.display import Latex as render_latex
-from errorpro import pytex
 from importlib import import_module
 
 def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
@@ -49,7 +40,7 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
         ltx = []
         for chunk in chunks(quantities):
             print(chunk)
-            l, h = qtable(*chunk, html=False, maxcols=None)
+            l, h = quantities.qtable(*chunk, html=False, maxcols=None)
             html.append(h)
             ltx.append(l)
 
@@ -63,9 +54,9 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
         return res
 
     for quant in quantities:
-        assert isinstance(quant, Quantity)
+        assert isinstance(quant, quantities.Quantity)
 
-        value, uncert, unit = adjust_to_unit(quant, unit_system)
+        value, uncert, unit = quantities.adjust_to_unit(quant, unit_system)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
@@ -170,8 +161,8 @@ class Project():
             latex code string of uncertainty formula
         """
 
-        quantity = parse_expr(quantity, self.data)
-        assert isinstance(quantity, Quantity)
+        quantity = quantities.parse_expr(quantity, self.data)
+        assert isinstance(quantity, quantities.Quantity)
 
         if quantity.uncert_depend is None:
             raise ValueError("quantity '%s' doesn't have an uncertainty formula.")
@@ -189,7 +180,7 @@ class Project():
                 return latex(sigma(quantity)) + " = " + latex(formula)
             return formula
 
-    def mean_value(self, quantity_to_assign, *quantities, weighted=None, longname=None):
+    def mean_value(self, quantity_to_assign, *quants, weighted=None, longname=None):
         """ Calculates mean value of quantities and assigns it to new quantity
 
         Args:
@@ -202,16 +193,16 @@ class Project():
         """
         # get quantities
         quantities_obj = []
-        for q in quantities:
-            q_obj = parse_expr(q, self.data)
-            assert isinstance(q_obj, Quantity)
+        for q in quants:
+            q_obj = quantities.parse_expr(q, self.data)
+            assert isinstance(q_obj, quantities.Quantity)
             quantities_obj.append(q_obj)
 
         if isinstance(quantity_to_assign, str):
             name = quantity_to_assign
-        elif isinstance(quantity_to_assign, Quantity):
+        elif isinstance(quantity_to_assign, quantities.Quantity):
             name = quantity_to_assign.name
-        quantity_to_assign = Quantity(name, longname)
+        quantity_to_assign = quantities.Quantity(name, longname)
         self.data[name] = quantity_to_assign
 
         # standard behaviour for "weighted"
@@ -222,19 +213,21 @@ class Project():
         if weighted is None:
             weighted = True
 
-        mean_value(quantity_to_assign, quantities_obj, weighted=weighted, force_weighted=force_weighted)
+        mean_value.mean_value(quantity_to_assign, quantities_obj, weighted=weighted, force_weighted=force_weighted)
 
 
-    def plot(self, *expr_pairs, save=None, xunit=None, yunit=None, ignore_dim=False):
+    def plot(self, *expr_pairs, save=None, xunit=None, yunit=None, xrange=None, yrange=None, ignore_dim=False):
         """ Plots data or functions
 
         Args:
-            expr_pairs_str: one or more pair of quantity on x-axis and on y-axis. e.g. ["p","V"]
-                            y-axis can also be a function. e.g. ["t", "7*exp(t/t0)"]
-            show: Bool, if plot is supposed to be shown
-            save: Bool, if plot is supposed to be saved to file
+            expr_pairs: one or more pair of quantity on x-axis and on y-axis. e.g. ["p","V"]
+                        y-axis can also be a function. e.g. ["t", "7*exp(t/t0)"]
+            save: string of file name without extension. if specified, plot will be saved to '<save>.png'
             xunit: unit on x-axis. if not given, will find unit on its own
             yunit: unit on y-axis. if not given, will find unit on its own
+            xrange: pair of x-axis range, e.g. [-5,10]
+            yrange: pair of y-axis range
+            ignore_dim: if True, will skip dimension check
         """
 
         # TODO x- und y-range angeben
@@ -248,14 +241,20 @@ class Project():
 
         for expr_pair in expr_pairs:
             # parse expressions
-            expr_pairs_obj.append( (parse_expr(expr_pair[0], self.data), parse_expr(expr_pair[1], self.data)) )
+            expr_pairs_obj.append( (quantities.parse_expr(expr_pair[0], self.data), quantities.parse_expr(expr_pair[1], self.data)) )
 
 
         if not xunit is None:
-            xunit = parse_unit(xunit, unit_system)[2]
+            xunit = units.parse_unit(xunit, unit_system)[2]
         if not yunit is None:
-            yunit = parse_unit(yunit, unit_system)[2]
-        return plotting.plot(expr_pairs_obj, self.config, save=save, xunit=xunit, yunit=yunit, ignore_dim=ignore_dim)
+            yunit = units.parse_unit(yunit, unit_system)[2]
+        if not xrange is None:
+            xrange = [quantities.get_value(quantities.parse_expr(xrange[0], self.data)),
+                      quantities.get_value(quantities.parse_expr(xrange[1], self.data))]
+        if not yrange is None:
+            yrange = [quantities.get_value(quantities.parse_expr(yrange[0], self.data)),
+                      quantities.get_value(quantities.parse_expr(yrange[1], self.data))]
+        return plotting.plot(expr_pairs_obj, self.config, save=save, xunit=xunit, yunit=yunit, xrange=xrange, yrange=yrange, ignore_dim=ignore_dim)
 
 
 
@@ -284,40 +283,40 @@ class Project():
         for p in parameters:
             if isinstance(p, str):
                 if not p in self.data:
-                    self.data[p] = Quantity(p)
+                    self.data[p] = quantities.Quantity(p)
                     self.data[p].dim = Dimension()
                 parameters_obj.append(self.data[p])
-            elif isinstance(p, Quantity):
+            elif isinstance(p, quantities.Quantity):
                 parameters_obj.append(p)
             else:
                 raise TypeError("parameters can only be strings or Quantity objects")
 
         # parse fit function
-        fit_function = parse_expr(fit_function, self.data)
+        fit_function = quantities.parse_expr(fit_function, self.data)
 
         # get data quantities
-        x_data = parse_expr(xydata[0], self.data)
+        x_data = quantities.parse_expr(xydata[0], self.data)
         # if x-data is an expression
-        if not isinstance(x_data, Quantity):
-            dummy = Quantity()
+        if not isinstance(x_data, quantities.Quantity):
+            dummy = quantities.Quantity()
             fit_function = fit_function.subs(x_data,dummy)
-            dummy.value = get_value(x_data)
-            dummy.uncert = get_uncertainty(x_data)[0]
-            dummy.dim = get_dimension(x_data)
+            dummy.value = quantities.get_value(x_data)
+            dummy.uncert = quantities.get_uncertainty(x_data)[0]
+            dummy.dim = quantities.get_dimension(x_data)
             x_data = dummy
-        y_data = parse_expr(xydata[1], self.data)
+        y_data = quantities.parse_expr(xydata[1], self.data)
         # if y-data is an expression
-        if not isinstance(y_data, Quantity):
-            dummy = Quantity()
-            dummy.value = get_value(y_data)
-            dummy.uncert = get_uncertainty(y_data)[0]
-            dummy.dim = get_dimension(y_data)
+        if not isinstance(y_data, quantities.Quantity):
+            dummy = quantities.Quantity()
+            dummy.value = quantities.get_value(y_data)
+            dummy.uncert = quantities.get_uncertainty(y_data)[0]
+            dummy.dim = quantities.get_dimension(y_data)
             y_data = dummy
 
         # check if dimension fits
         if not ignore_dim:
             try:
-                dim_func = get_dimension(fit_function)
+                dim_func = quantities.get_dimension(fit_function)
             except ValueError:
                 dim_func = None
             if not dim_func == y_data.dim:
@@ -327,10 +326,12 @@ class Project():
                 for q_name in known_dimensions:
                     if q_name in self.data:
                         self.data[q_name].dim = known_dimensions[q_name]
-                dim_func = get_dimension(fit_function)
+                dim_func = quantities.get_dimension(fit_function)
                 # if it still doesn't work, raise error
                 if not dim_func == y_data.dim:
-                    raise DimensionError("dimension of fit function %s doesn't fit dimension of y-data %s" % (dim_func, y_data.dim))
+                    raise exceptions.DimensionError("Finding dimensions of fit parameters was not sucessful.\n"\
+                                                     "Check fit function or specify parameter units manually.\n"\
+                                                     "This error will occur until dimensions are right.")
 
         # fit
         values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters_obj, weighted)
@@ -351,8 +352,63 @@ class Project():
         else:
             return self.table(*parameters_obj)
 
+    def concat(self, new_name, *quants, longname=""):
+        """ concatenates quantities
 
-    def assign(self, name, longname=None, value=None, uncert=None, unit=None, value_unit=None,  uncert_unit=None, replace=False, ignore_dim=False):
+        Args:
+            new_name: name of new quantity
+            quants: quantities to be concatenated
+        """
+
+        values=[]
+        uncerts=[]
+
+        dim = None
+
+        for q_str in quants:
+            q = quantities.parse_expr(q_str, self.data)
+            # check dimension
+            if dim is None:
+                dim = q.dim
+            else:
+                if not dim==q.dim:
+                    raise exceptions.DimensionError("dimension mismatch\n%s != %s" % (dim,q.dim))
+
+            # check if values or uncerts are None
+            if not values is None:
+                if q.value is None:
+                    values = None
+                else:
+                    v= q.value
+                    if not isinstance(q.value,np.ndarray):
+                        v = v.reshape((1))
+                    values.append(v)
+            if not uncerts is None:
+                if q.uncert is None:
+                    uncerts = None
+                else:
+                    u = q.uncert
+                    if not isinstance(q.uncert, np.ndarray):
+                        u = u.reshape((1))
+                    uncerts.append(u)
+        # concatenate
+        new_value = None
+        new_uncert = None
+        if not values is None:
+            new_value = np.concatenate(values)
+        if not uncerts is None:
+            new_uncert = np.concatenate(uncerts)
+        if new_value is None and new_uncert is None:
+            raise RuntimeError("Could not concatenate. At least one value and one uncertainty are None.")
+
+        new_q = quantities.Quantity(new_name, longname)
+        new_q.value = new_value
+        new_q.uncert = new_uncert
+        new_q.dim = dim
+        self.data[new_name] = new_q
+
+
+    def assign(self, name, value=None, uncert=None, unit=None, longname=None, value_unit=None, uncert_unit=None, replace=False, ignore_dim=False):
         """ Assigns value and/or uncertainty to quantity
 
         Args:
@@ -388,29 +444,29 @@ class Project():
 
             # parse unit if given
             if not value_unit is None:
-                factor, value_dim, value_unit = parse_unit(value_unit, unit_system)
+                factor, value_dim, value_unit = units.parse_unit(value_unit, unit_system)
 
             # parse value
             if isinstance(value, list) or isinstance(value, tuple):
                 # if it's a list, parse each element
                 parsed_list = []
                 for v in value:
-                    parsed_list.append(parse_expr(v, self.data))
+                    parsed_list.append(quantities.parse_expr(v, self.data))
             elif isinstance(value, str) or isinstance(value, Expr):
                 # if it's not a list, parse once
-                value = parse_expr(value, self.data)
+                value = quantities.parse_expr(value, self.data)
 
             # if it's a calculation
             if isinstance(value, Expr) and not value.is_number:
                 # calculate value from dependency
                 value_depend = value
-                value = get_value(value_depend)
+                value = quantities.get_value(value_depend)
 
                 # calculate dimension from dependency
                 if not ignore_dim:
-                    calculated_dim = get_dimension(value_depend)
+                    calculated_dim = quantities.get_dimension(value_depend)
                     if not value_dim is None and not calculated_dim == value_dim:
-                        raise DimensionError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
+                        raise exceptions.DimensionError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
                     elif value_dim is None:
                         value_dim = calculated_dim
                 else:
@@ -445,17 +501,17 @@ class Project():
 
             # parse unit if given
             if not uncert_unit is None:
-                factor, uncert_dim, uncert_unit = parse_unit(uncert_unit, unit_system)
+                factor, uncert_dim, uncert_unit = units.parse_unit(uncert_unit, unit_system)
 
             # parse value
             if isinstance(uncert, list) or isinstance(uncert, tuple):
                 # if it's a list, parse each element
                 parsed_list = []
                 for u in uncert:
-                    parsed_list.append(parse_expr(u, self.data))
+                    parsed_list.append(quantities.parse_expr(u, self.data))
             elif isinstance(uncert, str) or isinstance(uncert, Expr):
                 # if it's not a list, parse once
-                uncert = parse_expr(uncert, self.data)
+                uncert = quantities.parse_expr(uncert, self.data)
 
             # make sure uncertainty is a number
             if isinstance(uncert, Expr) and not uncert.is_number:
@@ -475,13 +531,13 @@ class Project():
 
         # if uncertainty can be calculated
         elif not value_depend is None:
-            uncert, uncert_depend = get_uncertainty(value_depend)
+            uncert, uncert_depend = quantities.get_uncertainty(value_depend)
 
 
         # merge dimensions
         dim = value_dim
         if not dim is None and not uncert_dim is None and not dim == uncert_dim:
-            raise DimensionError("value dimension and uncertainty dimension are not the same\n%s != %s" % (dim, uncert_dim))
+            raise exceptions.DimensionError("value dimension and uncertainty dimension are not the same\n%s != %s" % (dim, uncert_dim))
         if not uncert_dim is None:
             dim = uncert_dim
 
@@ -495,7 +551,7 @@ class Project():
 
         # if quantity didn't exist
         if not name in self.data or replace:
-            self.data[name] = Quantity(name)
+            self.data[name] = quantities.Quantity(name)
         # if it did exist
         else:
             # get old length, len(uncert)=1 is not a length, because it can be duplicated to fit any value length
@@ -512,7 +568,7 @@ class Project():
             # if new dimension or new length, create new quantity
             if (not self.data[name].dim == dim or
                    (not old_len is None and not new_len is None and not old_len == new_len)):
-                self.data[name] = Quantity(name)
+                self.data[name] = quantities.Quantity(name)
 
         # save stuff
         if not longname is None:
@@ -536,18 +592,18 @@ class Project():
             uncert_arr = np.full(len(self.data[name].value),self.data[name].uncert)
             self.data[name].uncert = uncert_arr
 
-    def table(self, *quantities, maxcols=5, latexonly=False):
+    def table(self, *quants, maxcols=5, latexonly=False):
         u_sys = self.config["unit_system"]
-        quants = [self[quant] for quant in quantities]
+        quants = [self[quant] for quant in quants]
         if latexonly:
-            return qtable(*quants, html=False, maxcols=maxcols, u_sys=u_sys)[0]
+            return quantities.qtable(*quants, html=False, maxcols=maxcols, u_sys=u_sys)[0]
         else:
-            return render_latex(qtable(*quants, maxcols=maxcols, u_sys=u_sys))
+            return render_latex(quantities.qtable(*quants, maxcols=maxcols, u_sys=u_sys))
 
     def _repr_html_(self):
         u_sys = self.config["unit_system"]
         quantities = list(self.data.values())
-        return qtable(*quantities, u_sys=u_sys)
+        return quantities.qtable(*quantities, u_sys=u_sys)
 
     def __getitem__(self, qname):
-        return parse_expr(qname, self.data)
+        return quantities.parse_expr(qname, self.data)

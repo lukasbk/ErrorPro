@@ -106,6 +106,22 @@ class Quantity(Symbol):
     def _repr_html_(self):
         return qtable(self)
 
+    #TODO defining this function causes strange errors
+    #def __getitem__(self, sliced):
+    #    slicedValue = None
+    #    slicedUncert = None
+    #    if not self.value is None:
+    #        slicedValue = self.value[sliced]
+    #    if not self.uncert is None:
+    #        slicedUncert = self.uncert[sliced]
+    #    q = Quantity()
+    #    q.value = slicedValue
+    #    q.uncert = slicedUncert
+    #    q.value_prefUnit = self.value_prefUnit
+    #    q.uncert_prefUnit = self.uncert_prefUnit
+    #    q.dim = self.dim
+    #    return q
+
 
 
 def qtable(*quantities, html=True, maxcols=5, u_sys='si'):

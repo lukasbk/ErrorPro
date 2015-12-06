@@ -2,9 +2,9 @@ import shlex, subprocess
 import tempfile
 from IPython.display import Image
 
-def plot(data_sets, functions, save=None, x_label="", y_label=""):
+def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", y_label=""):
 
-    gp = Gnuplot(data_sets, functions, x_label, y_label)
+    gp = Gnuplot(data_sets, functions, xrange, yrange, x_label, y_label)
 
     tmp_folder = tempfile.gettempdir()
 
@@ -18,9 +18,11 @@ def plot(data_sets, functions, save=None, x_label="", y_label=""):
 # TODO Gnuplot class doesn't make sense anymore
 
 class Gnuplot():
-    def __init__(self, data_sets, functions, x_label, y_label):
+    def __init__(self, data_sets, functions, xrange, yrange, x_label, y_label):
         self.data_sets = data_sets
         self.functions = functions
+        self.xrange = xrange
+        self.yrange = yrange
         self.x_label = x_label
         self.y_label = y_label
         self.image_file = None
@@ -37,6 +39,8 @@ reset
 %(output)s
 %(x_label)s
 %(y_label)s
+%(xrange)s
+%(yrange)s
 %(var_defs)s
 %(functions)s
 %(plot)s
@@ -53,6 +57,14 @@ reset
             x_label = "set xlabel '"+self.x_label+"'"
         if self.y_label:
             y_label = "set ylabel '"+self.y_label+"'"
+
+        # ranges
+        xrange = ""
+        yrange = ""
+        if not self.xrange is None:
+            xrange = "set xrange [%s:%s]" % (self.xrange[0], self.xrange[1])
+        if not self.yrange is None:
+            yrange = "set yrange [%s:%s]" % (self.yrange[0], self.yrange[1])
 
         # plot functions
         function_counter = 0
@@ -119,7 +131,7 @@ reset
         output_str = "set term pngcairo enhanced\nset output '"+ directory + "/" + prefix + outputfile + "'"
 
         with open(directory + "/" + prefix + plotfile,'w') as handle:
-            handle.write(code % {"output":output_str,"x_label":x_label, "y_label": y_label, "var_defs": var_defs_str, "functions": functions_str, "plot": plot_str})
+            handle.write(code % {"output":output_str, "xrange":xrange, "yrange":yrange, "x_label":x_label, "y_label": y_label, "var_defs": var_defs_str, "functions": functions_str, "plot": plot_str})
 
         proc=subprocess.Popen(shlex.split("gnuplot '"+ directory + "/" + prefix + plotfile+"'"))
         proc.communicate()

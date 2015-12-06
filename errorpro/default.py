@@ -1,6 +1,10 @@
 from errorpro.project import Project
-from IPython.core.magic import register_cell_magic
+from IPython.core.magic import register_line_cell_magic
 import pydoc
+
+from IPython import get_ipython
+ipython = get_ipython()
+ipython.magic("matplotlib inline")
 
 default_project = Project()
 
@@ -10,9 +14,12 @@ def wrappedHelpText (wrappedFunc):
          return f
     return decorator
 
-@register_cell_magic
-def calc(line, cell):
-    default_project.calc(cell)
+@register_line_cell_magic
+def calc(line, cell=None):
+    if cell is None:
+        default_project.calc(line)
+    else:
+        default_project.calc(cell)
 
 @wrappedHelpText(default_project.save)
 def save(*args, **kwargs):
@@ -45,6 +52,10 @@ def plot(*args, **kwargs):
 @wrappedHelpText(default_project.fit)
 def fit(*args, **kwargs):
     return default_project.fit(*args, **kwargs)
+
+@wrappedHelpText(default_project.concat)
+def concat(*args, **kwargs):
+    return default_project.concat(*args, **kwargs)
 
 @wrappedHelpText(default_project.assign)
 def assign(*args, **kwargs):

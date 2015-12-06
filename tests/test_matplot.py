@@ -30,4 +30,4 @@ if __name__ == '__main__':
 
 
 
-    matplot.plot([(data["t"],data["v"])], [], si, show=True)
+    matplot.plot([(data["t"],data["v"])], [], si)
