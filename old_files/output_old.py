@@ -88,7 +88,7 @@ class Output:
 
     def save(self, data, config):
 
-        unit_system = __import__(config["unit_system"]).system
+        unit_system = import_module("errorpypagation." + self.config["unit_system"]).system
 
         # if activated, create automatic csv-file of results
         # TODO use order from commands, not random order like it's now
