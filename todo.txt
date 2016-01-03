@@ -6,6 +6,7 @@ Mathis:
 - \phantom{0} erscheint manchmal in HTML-Ausgabe, 10hoch mit Punkt statt Kreuz, *10^2 ist ziemlich nervig
 - Fehlerformel auch nice ausgeben. Oder zumindest keine doppelten Backslashes
 - kurze/ausklappbare Fehlerausgabe?
+- Extrastelle nicht nur bei 1 und 2?
 
 Mit Alex beschnacken:
 
