@@ -18,9 +18,11 @@ jup - automatisch matplotlib inline
 jup - ranges beim Plotten
 jup - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
 - Damit klarkommen, dass scipy-Fit auch keinen/unendliche Fehler ausgeben kann..
+  Bessere Fehlerberechnung beim Fitten?
 - Mehr kommentieren
 - Achsen, Daten und Funktionen labeln beim Plotten
 - nur einmal prefunit
+- Warum liefert mean_value bei gleichen Fehlern trotzdem mit weighted=True und weighted=False unterschiedliche Ergebnisse? Sollte er bei gleichen Fehlern weighted ausschalten? Und das ansagen?
 
 Später:
 - None in data sets iwie erlauben ??
