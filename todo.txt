@@ -29,6 +29,7 @@ Später:
 - None in data sets iwie erlauben ??
 - gnuplot: keine doppelten Variablendefinitionen
 - Rundungstests
+- schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
 
 2. Priorität
 - Anleitung
