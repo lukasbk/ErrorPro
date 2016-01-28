@@ -243,7 +243,6 @@ class Project():
             # parse expressions
             expr_pairs_obj.append( (quantities.parse_expr(expr_pair[0], self.data), quantities.parse_expr(expr_pair[1], self.data)) )
 
-
         if not xunit is None:
             xunit = units.parse_unit(xunit, unit_system)[2]
         if not yunit is None:

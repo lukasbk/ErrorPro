@@ -11,9 +11,9 @@ from errorpro import pytex
 from importlib import import_module
 
 # parses string to expression containing quantities
-def parse_expr(expr, data):
+def parse_expr(expr, data, evaluate=None):
     try:
-        expr=sympify(expr,locals=data)
+        expr=sympify(expr, locals=data, evaluate=evaluate)
     except(SyntaxError):
         raise SyntaxError("error parsing term '%s'" % expr)
 

@@ -18,6 +18,7 @@ Machen:
 jup - automatisch matplotlib inline
 jup - ranges beim Plotten
 jup - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
+- eigene lambdify-Funktion mit cot-Ersetzung wie in plot_mat
 - Damit klarkommen, dass scipy-Fit auch keinen/unendliche Fehler ausgeben kann..
   Bessere Fehlerberechnung beim Fitten?
 - Mehr kommentieren
@@ -27,7 +28,7 @@ jup - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
 
 Später:
 - None in data sets iwie erlauben ??
-- Betragsfunktion? 
+- Betragsfunktion?
 - gnuplot: keine doppelten Variablendefinitionen
 - Rundungstests
 - schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
