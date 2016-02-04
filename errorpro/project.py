@@ -406,6 +406,46 @@ class Project():
         new_q.dim = dim
         self.data[new_name] = new_q
 
+    def slice(self, new_name, quantity, start=0, end=None, longname=""):
+        """ creates new quantity from data set that only contains values from start to end
+
+        Args:
+            new_name: name of new quantity
+            quantity: name of quantity to be sliced
+            start: number of value in data set where new quantity is supposed to start
+                   first value is 0
+            end: number of value to be the first one not taken into the new quantity
+                 None to get all values until the end
+            longname: long name of new quantity
+        """
+
+        q = quantities.parse_expr(quantity, self.data)
+
+        new_value = None
+        new_uncert = None
+        # check if values or uncerts are None
+        if not q.value is None:
+            if not isinstance(q.value, np.ndarray):
+                raise RuntimeError("Could not slice '%s'. It's not a data set." % quantity)
+            if end is None:
+                new_value = q.value[start:]
+            else:
+                new_value = q.value[start:end]
+        if not q.uncert is None:
+            if not isinstance(q.value, np.ndarray):
+                raise RuntimeError("Could not slice '%s'. Uncertainty is not an array." % quantity)
+            if end is None:
+                new_uncert = q.uncert[start:]
+            else:
+                new_uncert = q.uncert[start:end]
+
+
+        new_q = quantities.Quantity(new_name, longname)
+        new_q.value = new_value
+        new_q.uncert = new_uncert
+        new_q.dim = q.dim
+        self.data[new_name] = new_q
+
 
     def assign(self, name, value=None, uncert=None, unit=None, longname=None, value_unit=None, uncert_unit=None, replace=False, ignore_dim=False):
         """ Assigns value and/or uncertainty to quantity

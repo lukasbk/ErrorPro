@@ -57,6 +57,10 @@ def fit(*args, **kwargs):
 def concat(*args, **kwargs):
     return default_project.concat(*args, **kwargs)
 
+@wrappedHelpText(default_project.slice)
+def slice(*args, **kwargs):
+    return default_project.slice(*args, **kwargs)
+
 @wrappedHelpText(default_project.assign)
 def assign(*args, **kwargs):
     return default_project.assign(*args, **kwargs)
