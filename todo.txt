@@ -27,8 +27,8 @@ jup - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
 - Warum liefert mean_value bei gleichen Fehlern trotzdem mit weighted=True und weighted=False unterschiedliche Ergebnisse? Sollte er bei gleichen Fehlern weighted ausschalten? Und das ansagen?
 
 Später:
+- benutzerdefinierte Funktionen und sowas wie Betrag, Signum
 - None in data sets iwie erlauben ??
-- Betragsfunktion?
 - gnuplot: keine doppelten Variablendefinitionen
 - Rundungstests
 - schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
