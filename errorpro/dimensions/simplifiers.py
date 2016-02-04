@@ -41,7 +41,7 @@ def dim_simplify(expr):
         return Dimension({})
 
     if isinstance(expr, Function):
-        return Dimension({})
+        raise ValueError("Arguments of this function cannot have a dimension: %s" % expr)
     elif isinstance(expr, Pow):
         if isinstance(args[0], Dimension):
             return args[0].pow(args[1])
