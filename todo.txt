@@ -15,6 +15,13 @@ Mit Alex beschnacken:
   -> mehr Objektbasiertes Konzept für Quantities??
 
 Machen:
+- Fehler beheben:
+assign("epsilon",[-2,-1.5,-1,-0.5,0,0.5,1,1.5,2])
+assign("alpha",[-0.003,-0.003,-0.002,-0.001,0.0001,0.001,0.001,0.0015,0.002])
+assign("m",0.0013)
+assign("b",-0.0005)
+fit("m*epsilon+b",["epsilon","alpha"],["m","b"])
+
 jup - automatisch matplotlib inline
 jup - ranges beim Plotten
 jup - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
