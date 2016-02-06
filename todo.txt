@@ -15,6 +15,7 @@ Mit Alex beschnacken:
   -> mehr Objektbasiertes Konzept für Quantities??
 
 Machen:
+- absolute_sigma=True beim Fitten?
 - Fehler beheben:
 assign("epsilon",[-2,-1.5,-1,-0.5,0,0.5,1,1.5,2])
 assign("alpha",[-0.003,-0.003,-0.002,-0.001,0.0001,0.001,0.001,0.0015,0.002])
