@@ -8,6 +8,7 @@ Mathis:
 - Fehlerformel auch nice ausgeben. Oder zumindest keine doppelten Backslashes
 - kurze/ausklappbare Fehlerausgabe?
 - Extrastelle nicht nur bei 1 und 2?
+- Option für Ausgabe der exakten Werte?
 
 Mit Alex beschnacken:
 
