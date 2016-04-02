@@ -59,8 +59,7 @@ def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", 
         for var in term.free_symbols:
             if not var == f["x"]:
                 term = term.subs(var, var.value)
-
-        numpy_func = lambdify((f["x"]), term, "numpy")
+        numpy_func = lambdify((f["x"]), term, [{"cot":lambda x:1/np.tan(x)},"numpy"])
         x = np.linspace(min,max,500)
         y = numpy_func(x)
         ax.plot(x,y,label=f["title"])

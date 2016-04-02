@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS
 
 
-__version__ = (2015, 11, 22, 17, 31, 17, 6)
+__version__ = (2016, 1, 27, 23, 17, 0, 2)
 
 __all__ = [
     'DatParser',
@@ -252,7 +252,7 @@ class DatParser(Parser):
 
     @graken()
     def _multi_assignment_value_(self):
-        self._pattern(r'[\w\.]+')
+        self._pattern(r'[-/\w\.\*]+')
 
     @graken()
     def _multi_assignment_row_(self):

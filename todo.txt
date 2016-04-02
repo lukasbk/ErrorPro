@@ -4,8 +4,11 @@ TODO
 Mathis:
 
 - \phantom{0} erscheint manchmal in HTML-Ausgabe, 10hoch mit Punkt statt Kreuz, *10^2 ist ziemlich nervig
+- pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
 - Fehlerformel auch nice ausgeben. Oder zumindest keine doppelten Backslashes
 - kurze/ausklappbare Fehlerausgabe?
+- Extrastelle nicht nur bei 1 und 2?
+- Option für Ausgabe der exakten Werte?
 
 Mit Alex beschnacken:
 
@@ -14,18 +17,31 @@ Mit Alex beschnacken:
   -> mehr Objektbasiertes Konzept für Quantities??
 
 Machen:
+- absolute_sigma=True beim Fitten?
+- Fehler beheben:
+assign("epsilon",[-2,-1.5,-1,-0.5,0,0.5,1,1.5,2])
+assign("alpha",[-0.003,-0.003,-0.002,-0.001,0.0001,0.001,0.001,0.0015,0.002])
+assign("m",0.0013)
+assign("b",-0.0005)
+fit("m*epsilon+b",["epsilon","alpha"],["m","b"])
+
 jup - automatisch matplotlib inline
 jup - ranges beim Plotten
 jup - Er sollte nen Fehler werfen, wenn dim_solve nicht erfolgreich ist.
+- eigene lambdify-Funktion mit cot-Ersetzung wie in plot_mat
 - Damit klarkommen, dass scipy-Fit auch keinen/unendliche Fehler ausgeben kann..
+  Bessere Fehlerberechnung beim Fitten?
 - Mehr kommentieren
 - Achsen, Daten und Funktionen labeln beim Plotten
 - nur einmal prefunit
+- Warum liefert mean_value bei gleichen Fehlern trotzdem mit weighted=True und weighted=False unterschiedliche Ergebnisse? Sollte er bei gleichen Fehlern weighted ausschalten? Und das ansagen?
 
 Später:
+- benutzerdefinierte Funktionen und sowas wie Betrag, Signum
 - None in data sets iwie erlauben ??
 - gnuplot: keine doppelten Variablendefinitionen
 - Rundungstests
+- schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
 
 2. Priorität
 - Anleitung

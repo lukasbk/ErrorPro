@@ -21,7 +21,7 @@ whitespace = { newline };
 
 multi_assignment_spec = [longname:longname] name:variable_name [ error:error ] [ unit:unit ];
 multi_assignment_header = @+:multi_assignment_spec { "," @+:multi_assignment_spec } newline;
-multi_assignment_value = /[\w\.]+/;
+multi_assignment_value = ?/[-/\w\.\*]+/?;
 multi_assignment_row = { @+:multi_assignment_value }+ newline;
 multi_assignment_rows = { @+:multi_assignment_row whitespace };
 multi_assignment = "{" whitespace header:multi_assignment_header whitespace rows:multi_assignment_rows whitespace "}";
