@@ -7,7 +7,7 @@ def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", 
     """ plots data and functions with matplotlib
 
     Args:
-        data_sets: list of dicts like this {x_values, x_uncerts, y_values, y_uncerts, title}
+        data_sets: list of dicts like this {x_values, x_errors, y_values, y_errors, title}
         functions: list of dicts like this {x, term, title} -> must be adjusted to unit choice already
         save: filename of file to save to
 
@@ -35,8 +35,8 @@ def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", 
         # plot
         ax.errorbar(data_set["x_values"],
                     data_set["y_values"],
-                    xerr = data_set["x_uncerts"],
-                    yerr = data_set["y_uncerts"],
+                    xerr = data_set["x_errors"],
+                    yerr = data_set["y_errors"],
                     marker="o",
                     linestyle="None",
                     label=data_set["title"])
@@ -61,7 +61,7 @@ def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", 
                 term = term.subs(var, var.value)
 
         numpy_func = lambdify((f["x"]), term, "numpy")
-        x = np.linspace(min,max,100)
+        x = np.linspace(min,max,500)
         y = numpy_func(x)
         ax.plot(x,y,label=f["title"])
         if f["title"]:

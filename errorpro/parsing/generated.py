@@ -165,7 +165,7 @@ class DatParser(Parser):
             self._error('expecting one of: " [^,\\[\\]=\\(\\)\\{\\}<>\\s]+')
 
     @graken()
-    def _uncertainty_(self):
+    def _error_(self):
         self._token('<')
         self._formula_()
         self.ast['@'] = self.last_node
@@ -189,14 +189,14 @@ class DatParser(Parser):
         self._formula_()
         self.ast['value'] = self.last_node
         with self._optional():
-            self._uncertainty_()
-            self.ast['uncertainty'] = self.last_node
+            self._error_()
+            self.ast['error'] = self.last_node
         with self._optional():
             self._unit_()
             self.ast['unit'] = self.last_node
 
         self.ast._define(
-            ['longname', 'name', 'value', 'uncertainty', 'unit'],
+            ['longname', 'name', 'value', 'error', 'unit'],
             []
         )
 
@@ -227,14 +227,14 @@ class DatParser(Parser):
         self._variable_name_()
         self.ast['name'] = self.last_node
         with self._optional():
-            self._uncertainty_()
-            self.ast['uncertainty'] = self.last_node
+            self._error_()
+            self.ast['error'] = self.last_node
         with self._optional():
             self._unit_()
             self.ast['unit'] = self.last_node
 
         self.ast._define(
-            ['longname', 'name', 'uncertainty', 'unit'],
+            ['longname', 'name', 'error', 'unit'],
             []
         )
 
@@ -381,7 +381,7 @@ class DatSemantics(object):
     def longname(self, ast):
         return ast
 
-    def uncertainty(self, ast):
+    def error(self, ast):
         return ast
 
     def unit(self, ast):

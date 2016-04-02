@@ -13,9 +13,9 @@ class Assignment():
 		self.longname = longname
 		self.value = None
 		self.value_unit = None
-		self.uncert = None
-		self.uncert_unit = None
+		self.error = None
+		self.error_unit = None
 
 	def execute(self, p):
 
-		p.assign(self.name, longname=self.longname, value=self.value, value_unit=self.value_unit, uncert=self.uncert, uncert_unit=self.uncert_unit)
+		p.assign(self.name, longname=self.longname, value=self.value, value_unit=self.value_unit, error=self.error, error_unit=self.error_unit)

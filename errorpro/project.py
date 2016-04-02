@@ -56,23 +56,23 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
     for quant in quantities:
         assert isinstance(quant, quantities.Quantity)
 
-        value, uncert, unit = quantities.adjust_to_unit(quant, unit_system)
+        value, error, unit = quantities.adjust_to_unit(quant, unit_system)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
             latex(quant), latex(unit))
 
         column = [header]
-        if uncert is None:
+        if error is None:
             if isinstance(value, np.ndarray):
                 column.extend(pytex.align_num_list(value))
             else:
                 column.append(pytex.align_num(value))
         else:
             if isinstance(value, np.ndarray):
-                column.extend(pytex.format_valerr_list(value,uncert))
+                column.extend(pytex.format_valerr_list(value,error))
             else:
-                column.append(pytex.format_valerr(value,uncert))
+                column.append(pytex.format_valerr(value,error))
         cols.append(column)
 
     return (pytex.table_latex(cols), pytex.table_html(cols))
@@ -98,7 +98,7 @@ class Project():
         if not self.config["auto_csv"] is None or self.config["auto_csv"]=="":
             output.save_as_csv(self.data, unit_system, self.config["auto_csv"])
 
-        # TODO automatic uncertainty formulas file
+        # TODO automatic error formulas file
 
     # rename to config? A little bit more specific...
     def set(self, entry, value):
@@ -151,23 +151,23 @@ class Project():
 
 
     def formula(self, quantity, adjust=True):
-        """ returns uncertainty formula of quantity as latex code
+        """ returns error formula of quantity as latex code
 
         Args:
             quantity: name of quantity or Quantity object
             adjust: if True, replaces "_err" suffix by "\sigma" function and adds equals sign in front
 
         Return:
-            latex code string of uncertainty formula
+            latex code string of error formula
         """
 
         quantity = quantities.parse_expr(quantity, self.data)
         assert isinstance(quantity, quantities.Quantity)
 
-        if quantity.uncert_depend is None:
-            raise ValueError("quantity '%s' doesn't have an uncertainty formula.")
+        if quantity.error_formula is None:
+            raise ValueError("quantity '%s' doesn't have an error formula.")
 
-        formula = quantity.uncert_depend
+        formula = quantity.error_formula
         if isinstance(formula,str):
             return formula
         else:
@@ -186,9 +186,9 @@ class Project():
         Args:
             quantity_to_assign: name or quantity object of new mean value
             quantities: one or more quantities names or objects of which mean value shall be calculated
-            weighted: if True, will weight mean value by uncertainties (returns error if not possible)
-                      if False, will not weight mean value by uncertainties
-                      if None, will try to weight mean value, but if at least one uncertainty is not given, will not weight it
+            weighted: if True, will weight mean value by errorainties (returns error if not possible)
+                      if False, will not weight mean value by errorainties
+                      if None, will try to weight mean value, but if at least one error is not given, will not weight it
             longname: description for mean value quantity
         """
         # get quantities
@@ -265,9 +265,9 @@ class Project():
             fit_function: function to fit, e.g. "n*t**2 + m*t + b"
             xydata: pair of x-quantity and y-quantity of data to fit to, e.g. ["t","U"]
             parameters: list of parameters in fit function, e.g. ["n","m","b"]
-            weighted: if True, will weight fit by uncertainties (returns error if not possible)
-                      if False, will not weight fit by uncertainties
-                      if None, will try to weight fit, but if at least one uncertainty is not given, will not weight it
+            weighted: if True, will weight fit by errorainties (returns error if not possible)
+                      if False, will not weight fit by errorainties
+                      if None, will try to weight fit, but if at least one error is not given, will not weight it
             plot: Bool, if data and fit function should be plotted
             ignore_dim: if True, will ignore dimensions and just calculate in base units instead
         """
@@ -301,7 +301,7 @@ class Project():
             dummy = quantities.Quantity()
             fit_function = fit_function.subs(x_data,dummy)
             dummy.value = quantities.get_value(x_data)
-            dummy.uncert = quantities.get_uncertainty(x_data)[0]
+            dummy.error = quantities.get_error(x_data)[0]
             dummy.dim = quantities.get_dimension(x_data)
             x_data = dummy
         y_data = quantities.parse_expr(xydata[1], self.data)
@@ -309,7 +309,7 @@ class Project():
         if not isinstance(y_data, quantities.Quantity):
             dummy = quantities.Quantity()
             dummy.value = quantities.get_value(y_data)
-            dummy.uncert = quantities.get_uncertainty(y_data)[0]
+            dummy.error = quantities.get_error(y_data)[0]
             dummy.dim = quantities.get_dimension(y_data)
             y_data = dummy
 
@@ -325,7 +325,9 @@ class Project():
                 known_dimensions = dim_solve(fit_function, y_data.dim, known_dimensions)
                 for q_name in known_dimensions:
                     if q_name in self.data:
-                        self.data[q_name].dim = known_dimensions[q_name]
+                        if not self.data[q_name].dim == known_dimensions[q_name]:
+                            self.data[q_name].dim = known_dimensions[q_name]
+                            self.data[q_name].prefer_unit = None
                 dim_func = quantities.get_dimension(fit_function)
                 # if it still doesn't work, raise error
                 if not dim_func == y_data.dim:
@@ -334,16 +336,16 @@ class Project():
                                                      "This error will occur until dimensions are right.")
 
         # fit
-        values, uncerts = fit_module.fit(x_data, y_data, fit_function, parameters_obj, weighted)
+        values, errors = fit_module.fit(x_data, y_data, fit_function, parameters_obj, weighted)
 
 
         # save results
         i = 0
         for p in parameters_obj:
             p.value = values[i]
-            p.value_depend = "fit"
-            p.uncert = uncerts[i]
-            p.uncert_depend = "fit"
+            p.value_formula = "fit"
+            p.error = errors[i]
+            p.error_formula = "fit"
             i += 1
 
         # plot
@@ -361,7 +363,7 @@ class Project():
         """
 
         values=[]
-        uncerts=[]
+        errors=[]
 
         dim = None
 
@@ -374,7 +376,7 @@ class Project():
                 if not dim==q.dim:
                     raise exceptions.DimensionError("dimension mismatch\n%s != %s" % (dim,q.dim))
 
-            # check if values or uncerts are None
+            # check if values or errors are None
             if not values is None:
                 if q.value is None:
                     values = None
@@ -383,61 +385,61 @@ class Project():
                     if not isinstance(q.value,np.ndarray):
                         v = v.reshape((1))
                     values.append(v)
-            if not uncerts is None:
-                if q.uncert is None:
-                    uncerts = None
+            if not errors is None:
+                if q.error is None:
+                    errors = None
                 else:
-                    u = q.uncert
-                    if not isinstance(q.uncert, np.ndarray):
+                    u = q.error
+                    if not isinstance(q.error, np.ndarray):
                         u = u.reshape((1))
-                    uncerts.append(u)
+                    errors.append(u)
         # concatenate
         new_value = None
-        new_uncert = None
+        new_error = None
         if not values is None:
             new_value = np.concatenate(values)
-        if not uncerts is None:
-            new_uncert = np.concatenate(uncerts)
-        if new_value is None and new_uncert is None:
-            raise RuntimeError("Could not concatenate. At least one value and one uncertainty are None.")
+        if not errors is None:
+            new_error = np.concatenate(errors)
+        if new_value is None and new_error is None:
+            raise RuntimeError("Could not concatenate. At least one value and one error are None.")
 
         new_q = quantities.Quantity(new_name, longname)
         new_q.value = new_value
-        new_q.uncert = new_uncert
+        new_q.error = new_error
         new_q.dim = dim
         self.data[new_name] = new_q
 
 
-    def assign(self, name, value=None, uncert=None, unit=None, longname=None, value_unit=None, uncert_unit=None, replace=False, ignore_dim=False):
-        """ Assigns value and/or uncertainty to quantity
+    def assign(self, name, value=None, error=None, unit=None, longname=None, value_unit=None, error_unit=None, replace=False, ignore_dim=False):
+        """ Assigns value and/or error to quantity
 
         Args:
             name: quantity name
             longname: description of quantity
             value: value to assign, can be expression, string, list or number
-            uncert: uncertainty to assign, can be expression, string, list or number, but mustn't depend on other quantities
-            unit: unit of both value and uncertainty, replaces 'value_unit' and 'uncert_unit' if given
+            error: error to assign, can be expression, string, list or number, but mustn't depend on other quantities
+            unit: unit of both value and error, replaces 'value_unit' and 'error_unit' if given
             value_unit: value unit expression or string
-            uncert_unit: uncertainty unit expression or string
+            error_unit: error unit expression or string
             replace: if True, will replace quantity instead of trying to keep data
             ignore_dim: if True, will ignore calculated dimension and use given unit instead
         """
 
         if not unit is None:
             value_unit = unit
-            uncert_unit = unit
+            error_unit = unit
 
         unit_system = import_module("errorpro." + self.config["unit_system"]).system
 
-        if value is None and uncert is None:
-            raise ValueError("At least either value or uncertainty must be specified.")
+        if value is None and error is None:
+            raise ValueError("At least either value or error must be specified.")
 
         value_len = None
         value_dim = None
-        value_depend = None
-        uncert_len = None
-        uncert_dim = None
-        uncert_depend = None
+        value_formula = None
+        error_len = None
+        error_dim = None
+        error_formula = None
 
         # if value is given
         if not value is None:
@@ -459,12 +461,12 @@ class Project():
             # if it's a calculation
             if isinstance(value, Expr) and not value.is_number:
                 # calculate value from dependency
-                value_depend = value
-                value = quantities.get_value(value_depend)
+                value_formula = value
+                value = quantities.get_value(value_formula)
 
                 # calculate dimension from dependency
                 if not ignore_dim:
-                    calculated_dim = quantities.get_dimension(value_depend)
+                    calculated_dim = quantities.get_dimension(value_formula)
                     if not value_dim is None and not calculated_dim == value_dim:
                         raise exceptions.DimensionError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
                     elif value_dim is None:
@@ -496,57 +498,57 @@ class Project():
                 value_len = 1
 
 
-        # if uncertainty is given
-        if not uncert is None:
+        # if error is given
+        if not error is None:
 
             # parse unit if given
-            if not uncert_unit is None:
-                factor, uncert_dim, uncert_unit = units.parse_unit(uncert_unit, unit_system)
+            if not error_unit is None:
+                factor, error_dim, error_unit = units.parse_unit(error_unit, unit_system)
 
             # parse value
-            if isinstance(uncert, list) or isinstance(uncert, tuple):
+            if isinstance(error, list) or isinstance(error, tuple):
                 # if it's a list, parse each element
                 parsed_list = []
-                for u in uncert:
+                for u in error:
                     parsed_list.append(quantities.parse_expr(u, self.data))
-            elif isinstance(uncert, str) or isinstance(uncert, Expr):
+            elif isinstance(error, str) or isinstance(error, Expr):
                 # if it's not a list, parse once
-                uncert = quantities.parse_expr(uncert, self.data)
+                error = quantities.parse_expr(error, self.data)
 
-            # make sure uncertainty is a number
-            if isinstance(uncert, Expr) and not uncert.is_number:
-                raise RuntimeError("uncertainty '%s' is not a number" % uncert)
+            # make sure error is a number
+            if isinstance(error, Expr) and not error.is_number:
+                raise RuntimeError("error '%s' is not a number" % error)
 
             # if no unit given, set dimensionless
-            if uncert_unit is None:
+            if error_unit is None:
                 factor = 1
-                uncert_dim = Dimension()
-                uncert_unit = S.One
+                error_dim = Dimension()
+                error_unit = S.One
 
-            uncert=np.float_(factor)*np.float_(uncert)
+            error=np.float_(factor)*np.float_(error)
 
-            # calculate uncertainty length, ignore len(uncert)==1 because it can be duplicated to fit any value length
-            if isinstance(uncert,np.ndarray):
-                uncert_len = len(uncert)
+            # calculate error length, ignore len(error)==1 because it can be duplicated to fit any value length
+            if isinstance(error,np.ndarray):
+                error_len = len(error)
 
-        # if uncertainty can be calculated
-        elif not value_depend is None:
-            uncert, uncert_depend = quantities.get_uncertainty(value_depend)
+        # if error can be calculated
+        elif not value_formula is None:
+            error, error_formula = quantities.get_error(value_formula)
 
 
         # merge dimensions
         dim = value_dim
-        if not dim is None and not uncert_dim is None and not dim == uncert_dim:
-            raise exceptions.DimensionError("value dimension and uncertainty dimension are not the same\n%s != %s" % (dim, uncert_dim))
-        if not uncert_dim is None:
-            dim = uncert_dim
+        if not dim is None and not error_dim is None and not dim == error_dim:
+            raise exceptions.DimensionError("value dimension and error dimension are not the same\n%s != %s" % (dim, error_dim))
+        if not error_dim is None:
+            dim = error_dim
 
         # merge lengths
         new_len = value_len
-        if not new_len is None and not uncert_len is None and not new_len == uncert_len:
-            raise RuntimeError("value length doesn't fit uncertainty length for '%s':\n%s != %s" % (name, new_len, uncert_len))
-        if not uncert_len is None:
-            new_len = uncert_len
+        if not new_len is None and not error_len is None and not new_len == error_len:
+            raise RuntimeError("value length doesn't fit error length for '%s':\n%s != %s" % (name, new_len, error_len))
+        if not error_len is None:
+            new_len = error_len
 
 
         # if quantity didn't exist
@@ -554,15 +556,15 @@ class Project():
             self.data[name] = quantities.Quantity(name)
         # if it did exist
         else:
-            # get old length, len(uncert)=1 is not a length, because it can be duplicated to fit any value length
+            # get old length, len(error)=1 is not a length, because it can be duplicated to fit any value length
             old_len = None
             if not self.data[name].value is None:
                 if isinstance(self.data[name].value, np.ndarray):
                     old_len = len(self.data[name].value)
                 else:
                     old_len = 1
-            if not self.data[name].uncert is None and isinstance(self.data[name].uncert, np.ndarray):
-                old_len = len(self.data[name].uncert)
+            if not self.data[name].error is None and isinstance(self.data[name].error, np.ndarray):
+                old_len = len(self.data[name].error)
 
 
             # if new dimension or new length, create new quantity
@@ -575,22 +577,22 @@ class Project():
             self.data[name].longname = longname
         if not value is None:
             self.data[name].value = value
-            self.data[name].value_depend = value_depend
+            self.data[name].value_formula = value_formula
         if not value_unit is None:
-            self.data[name].value_prefUnit = value_unit
-        if not uncert is None:
-            self.data[name].uncert = uncert
-            self.data[name].uncert_depend = uncert_depend
-        if not uncert_unit is None:
-            self.data[name].uncert_prefUnit = uncert_unit
+            self.data[name].prefer_unit = value_unit
+        elif not error_unit is None:
+            self.data[name].prefer_unit = error_unit
+        if not error is None:
+            self.data[name].error = error
+            self.data[name].error_formula = error_formula
         self.data[name].dim = dim
 
 
 
-        # check if uncertainty must be duplicated to adjust to value length
-        if isinstance(self.data[name].value, np.ndarray) and isinstance(self.data[name].uncert, np.float_):
-            uncert_arr = np.full(len(self.data[name].value),self.data[name].uncert)
-            self.data[name].uncert = uncert_arr
+        # check if error must be duplicated to adjust to value length
+        if isinstance(self.data[name].value, np.ndarray) and isinstance(self.data[name].error, np.float_):
+            error_arr = np.full(len(self.data[name].value),self.data[name].error)
+            self.data[name].error = error_arr
 
     def table(self, *quants, maxcols=5, latexonly=False):
         u_sys = self.config["unit_system"]

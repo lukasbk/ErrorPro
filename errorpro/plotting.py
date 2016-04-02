@@ -1,4 +1,4 @@
-from errorpro.quantities import get_value, get_uncertainty, adjust_to_unit, get_dimension, Quantity
+from errorpro.quantities import get_value, get_error, adjust_to_unit, get_dimension, Quantity
 from errorpro.units import convert_to_unit
 from sympy import S
 from errorpro.exceptions import *
@@ -13,8 +13,6 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
         single_plot = False
     else:
         single_plot = True
-
-    unit_system = import_module("errorpro." + config["unit_system"]).system
 
     x_dim = None
     y_dim = None
@@ -62,8 +60,8 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
 
             if not ignore_dim:
                 # get factors
-                x_factor, xunit = convert_to_unit(x_dim, unit_system, outputUnit=xunit)
-                y_factor, yunit = convert_to_unit(y_dim, unit_system, outputUnit=yunit)
+                x_factor, xunit = convert_to_unit(x_dim, outputUnit=xunit)
+                y_factor, yunit = convert_to_unit(y_dim, outputUnit=yunit)
 
                 # scale function to units
                 y = y.subs(x,x*x_factor) / y_factor
@@ -90,7 +88,7 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
                 # dummy quantity for calculation
                 x = Quantity()
                 x.value = get_value(expr_pair[0])
-                x.uncert = get_uncertainty(expr_pair[0])[0]
+                x.error = get_error(expr_pair[0])[0]
                 x.dim = x_dim
                 x_title = str(expr_pair[0])
             if isinstance(expr_pair[1], Quantity):
@@ -100,19 +98,19 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
                 # dummy quantity for calculation
                 y = Quantity()
                 y.value = get_value(expr_pair[1])
-                y.uncert = get_uncertainty(expr_pair[1])[0]
+                y.error = get_error(expr_pair[1])[0]
                 y.dim = y_dim
                 y_title = str(expr_pair[1])
 
             if ignore_dim:
                 x_values = x.value
-                x_uncerts = x.uncert
+                x_errors = x.error
                 y_values = y.value
-                y_uncerts = y.uncert
+                y_errors = y.error
             else:
-                # get values and uncertainties all in one unit
-                x_values, x_uncerts, xunit = adjust_to_unit(x, unit_system, prefUnit = xunit)
-                y_values, y_uncerts, yunit = adjust_to_unit(y, unit_system, prefUnit = yunit)
+                # get values and errorainties all in one unit
+                x_values, x_errors, xunit = adjust_to_unit(x, unit_system, prefer_unit = xunit)
+                y_values, y_errors, yunit = adjust_to_unit(y, unit_system, prefer_unit = yunit)
 
 
             # if only one thing on plot, write labels to x-axis and y-axis
@@ -124,7 +122,7 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
             else:
                 title = y_title
 
-            data_sets.append({"x_values": x_values, "y_values": y_values, "x_uncerts": x_uncerts, "y_uncerts":y_uncerts, "title": title})
+            data_sets.append({"x_values": x_values, "y_values": y_values, "x_errors": x_errors, "y_errors":y_errors, "title": title})
 
 
 

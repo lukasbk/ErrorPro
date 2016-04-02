@@ -32,15 +32,15 @@ def get_dimension(expr):
         dim = subs_symbols(dim,{var.name:var.dim})
     return dim_simplify(dim)
 
-# returns value and uncertainty according to unit
-def adjust_to_unit (q, unit_system, prefUnit=None):
-    if prefUnit is None:
-        prefUnit = q.value_prefUnit
-    factor, unit = convert_to_unit(q.dim, unit_system, outputUnit=prefUnit)
+# returns value and error according to unit
+def adjust_to_unit (q, prefer_unit=None, unit_system=None):
+    if prefer_unit is None:
+        prefer_unit = q.prefer_unit
+    factor, unit = convert_to_unit(q.dim, output_unit=prefer_unit, unit_system=unit_system)
     factor = np.float_(factor)
     value = None if q.value is None else q.value / factor
-    uncert = None if q.uncert is None else q.uncert / factor
-    return (value, uncert, unit)
+    error = None if q.error is None else q.error / factor
+    return (value, error, unit)
 
 # returns value of expression
 def get_value(expr):
@@ -53,36 +53,36 @@ def get_value(expr):
     return calcFunction(*depValues)
 
 
-# returns uncertainty and uncertainty formula
-def get_uncertainty(expr):
+# returns error and error formula
+def get_error(expr):
     integrand = 0
-    uncert_depend = 0
+    error_formula = 0
     for varToDiff in expr.free_symbols:
-        if not varToDiff.uncert is None:
+        if not varToDiff.error is None:
             differential = sympy.diff(expr,varToDiff)
-            uncert_depend += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
+            error_formula += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
             diffFunction = lambdify(differential.free_symbols,differential, modules="numpy")
 
             diffValues = []
             for var in differential.free_symbols:
                 diffValues.append(var.value)
 
-            integrand += ( varToDiff.uncert*diffFunction(*diffValues) )**2
+            integrand += ( varToDiff.error*diffFunction(*diffValues) )**2
     if isinstance(integrand,np.ndarray):
         if (integrand==0).all():
             return (None,None)
     elif integrand == 0:
         return (None,None)
 
-    return (np.sqrt(integrand),sympy.sqrt (uncert_depend))
+    return (np.sqrt(integrand),sympy.sqrt (error_formula))
 
 class Quantity(Symbol):
     quantity_count = 0
     dummy_count = 1
 
-    def __new__(cls,name="",longname=None):
-        if name == "":
-            name = "Dummy_"+str(Quantity.dummy_count)
+    def __new__(cls,name=None,longname=None):
+        if name is None or name == "":
+            name = "NoName_"+str(Quantity.dummy_count)
             Quantity.dummy_count += 1
             self = Dummy.__new__(cls, name)
         else:
@@ -95,30 +95,28 @@ class Quantity(Symbol):
         self.name = name
         self.longname = longname
         self.value = None
-        self.value_prefUnit = None
-        self.value_depend = None
-        self.uncert = None
-        self.uncert_prefUnit = None
-        self.uncert_depend = None
+        self.value_formula = None
+        self.error = None
+        self.error_formula = None
+        self.prefer_unit = None
         self.dim = None
         return self
 
     def _repr_html_(self):
         return qtable(self)
 
-    #TODO defining this function causes strange errors
+    # TODO implementing this method screws up dependent quantities
     #def __getitem__(self, sliced):
     #    slicedValue = None
-    #    slicedUncert = None
+    #   slicederror = None
     #    if not self.value is None:
     #        slicedValue = self.value[sliced]
-    #    if not self.uncert is None:
-    #        slicedUncert = self.uncert[sliced]
+    #    if not self.error is None:
+    #        slicederror = self.error[sliced]
     #    q = Quantity()
     #    q.value = slicedValue
-    #    q.uncert = slicedUncert
-    #    q.value_prefUnit = self.value_prefUnit
-    #    q.uncert_prefUnit = self.uncert_prefUnit
+    #    q.error = slicederror
+    #    q.prefer_unit = self.prefer_unit
     #    q.dim = self.dim
     #    return q
 
@@ -172,23 +170,23 @@ def qtable(*quantities, html=True, maxcols=5, u_sys='si'):
     for quant in quantities:
         assert isinstance(quant, Quantity)
 
-        value, uncert, unit = adjust_to_unit(quant, unit_system)
+        value, error, unit = adjust_to_unit(quant, unit_system)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
             latex(quant), latex(unit))
 
         column = [header]
-        if uncert is None:
+        if error is None:
             if isinstance(value, np.ndarray):
                 column.extend(pytex.align_num_list(value))
             else:
                 column.append(pytex.align_num(value))
         else:
             if isinstance(value, np.ndarray):
-                column.extend(pytex.format_valerr_list(value,uncert))
+                column.extend(pytex.format_valerr_list(value,error))
             else:
-                column.append(pytex.format_valerr(value,uncert))
+                column.append(pytex.format_valerr(value,error))
         cols.append(column)
 
     return (pytex.table_latex(cols), pytex.table_html(cols))

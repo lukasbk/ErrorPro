@@ -39,10 +39,10 @@ def arrange_data(data, unit_system):
     # list single data on the left side
     if 1 in data_by_length:
         for q in data_by_length[1]:
-            description, value, uncert, unit = format_quantity(q, unit_system)
+            description, value, error, unit = format_quantity(q, unit_system)
             columns[0].append(description)
             columns[1].append(value)
-            columns[2].append(uncert)
+            columns[2].append(error)
             columns[3].append(unit)
 
     # iterate data set length
@@ -52,13 +52,13 @@ def arrange_data(data, unit_system):
         q_counter = 0
         # iterate quantities of one length
         for q in data_by_length[length]:
-            description, value, uncert, unit = format_quantity(q, unit_system)
+            description, value, error, unit = format_quantity(q, unit_system)
             # list data sets on the right, grouped by length
             columns[5 + q_counter*2].append(description + " [" + unit + "]")
             columns[6 + q_counter*2].append("")
             for i in range(0,len(value)):
                 columns[5 + q_counter*2].append(value[i])
-                columns[6 + q_counter*2].append(uncert[i])
+                columns[6 + q_counter*2].append(error[i])
             columns[5 + q_counter*2].append("")
             columns[6 + q_counter*2].append("")
             q_counter += 1
@@ -79,7 +79,7 @@ def format_quantity(q, unit_system):
         q: quantity to format
         unit_system
 
-    Returns: tuple of description, value, uncertainty and unit (as strings)
+    Returns: tuple of description, value, error and unit (as strings)
     """
 
     description = q.name
@@ -87,23 +87,23 @@ def format_quantity(q, unit_system):
         description = q.longname + " " + description
 
     # find unit
-    value, uncert, unit = adjust_to_unit(q, unit_system)
+    value, error, unit = adjust_to_unit(q, unit_system)
 
     # if it's a data set
     if isinstance(value, np.ndarray):
         value_str = []
-        uncert_str = []
+        error_str = []
         for i in range(0,len(value)):
             v = value[i] if value is not None else ""
 
-            u = uncert[i] if uncert is not None else ""
+            u = error[i] if error is not None else ""
             value_str.append(v)
-            uncert_str.append(u)
+            error_str.append(u)
 
     # if it's a single value
     else:
         value_str = value if value is not None else ""
-        uncert_str = uncert if uncert is not None else ""
+        error_str = error if error is not None else ""
 
     # create unit string
     if unit == S.One:
@@ -111,7 +111,7 @@ def format_quantity(q, unit_system):
     else:
         unit = str(unit)
 
-    return (description, value_str, uncert_str, unit)
+    return (description, value_str, error_str, unit)
 
 
 def save_as_csv(data, unit_system, filename):

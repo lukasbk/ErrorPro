@@ -8,105 +8,6 @@ from errorpro.exceptions import DimensionError
 from sympy.parsing.sympy_parser import parse_expr
 from sympy import sympify
 
-
-def parse_unit(unit,unitSystem):
-	"""
-	parses a unit string or unit expression and returns (factor,dimension)
-	where factor is the correction factor to get to the base unit system
-
-	Returns:
-	tuple of factor, dimension and unit
-	"""
-	if isinstance(unit,str):
-		if unit=="":
-			unit=S.One
-		else:
-			unit=parse_expr(unit,local_dict=unitSystem)
-
-	for u in unit.free_symbols:
-		if not isinstance(u,Unit):
-			raise ValueError("%s is not a unit." % u.name)
-
-	#calculate dimension
-	dim=unit
-	factor=unit
-	for var in unit.free_symbols:
-		exp=unit.as_coeff_exponent(var)[1]
-		if exp==0:
-			raise ValueError("%s is not a valid unit string." % unitStr)
-		dim=subs_symbols(dim,{var.name:var.dim})
-		factor=factor.subs(var,var.factor)
-
-	return (factor,dim_simplify(dim),unit)
-
-
-def convert_to_unit(inputDimension,unitSystem,outputUnit=None,onlyBase=False):
-	"""
-	function that converts dimension to unit
-	With outputUnit, you can specify a unit to convert to.
-	Returns factor and unit.
-	"""
-
-	if outputUnit==None:
-		outputUnit=S.One
-		if inputDimension.is_dimensionless:
-			return (S.One,S.One)
-		assert isinstance(inputDimension,Dimension)
-		factor=1
-
-		sortedComplexities=sorted(set(map(lambda x:unitSystem[x].complexity,unitSystem)), reverse=True)
-		#iterates all complexities
-		for complexity in sortedComplexities:
-			reciprocal=S.One
-			#checks first putting in normally, then putting in reciprocally
-			while True:
-				#iterates all units of this complexity
-				for unit in unitSystem.values():
-					if (not onlyBase) or isinstance(unit,BaseUnit):
-						if unit.standard and unit.complexity==complexity:
-							#tries to put in as often as possible
-							while True:
-								if fits_in(unit,inputDimension,reciprocal):
-									inputDimension=dim_simplify(inputDimension/(unit.dim**reciprocal))
-									outputUnit*=unit**reciprocal
-									factor*=unit.factor**reciprocal
-									if inputDimension.is_dimensionless:
-										return (factor,outputUnit)
-								else:
-									break
-
-				if reciprocal==S.One:
-					reciprocal=S.NegativeOne
-				else:
-					break
-		assert inputDimension.is_dimensionless
-	else:
-		factor, dim, unit=parse_unit(outputUnit,unitSystem)
-		if not inputDimension==dim:
-			raise DimensionError("unit %s does not fit dimension %s." % (outputUnit,inputDimension))
-
-	return (factor,outputUnit)
-
-#internal
-def fits_in(unit,dimension,reciprocal):
-	"""
-	checks if unit fits in given dimension
-	reciprocal: 1 or -1 to show if unit is supposed to be fitted in as reciprocal or not
-	"""
-	assert isinstance(unit,Unit)
-	assert isinstance(dimension,Dimension)
-	assert reciprocal is S.One or reciprocal is S.NegativeOne
-
-	for lookAtThis, unitExp in unit.dim.items():
-		dimExp=dimension.get(lookAtThis,0)
-		if not unitExp==0:
-			if not sign(unitExp)==sign(dimExp*reciprocal):
-				return False
-			if not abs(unitExp)<=abs(dimExp):
-				return False
-
-	return True
-
 class Unit(Symbol):
 	"""
 	class for handling unit system internally.
@@ -140,11 +41,12 @@ class DerivedUnit(Unit):
 	"""
 	all units derived from other units
 	"""
-	def __new__(cls,name,dependency,unitSystem,standard=True):
+	def __new__(cls,name,dependency,unit_system,standard=True):
+
 		self = Unit.__new__(cls, name)
 		self.standard=standard
 		if isinstance(dependency,str):
-			self.dependency=parse_expr(dependency,local_dict=unitSystem)
+			self.dependency=parse_expr(dependency,local_dict=unit_system)
 			for u in self.dependency.free_symbols:
 				if not isinstance(u,Unit):
 					raise ValueError("%s is not a unit." % u.name)
@@ -171,3 +73,113 @@ class DerivedUnit(Unit):
 			self.complexity+=abs(exponent)
 
 		return self
+
+
+# default unit system is SI
+from errorpro.si import system as DEF_UNIT_SYSTEM
+
+def parse_unit(unit, unit_system=None):
+	"""
+	parses a unit string or unit expression and returns (factor,dimension,unit)
+	where factor is the correction factor to get to the base unit system,
+	dimension is the physical dimension as a Dimension object
+	and unit is the unit as an Expression containing Unit objects
+
+	Returns:
+	tuple of factor, dimension and unit
+	"""
+
+	if unit_system is None:
+		unit_system = DEF_UNIT_SYSTEM
+
+	if isinstance(unit,str):
+		if unit=="":
+			unit=S.One
+		else:
+			unit=parse_expr(unit,local_dict=unit_system)
+
+	for u in unit.free_symbols:
+		if not isinstance(u,Unit):
+			raise ValueError("%s is not a unit." % u.name)
+
+	#calculate dimension
+	dim=unit
+	factor=unit
+	for var in unit.free_symbols:
+		exp=unit.as_coeff_exponent(var)[1]
+		if exp==0:
+			raise ValueError("%s is not a valid unit string." % unitStr)
+		dim=subs_symbols(dim,{var.name:var.dim})
+		factor=factor.subs(var,var.factor)
+
+	return (factor,dim_simplify(dim),unit)
+
+
+def convert_to_unit(input_dimension, output_unit=None, only_base=False, unit_system=None):
+	"""
+	function that converts dimension to unit
+	With output_unit, you can specify a unit to convert to.
+	Returns factor and unit.
+	"""
+	if unit_system is None:
+		unit_system = DEF_UNIT_SYSTEM
+
+	if output_unit==None:
+		output_unit=S.One
+		if input_dimension.is_dimensionless:
+			return (S.One,S.One)
+		assert isinstance(input_dimension,Dimension)
+		factor=1
+
+		sortedComplexities=sorted(set(map(lambda x:unit_system[x].complexity,unit_system)), reverse=True)
+		#iterates all complexities
+		for complexity in sortedComplexities:
+			reciprocal=S.One
+			#checks first putting in normally, then putting in reciprocally
+			while True:
+				#iterates all units of this complexity
+				for unit in unit_system.values():
+					if (not only_base) or isinstance(unit,BaseUnit):
+						if unit.standard and unit.complexity==complexity:
+							#tries to put in as often as possible
+							while True:
+								if fits_in(unit,input_dimension,reciprocal):
+									input_dimension=dim_simplify(input_dimension/(unit.dim**reciprocal))
+									output_unit*=unit**reciprocal
+									factor*=unit.factor**reciprocal
+									if input_dimension.is_dimensionless:
+										return (factor,output_unit)
+								else:
+									break
+
+				if reciprocal==S.One:
+					reciprocal=S.NegativeOne
+				else:
+					break
+		assert input_dimension.is_dimensionless
+	else:
+		factor, dim, unit=parse_unit(output_unit,unit_system)
+		if not input_dimension==dim:
+			raise DimensionError("unit %s does not fit dimension %s." % (output_unit,input_dimension))
+
+	return (factor,output_unit)
+
+#internal
+def fits_in(unit,dimension,reciprocal):
+	"""
+	checks if unit fits in given dimension
+	reciprocal: 1 or -1 to show if unit is supposed to be fitted in as reciprocal or not
+	"""
+	assert isinstance(unit,Unit)
+	assert isinstance(dimension,Dimension)
+	assert reciprocal is S.One or reciprocal is S.NegativeOne
+
+	for lookAtThis, unitExp in unit.dim.items():
+		dimExp=dimension.get(lookAtThis,0)
+		if not unitExp==0:
+			if not sign(unitExp)==sign(dimExp*reciprocal):
+				return False
+			if not abs(unitExp)<=abs(dimExp):
+				return False
+
+	return True

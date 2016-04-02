@@ -99,10 +99,10 @@ reset
             for line in range(0,len(data_set["x_values"])):
                 data += str(data_set["x_values"][line]) + " "
                 data += str(data_set["y_values"][line]) + " "
-                if not data_set["x_uncerts"] is None:
-                    data += str(data_set["x_uncerts"][line]) + " "
-                if not data_set["y_uncerts"] is None:
-                    data += str(data_set["y_uncerts"][line]) + " "
+                if not data_set["x_errors"] is None:
+                    data += str(data_set["x_errors"][line]) + " "
+                if not data_set["y_errors"] is None:
+                    data += str(data_set["y_errors"][line]) + " "
                 data += "\n"
 
             # write to file
@@ -114,11 +114,11 @@ reset
             if not first_plot:
                 plot_str+=", "
             plot_str += "'" + directory + "/" + prefix + datafile +"'"
-            if not data_set["x_uncerts"] is None and not data_set["y_uncerts"] is None:
+            if not data_set["x_errors"] is None and not data_set["y_errors"] is None:
                 plot_str += " with xyerrorbars"
-            elif not data_set["x_uncerts"] is None:
+            elif not data_set["x_errors"] is None:
                 plot_str += " with xerrorbars"
-            elif not data_set["y_uncerts"] is None:
+            elif not data_set["y_errors"] is None:
                 plot_str += " with yerrorbars"
 
             # add title

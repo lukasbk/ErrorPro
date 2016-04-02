@@ -6,9 +6,9 @@ def createAssignmentCommand(value, header):
 	if name.endswith("_err"):
 		name = name[:-4]
 		command = commands.Assignment(name)
-		command.uncert = value
-		command.uncert_unit = header.unit
-		if header.uncertainty is not None:
+		command.error = value
+		command.error_unit = header.unit
+		if header.error is not None:
 			raise RuntimeError("Variables with _err notation cannot use the <...> notation.")
 		if header.longname is not None:
 			raise RuntimeError("Variables with _err notation cannot have a long name: %s"%header.longname)
@@ -17,9 +17,9 @@ def createAssignmentCommand(value, header):
 		command.value = value
 		command.longname = header.longname
 		command.value_unit = header.unit
-		command.uncert = header.uncertainty
-		if header.uncertainty is not None:
-			command.uncert_unit = header.unit
+		command.error = header.error
+		if header.error is not None:
+			command.error_unit = header.unit
 	return command
 
 def interpret (syntacticProgram):

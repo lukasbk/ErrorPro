@@ -11,15 +11,15 @@ function = name:function_name "(" parameters:parameters ")";
 
 variable_name = /[\w]+/;
 longname = '"' @:/[^\"]+/ '"' | @:{ /[^,\[\]=\(\)\{\}<>\s]+/ /[\t ]+/ &/[^,\[\]=\(\)\{\}<>\s]+/ }+ ;
-uncertainty = "<" @:formula ">";
+error = "<" @:formula ">";
 unit = "[" @:formula "]";
 
-assignment = [longname:longname] name:variable_name "=" value:formula [ uncertainty:uncertainty ] [ unit:unit ] ;
+assignment = [longname:longname] name:variable_name "=" value:formula [ error:error ] [ unit:unit ] ;
 
 newline = ["\r\n" | "\n" | "\r"];
 whitespace = { newline };
 
-multi_assignment_spec = [longname:longname] name:variable_name [ uncertainty:uncertainty ] [ unit:unit ];
+multi_assignment_spec = [longname:longname] name:variable_name [ error:error ] [ unit:unit ];
 multi_assignment_header = @+:multi_assignment_spec { "," @+:multi_assignment_spec } newline;
 multi_assignment_value = /[\w\.]+/;
 multi_assignment_row = { @+:multi_assignment_value }+ newline;
