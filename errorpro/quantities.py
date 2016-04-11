@@ -1,30 +1,45 @@
-from sympy import Symbol, Dummy
-import sympy
-#from sympy.parsing.sympy_parser import parse_expr as sym_parse_expr
-from sympy import sympify, latex
-from errorpro.units import convert_to_unit
-from errorpro.dimensions.simplifiers import dim_simplify
-from errorpro.dimensions.solvers import subs_symbols
+from sympy import  Symbol, Dummy, sympify, latex, diff, sqrt as sym_sqrt
 from sympy.utilities.lambdify import lambdify
 import numpy as np
-from errorpro import pytex
+
 from importlib import import_module
 
-# parses string to expression containing quantities
-def parse_expr(expr, data, evaluate=None):
-    try:
-        expr=sympify(expr, locals=data, evaluate=evaluate)
-    except(SyntaxError):
-        raise SyntaxError("error parsing term '%s'" % expr)
+from errorpro.units import parse_unit, convert_to_unit
+from errorpro.dimensions.simplifiers import dim_simplify
+from errorpro.dimensions.solvers import subs_symbols
+from errorpro import pytex
 
-    for q in expr.free_symbols:
+
+def parse_expr(term, data, evaluate=None):
+    """ parses string to expression containing quantities
+
+    Args:
+    - term: string of mathematical term (can also be a sympy expression)
+    - data: dict of defined quantities
+    - evaluate: specifies if automatic simplifications should be done (passed on to sympify)
+
+    """
+
+    try:
+        term=sympify(term, locals=data, evaluate=evaluate)
+    except(SyntaxError):
+        raise SyntaxError("error parsing term '%s'" % term)
+
+    for q in term.free_symbols:
         if not isinstance(q,Quantity):
             raise ValueError("Symbol '%s' is not defined." % q.name)
 
-    return expr
+    return term
 
-# returns dimension of expression containing quantities
 def get_dimension(expr):
+    """ finds out physical dimension of a term containing quantities
+
+    Args:
+    - expr: Expr object possibly containing Quantity objects
+
+    Returns: Dimension object
+    """
+
     dim = expr
     for var in expr.free_symbols:
         if var.dim is None:
@@ -32,18 +47,29 @@ def get_dimension(expr):
         dim = subs_symbols(dim,{var.name:var.dim})
     return dim_simplify(dim)
 
-# returns value and error according to unit
-def adjust_to_unit (q, prefer_unit=None, unit_system=None):
-    if prefer_unit is None:
-        prefer_unit = q.prefer_unit
-    factor, unit = convert_to_unit(q.dim, output_unit=prefer_unit, unit_system=unit_system)
+def adjust_to_unit (quant, unit=None):
+    """ calculates value and error of quantity according to specified unit
+
+    Args:
+    - quant: Quantity object to use
+    - unit: Unit object to adjust values to. If not specified, prefer_unit
+            of quantity will be used. If prefer_unit is None, Unit will be found
+            automatically.
+
+    Returns: tuple of adjusted value, error and unit
+    """
+
+    if unit is None:
+        unit = quant.prefer_unit
+    factor, unit = convert_to_unit(quant.dim, unit)
     factor = np.float_(factor)
-    value = None if q.value is None else q.value / factor
-    error = None if q.error is None else q.error / factor
+    value = None if quant.value is None else quant.value / factor
+    error = None if quant.error is None else quant.error / factor
     return (value, error, unit)
 
-# returns value of expression
 def get_value(expr):
+    """ calculates number value of an expression possibly containing quantities
+    """
     calcFunction=lambdify(expr.free_symbols, expr, modules="numpy")
     depValues=[]
     for var in expr.free_symbols:
@@ -52,14 +78,16 @@ def get_value(expr):
         depValues.append(var.value)
     return calcFunction(*depValues)
 
-
-# returns error and error formula
 def get_error(expr):
+    """ calculates error of an expression possibly containing quantities
+
+    Returns: tuple of error and error formula (as Expr object)
+    """
     integrand = 0
     error_formula = 0
     for varToDiff in expr.free_symbols:
-        if not varToDiff.error is None:
-            differential = sympy.diff(expr,varToDiff)
+        if varToDiff.error is not None:
+            differential = diff(expr,varToDiff)
             error_formula += ( Symbol(varToDiff.name+"_err",positive=True) * differential )**2
             diffFunction = lambdify(differential.free_symbols,differential, modules="numpy")
 
@@ -74,13 +102,18 @@ def get_error(expr):
     elif integrand == 0:
         return (None,None)
 
-    return (np.sqrt(integrand),sympy.sqrt (error_formula))
+    return (np.sqrt(integrand),sym_sqrt (error_formula))
 
 class Quantity(Symbol):
+    """ class for physical quantities storing name, value, error and physical dimension
+
+    """
+
     quantity_count = 0
     dummy_count = 1
 
-    def __new__(cls,name=None,longname=None):
+    def __new__(cls, name=None, longname=None):
+
         if name is None or name == "":
             name = "NoName_"+str(Quantity.dummy_count)
             Quantity.dummy_count += 1
@@ -109,9 +142,9 @@ class Quantity(Symbol):
     #def __getitem__(self, sliced):
     #    slicedValue = None
     #   slicederror = None
-    #    if not self.value is None:
+    #    if self.value is not None:
     #        slicedValue = self.value[sliced]
-    #    if not self.error is None:
+    #    if self.error is not None:
     #        slicederror = self.error[sliced]
     #    q = Quantity()
     #    q.value = slicedValue
@@ -122,7 +155,7 @@ class Quantity(Symbol):
 
 
 
-def qtable(*quantities, html=True, maxcols=5, u_sys='si'):
+def qtable(*quantities, html=True, maxcols=5):
     """ Represent quantites in a table.
 
     Args:
@@ -131,7 +164,6 @@ def qtable(*quantities, html=True, maxcols=5, u_sys='si'):
             Else, LaTeX and html code is returned in a tuple.
         maxcols:
             Maximum number of columns. Table will be split.
-        u_sys: String specifying unit system.
 
     Returns:
         String of html code (html=True) or tuple (LaTeX table, html table).
@@ -140,8 +172,6 @@ def qtable(*quantities, html=True, maxcols=5, u_sys='si'):
     if len(quantities) == 0:
         return 'No quantities selected.'
 
-    # this does not look like a neat solution...
-    unit_system = import_module("errorpro." + u_sys).system
     cols = []
     if html:
         if not maxcols:
@@ -170,7 +200,7 @@ def qtable(*quantities, html=True, maxcols=5, u_sys='si'):
     for quant in quantities:
         assert isinstance(quant, Quantity)
 
-        value, error, unit = adjust_to_unit(quant, unit_system)
+        value, error, unit = adjust_to_unit(quant)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (

@@ -4,7 +4,6 @@ from sympy.functions import sign
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.simplifiers import dim_simplify
 from errorpro.dimensions.solvers import subs_symbols
-from errorpro.exceptions import DimensionError
 from sympy.parsing.sympy_parser import parse_expr
 from sympy import sympify
 
@@ -118,8 +117,14 @@ def parse_unit(unit, unit_system=None):
 def convert_to_unit(input_dimension, output_unit=None, only_base=False, unit_system=None):
 	"""
 	function that converts dimension to unit
-	With output_unit, you can specify a unit to convert to.
-	Returns factor and unit.
+
+	Args:
+	 - input_dimension: physical dimension as Dimension object
+	 - output_unit: if specified, this function will only calculate the corresponding factor
+	 - only_base: if True, will just use base units
+	 - unit_system: dictionary of unit system to use
+
+	Returns tuple of factor and unit.
 	"""
 	if unit_system is None:
 		unit_system = DEF_UNIT_SYSTEM
@@ -160,15 +165,19 @@ def convert_to_unit(input_dimension, output_unit=None, only_base=False, unit_sys
 	else:
 		factor, dim, unit=parse_unit(output_unit,unit_system)
 		if not input_dimension==dim:
-			raise DimensionError("unit %s does not fit dimension %s." % (output_unit,input_dimension))
+			raise RuntimeError("unit %s does not fit dimension %s." % (output_unit,input_dimension))
 
 	return (factor,output_unit)
 
-#internal
 def fits_in(unit,dimension,reciprocal):
 	"""
-	checks if unit fits in given dimension
-	reciprocal: 1 or -1 to show if unit is supposed to be fitted in as reciprocal or not
+	Checks if unit fits in given dimension
+	(just for use inside this module)
+
+	Args:
+	 - unit
+	 - dimension
+	 - reciprocal: 1 or -1 to show if unit is supposed to be fitted in as reciprocal or not
 	"""
 	assert isinstance(unit,Unit)
 	assert isinstance(dimension,Dimension)

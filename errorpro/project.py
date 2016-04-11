@@ -1,4 +1,4 @@
-from errorpro import exceptions, interpreter, mean_value, output, plotting, pytex, quantities, units
+from errorpro import interpreter, mean_value, output, plotting, pytex, quantities, units
 from errorpro.parsing.parsing import parse, parse_file
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.solvers import dim_solve
@@ -7,7 +7,7 @@ import numpy as np
 from IPython.display import Latex as render_latex
 from importlib import import_module
 
-def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
+def red_qtable(*quantities, html=True, maxcols=5):
     """ Represent quantites in a table.
 
     Args:
@@ -16,7 +16,6 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
             Else, LaTeX and html code is returned in a tuple.
         maxcols:
             Maximum number of columns. Table will be split.
-        u_sys: String specifying unit system.
 
     Returns:
         String of html code (html=True) or tuple (LaTeX table, html table).
@@ -25,8 +24,6 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
     if len(quantities) == 0:
         return 'No quantities selected.'
 
-    # this does not look like a neat solution...
-    unit_system = import_module("errorpro." + u_sys).system
     cols = []
     if html:
         if not maxcols:
@@ -56,7 +53,7 @@ def red_qtable(*quantities, html=True, maxcols=5, u_sys='si'):
     for quant in quantities:
         assert isinstance(quant, quantities.Quantity)
 
-        value, error, unit = quantities.adjust_to_unit(quant, unit_system)
+        value, error, unit = quantities.adjust_to_unit(quant)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
@@ -82,8 +79,7 @@ class Project():
     def __init__(self):
         self.data = {}
         # standard configuration
-        self.config = {"unit_system":"si",
-                       "fit_module":"scipy",
+        self.config = {"fit_module":"scipy",
                        "directory":".",
                        "plot_module":"matplotlib",
                        "auto_csv":"results.csv",
@@ -186,8 +182,8 @@ class Project():
         Args:
             quantity_to_assign: name or quantity object of new mean value
             quantities: one or more quantities names or objects of which mean value shall be calculated
-            weighted: if True, will weight mean value by errorainties (returns error if not possible)
-                      if False, will not weight mean value by errorainties
+            weighted: if True, will weight mean value by errors (returns error if not possible)
+                      if False, will not weight mean value by errors
                       if None, will try to weight mean value, but if at least one error is not given, will not weight it
             longname: description for mean value quantity
         """
@@ -230,10 +226,6 @@ class Project():
             ignore_dim: if True, will skip dimension check
         """
 
-        # TODO x- und y-range angeben
-
-        unit_system = import_module("errorpro." + self.config["unit_system"]).system
-
         if len(expr_pairs) == 0:#
             raise ValueError("nothing to plot specified.")
 
@@ -244,9 +236,9 @@ class Project():
             expr_pairs_obj.append( (quantities.parse_expr(expr_pair[0], self.data), quantities.parse_expr(expr_pair[1], self.data)) )
 
         if not xunit is None:
-            xunit = units.parse_unit(xunit, unit_system)[2]
+            xunit = units.parse_unit(xunit)[2]
         if not yunit is None:
-            yunit = units.parse_unit(yunit, unit_system)[2]
+            yunit = units.parse_unit(yunit)[2]
         if not xrange is None:
             xrange = [quantities.get_value(quantities.parse_expr(xrange[0], self.data)),
                       quantities.get_value(quantities.parse_expr(xrange[1], self.data))]
@@ -264,8 +256,8 @@ class Project():
             fit_function: function to fit, e.g. "n*t**2 + m*t + b"
             xydata: pair of x-quantity and y-quantity of data to fit to, e.g. ["t","U"]
             parameters: list of parameters in fit function, e.g. ["n","m","b"]
-            weighted: if True, will weight fit by errorainties (returns error if not possible)
-                      if False, will not weight fit by errorainties
+            weighted: if True, will weight fit by errors (returns error if not possible)
+                      if False, will not weight fit by errors
                       if None, will try to weight fit, but if at least one error is not given, will not weight it
             plot: Bool, if data and fit function should be plotted
             ignore_dim: if True, will ignore dimensions and just calculate in base units instead
@@ -330,7 +322,7 @@ class Project():
                 dim_func = quantities.get_dimension(fit_function)
                 # if it still doesn't work, raise error
                 if not dim_func == y_data.dim:
-                    raise exceptions.DimensionError("Finding dimensions of fit parameters was not sucessful.\n"\
+                    raise RuntimeError("Finding dimensions of fit parameters was not sucessful.\n"\
                                                      "Check fit function or specify parameter units manually.\n"\
                                                      "This error will occur until dimensions are right.")
 
@@ -373,7 +365,7 @@ class Project():
                 dim = q.dim
             else:
                 if not dim==q.dim:
-                    raise exceptions.DimensionError("dimension mismatch\n%s != %s" % (dim,q.dim))
+                    raise RuntimeError("dimension mismatch\n%s != %s" % (dim,q.dim))
 
             # check if values or errors are None
             if not values is None:
@@ -468,8 +460,6 @@ class Project():
             value_unit = unit
             error_unit = unit
 
-        unit_system = import_module("errorpro." + self.config["unit_system"]).system
-
         if value is None and error is None:
             raise ValueError("At least either value or error must be specified.")
 
@@ -485,7 +475,7 @@ class Project():
 
             # parse unit if given
             if not value_unit is None:
-                factor, value_dim, value_unit = units.parse_unit(value_unit, unit_system)
+                factor, value_dim, value_unit = units.parse_unit(value_unit)
 
             # parse value
             if isinstance(value, list) or isinstance(value, tuple):
@@ -507,7 +497,7 @@ class Project():
                 if not ignore_dim:
                     calculated_dim = quantities.get_dimension(value_formula)
                     if not value_dim is None and not calculated_dim == value_dim:
-                        raise exceptions.DimensionError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
+                        raise RuntimeError("dimension mismatch for '%s'\n%s != %s" % (name, value_dim, calculated_dim))
                     elif value_dim is None:
                         value_dim = calculated_dim
                 else:
@@ -542,7 +532,7 @@ class Project():
 
             # parse unit if given
             if not error_unit is None:
-                factor, error_dim, error_unit = units.parse_unit(error_unit, unit_system)
+                factor, error_dim, error_unit = units.parse_unit(error_unit)
 
             # parse value
             if isinstance(error, list) or isinstance(error, tuple):
@@ -578,7 +568,7 @@ class Project():
         # merge dimensions
         dim = value_dim
         if not dim is None and not error_dim is None and not dim == error_dim:
-            raise exceptions.DimensionError("value dimension and error dimension are not the same\n%s != %s" % (dim, error_dim))
+            raise RuntimeError("value dimension and error dimension are not the same\n%s != %s" % (dim, error_dim))
         if not error_dim is None:
             dim = error_dim
 
@@ -634,17 +624,15 @@ class Project():
             self.data[name].error = error_arr
 
     def table(self, *quants, maxcols=5, latexonly=False):
-        u_sys = self.config["unit_system"]
         quants = [self[quant] for quant in quants]
         if latexonly:
-            return quantities.qtable(*quants, html=False, maxcols=maxcols, u_sys=u_sys)[0]
+            return quantities.qtable(*quants, html=False, maxcols=maxcols)[0]
         else:
-            return render_latex(quantities.qtable(*quants, maxcols=maxcols, u_sys=u_sys))
+            return render_latex(quantities.qtable(*quants, maxcols=maxcols))
 
     def _repr_html_(self):
-        u_sys = self.config["unit_system"]
         quantities = list(self.data.values())
-        return quantities.qtable(*quantities, u_sys=u_sys)
+        return quantities.qtable(*quantities)
 
     def __getitem__(self, qname):
         return quantities.parse_expr(qname, self.data)

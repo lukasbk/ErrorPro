@@ -1,7 +1,6 @@
 from errorpro.quantities import get_value, get_error, adjust_to_unit, get_dimension, Quantity
 from errorpro.units import convert_to_unit
 from sympy import S
-from errorpro.exceptions import *
 from importlib import import_module
 
 def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yrange=None, ignore_dim=False):
@@ -34,12 +33,12 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
                 x_dim = get_dimension(x)
             else:
                 if not x_dim == get_dimension(x):
-                    raise DimensionError("dimension mismatch\n%s != %s" % (x_dim, get_dimension(x)))
+                    raise RuntimeError("dimension mismatch\n%s != %s" % (x_dim, get_dimension(x)))
             if y_dim is None:
                 y_dim = get_dimension(y)
             else:
                 if not y_dim == get_dimension(y):
-                    raise DimensionError("dimension mismatch\n%s != %s" % (y_dim, get_dimension(y)))
+                    raise RuntimeError("dimension mismatch\n%s != %s" % (y_dim, get_dimension(y)))
 
     	# if y contains x, it must be a function
         dummy = Quantity()
@@ -108,9 +107,9 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
                 y_values = y.value
                 y_errors = y.error
             else:
-                # get values and errorainties all in one unit
-                x_values, x_errors, xunit = adjust_to_unit(x, unit_system, prefer_unit = xunit)
-                y_values, y_errors, yunit = adjust_to_unit(y, unit_system, prefer_unit = yunit)
+                # get values and errors all in one unit
+                x_values, x_errors, xunit = adjust_to_unit(x, unit = xunit)
+                y_values, y_errors, yunit = adjust_to_unit(y, unit = yunit)
 
 
             # if only one thing on plot, write labels to x-axis and y-axis

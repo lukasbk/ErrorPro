@@ -2,10 +2,9 @@ from numpy import *
 from scipy.stats import t as student_t
 import numpy as np
 from errorpro.quantities import Quantity
-from errorpro.exceptions import DimensionError
 
 def mean_value(quantity_to_assign, quantities, weighted, force_weighted):
-	# put all values and errorainties into arrays
+	# put all values and errors into arrays
 	values = np.ndarray((0),dtype=np.float_)
 	errors = np.ndarray((0),dtype=np.float_)
 	dim = None
@@ -25,7 +24,7 @@ def mean_value(quantity_to_assign, quantities, weighted, force_weighted):
 			dim = q.dim
 		else:
 			if not dim == q.dim:
-				raise DimensionError("quantities don't have the same dimension: %s != %s" % (dim,q.dim))
+				raise RuntimeError("quantities don't have the same dimension: %s != %s" % (dim,q.dim))
 
 		# put into arrays
 		values = np.append(values, q.value)

@@ -4,6 +4,10 @@ from itertools import zip_longest
 import csv
 from sympy import S
 
+
+# old file, supposed to be removed soon
+
+
 def arrange_data(data, unit_system):
     """ arranges all quantities in data in a 2-dimensional array in order to be presented in some sort of table file
 
