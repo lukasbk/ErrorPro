@@ -13,7 +13,7 @@ class FormulaTestCase(unittest.TestCase):
         i_err = Symbol("I_I_err", positive=True)
 
         p.data["Z_I"] = Quantity("Z_I", "Impedanz")
-        p.data["Z_I"].uncert_depend = u_err * i_err + p.data["U_I"] * p.data["I_I"]**2
+        p.data["Z_I"].error_formula = u_err * i_err + p.data["U_I"] * p.data["I_I"]**2
 
         self.assertEqual(p.formula("Z_I",True), r"\sigma{\left (Z_{I} \right )} = I_{I}^{2} U_{I} + \sigma{\left (I_{I} \right )} \sigma{\left (U_{I} \right )}")
 

@@ -1,11 +1,10 @@
-from sympy import Symbol,N,S
+from sympy import Symbol,N,S,sympify
 from sympy.core import Mul,Pow
 from sympy.functions import sign
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.simplifiers import dim_simplify
 from errorpro.dimensions.solvers import subs_symbols
 from sympy.parsing.sympy_parser import parse_expr
-from sympy import sympify
 
 class Unit(Symbol):
 	"""
@@ -96,7 +95,6 @@ def parse_unit(unit, unit_system=None):
 			unit=S.One
 		else:
 			unit=parse_expr(unit,local_dict=unit_system)
-
 	for u in unit.free_symbols:
 		if not isinstance(u,Unit):
 			raise ValueError("%s is not a unit." % u.name)

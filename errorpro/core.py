@@ -5,15 +5,12 @@ from errorpro.units import parse_unit
 from errorpro.quantities import Quantity, get_value, get_error, get_dimension
 from errorpro.dimensions.dimensions import Dimension
 
-# TODO: test ignore_dim=True and specifying a unit
-# TODO: tests schreiben
-
 def assign(value, error=None, unit=None, name=None, longname=None, value_unit=None, error_unit=None, ignore_dim=False):
     """ function to create a new quantity
 
     Args:
-     value: number or string that can be parsed by numpy or sympy
-            expression. if it's a sympy expression containing quantities, it
+     value: number or string that can be parsed by numpy, or sympy
+            expression. If it's a sympy expression containing quantities, it
             will perform the calculation, otherwise it just saves the value.
      error: number that is saved as the value's uncertainty. this will replace
             any error coming from a calculation.
@@ -66,8 +63,7 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
 
         if ignore_dim:
             # with ignore_dim=True, calculated value is converted to given unit
-            if value_dim is not None:
-                value = np.float_(value_factor)*np.float_(value)
+            value = np.float_(value_factor)*np.float_(value)
         else:
             # calculate dimension from dependency
             calculated_dim = get_dimension(value_formula)
@@ -96,6 +92,11 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
     # if error can be calculated
     elif value_formula is not None:
         error, error_formula = get_error(value_formula)
+
+        if ignore_dim:
+            # with ignore_dim=True, calculated error is converted to given unit
+            error = np.float_(error_factor)*np.float_(error)
+
 
     q = Quantity(name, longname)
     q.value = value

@@ -24,7 +24,7 @@ if __name__ == '__main__':
     data["t"].dim = Dimension(time=1)
 
     data["v"].value = np.float_([33,23,14,10,7,3])
-    data["v"].uncert = np.float_([1,2,1.3,2.1,0.5,0.6])
+    data["v"].error = np.float_([1,2,1.3,2.1,0.5,0.6])
     data["v"].value_prefUnit = si["km"]/si["h"]
     data["v"].dim = Dimension(length=1,time=-1)
 

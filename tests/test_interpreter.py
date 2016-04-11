@@ -53,9 +53,9 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertEqual(program[0].longname, 'Force')
         self.assertEqual(program[0].name, 'F')
         self.assertEqual(program[0].value, '1.234 ')
-        self.assertEqual(program[0].uncert, '0.01')
+        self.assertEqual(program[0].error, '0.01')
         self.assertEqual(program[0].value_unit, 'N')
-        self.assertEqual(program[0].uncert_unit, 'N')
+        self.assertEqual(program[0].error_unit, 'N')
 
     def test_assignment_formula(self):
         ast = parse(
@@ -116,7 +116,7 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertEqual(program[1].value, ['2','4'])
         self.assertTrue(type(program[2]) is commands.Assignment)
         self.assertEqual(program[2].name, 's')
-        self.assertEqual(program[2].uncert, ['0.1','0.2'])
+        self.assertEqual(program[2].error, ['0.1','0.2'])
 
 if __name__ == '__main__':
     unittest.main()

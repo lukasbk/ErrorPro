@@ -5,7 +5,7 @@ import numpy as np
 from errorpro.project import Project
 from errorpro import commands
 
-#TODO Test for start parameters and weighting y-uncertainties
+#TODO Test for start parameters and weighting y-errorainties
 
 class fitTestCase(unittest.TestCase):
 
@@ -44,8 +44,8 @@ class fitTestCase(unittest.TestCase):
         g = commands.Assignment("y")
         g.value = ["6","3","2.1"]
         g.value_unit = "C"
-        g.uncert = ["1","1","2"]
-        g.uncert_unit = "1e-1*C"
+        g.error = ["1","1","2"]
+        g.error_unit = "1e-1*C"
         g.execute(p)
 
         h = commands.Assignment("m")
@@ -60,17 +60,17 @@ class fitTestCase(unittest.TestCase):
 
         p.fit("m*x+b",("x","y"),["m","b"])
         self.assertTrue(abs(p.data["m"].value - (-2.3)) < small)
-        self.assertTrue(abs(p.data["m"].uncert - 0.7) < small)
+        self.assertTrue(abs(p.data["m"].error - 0.7) < small)
         self.assertTrue(abs(p.data["b"].value - 8.06667) < small)
-        self.assertTrue(abs(p.data["b"].uncert - 1.257) < small)
+        self.assertTrue(abs(p.data["b"].error - 1.257) < small)
 
         p.fit("m*x+b",("x","y"),["m","b"],weighted=False)
         self.assertTrue(abs(p.data["m"].value - (-1.95)) < small)
-        self.assertTrue(abs(p.data["m"].uncert - 0.6062) < small)
+        self.assertTrue(abs(p.data["m"].error - 0.6062) < small)
         self.assertTrue(abs(p.data["b"].value - 7.6) < small)
-        self.assertTrue(abs(p.data["b"].uncert - 1.31) < small)
+        self.assertTrue(abs(p.data["b"].error - 1.31) < small)
 
-        p.data["y"].uncert = None
+        p.data["y"].error = None
         self.assertRaises(RuntimeError,p.fit,"m*x+b",("x","y"),["m","b"],weighted=True)
 
 if __name__ == '__main__':
