@@ -85,7 +85,7 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
         if error.shape == () or value.shape[-len(error.shape):] == error.shape:
             error = np.resize(error, value.shape)
         else:
-            raise RuntimeError("length of value and error don't match and"\
+            raise RuntimeError("length of value and error don't match and "\
                                 "can't be adjusted by duplicating.\n"\
                                 "%s and %s" % (value.shape, error.shape))
 
@@ -107,9 +107,6 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
         q.prefer_unit = value_unit
     else:
         q.prefer_unit = error_unit
-    if value is not None:
-        q.dim = value_dim
-    else:
-        q.dim = error_dim
+    q.dim = value_dim
 
     return q
