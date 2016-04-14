@@ -1,9 +1,12 @@
 import numpy as np
-from sympy import S, Expr
+from sympy import S, Expr, latex, Function, Symbol
 
 from errorpro.units import parse_unit
 from errorpro.quantities import Quantity, get_value, get_error, get_dimension
 from errorpro.dimensions.dimensions import Dimension
+from errorpro import pytex
+
+from IPython.display import Latex as render_latex
 
 def assign(value, error=None, unit=None, name=None, longname=None, value_unit=None, error_unit=None, ignore_dim=False):
     """ function to create a new quantity
@@ -110,3 +113,36 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
     q.dim = value_dim
 
     return q
+
+def formula(quantity):
+    """ returns error formula of quantity as latex code
+
+    Args:
+        quantity: Quantity object
+
+    Return:
+        latex code string of error formula
+    """
+
+    assert isinstance(quantity, Quantity)
+
+    if quantity.error_formula is None:
+        raise ValueError("quantity '%s' doesn't have an error formula." % quantity.name)
+
+    formula = quantity.error_formula
+    if isinstance(formula,str):
+        return formula
+    else:
+        # replace "_err" by sigma function
+        sigma = Function("\sigma")
+        for var in formula.free_symbols:
+            if var.name[-4:] == "_err":
+                formula = formula.subs(var, sigma( Symbol(var.name[:-4], **var._assumptions)))
+        latex_code = latex(sigma(quantity)) + " = " + latex(formula)
+
+    form_button, form_code = pytex.hide_div('Formula', '$%s$' % (latex_code) , hide = False)
+    latex_button, latex_code = pytex.hide_div('LaTex', latex_code)
+    res = 'Error Formula for %s<div width=20px/>%s%s<hr/>%s<br>%s' % (
+        '$%s$' % latex(quantity), form_button, latex_button, form_code, latex_code)
+
+    return render_latex(res)

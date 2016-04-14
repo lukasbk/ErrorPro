@@ -188,7 +188,7 @@ def qtable(*quantities, html=True, maxcols=5):
             html.append(h)
             ltx.append(l)
 
-        htmlb, htmlc = pytex.hide_div('Data', ''.join(html))
+        htmlb, htmlc = pytex.hide_div('Data', ''.join(html), hide = False)
         ltxb, ltxc = pytex.hide_div('LaTeX', ''.join(ltx))
 
         res = 'Displaying: %s<div width=20px/>%s%s<hr/>%s<br>%s' % (

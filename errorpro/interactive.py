@@ -16,7 +16,7 @@ def init(namespace, register_only = False):
      namespace: dictionary representing the namespace to work in
      register_only: bool. If True, namespace will be saved without modifying.
                     If False, IPython will be configured, mathematical functions and
-                    constants will be added and ErrorPro functions will be added.
+                    constants and ErrorPro functions will be added.
     """
 
     # save in global variable
