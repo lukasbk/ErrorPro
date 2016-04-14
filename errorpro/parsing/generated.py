@@ -14,16 +14,18 @@
 from __future__ import print_function, division, absolute_import, unicode_literals
 
 from grako.parsing import graken, Parser
-from grako.util import re, RE_FLAGS
+from grako.util import re, RE_FLAGS, generic_main  # noqa
 
 
-__version__ = (2016, 1, 27, 23, 17, 0, 2)
+__version__ = (2016, 4, 14, 9, 55, 34, 3)
 
 __all__ = [
     'DatParser',
     'DatSemantics',
     'main'
 ]
+
+KEYWORDS = set([])
 
 
 class DatParser(Parser):
@@ -34,6 +36,7 @@ class DatParser(Parser):
                  eol_comments_re=None,
                  ignorecase=None,
                  left_recursion=True,
+                 keywords=KEYWORDS,
                  **kwargs):
         super(DatParser, self).__init__(
             whitespace=whitespace,
@@ -42,6 +45,7 @@ class DatParser(Parser):
             eol_comments_re=eol_comments_re,
             ignorecase=ignorecase,
             left_recursion=left_recursion,
+            keywords=keywords,
             **kwargs
         )
 
@@ -72,73 +76,9 @@ class DatParser(Parser):
             with self._option():
                 self._token("'")
                 self._pattern(r"[^']*")
-                self.ast['@'] = self.last_node
+                self.name_last_node('@')
                 self._token("'")
             self._error("expecting one of: '")
-
-    @graken()
-    def _function_name_(self):
-        self._pattern(r'\w+')
-
-    @graken()
-    def _parameter_name_(self):
-        self._pattern(r'\w+')
-
-    @graken()
-    def _parameter_value_(self):
-        with self._choice():
-            with self._option():
-                self._formula_()
-            with self._option():
-                self._token('[')
-                with self._optional():
-                    self._parameter_value_()
-                    self.ast.setlist('@', self.last_node)
-
-                    def block1():
-                        self._token(',')
-                        self._parameter_value_()
-                        self.ast.setlist('@', self.last_node)
-                    self._closure(block1)
-                self._token(']')
-            self._error('expecting one of: [')
-
-    @graken()
-    def _parameter_(self):
-        with self._choice():
-            with self._option():
-                self._parameter_name_()
-                self._token('=')
-                self._parameter_value_()
-            with self._option():
-                self._parameter_value_()
-            self._error('no available options')
-
-    @graken()
-    def _parameters_(self):
-        with self._optional():
-            self._parameter_()
-            self.ast.setlist('@', self.last_node)
-
-            def block1():
-                self._token(',')
-                self._parameter_()
-                self.ast.setlist('@', self.last_node)
-            self._closure(block1)
-
-    @graken()
-    def _function_(self):
-        self._function_name_()
-        self.ast['name'] = self.last_node
-        self._token('(')
-        self._parameters_()
-        self.ast['parameters'] = self.last_node
-        self._token(')')
-
-        self.ast._define(
-            ['name', 'parameters'],
-            []
-        )
 
     @graken()
     def _variable_name_(self):
@@ -150,7 +90,7 @@ class DatParser(Parser):
             with self._option():
                 self._token('"')
                 self._pattern(r'[^\"]+')
-                self.ast['@'] = self.last_node
+                self.name_last_node('@')
                 self._token('"')
             with self._option():
 
@@ -160,40 +100,39 @@ class DatParser(Parser):
                     with self._if():
                         self._pattern(r'[^,\[\]=\(\)\{\}<>\s]+')
                 self._positive_closure(block2)
-
-                self.ast['@'] = self.last_node
+                self.name_last_node('@')
             self._error('expecting one of: " [^,\\[\\]=\\(\\)\\{\\}<>\\s]+')
 
     @graken()
     def _error_(self):
         self._token('<')
         self._formula_()
-        self.ast['@'] = self.last_node
+        self.name_last_node('@')
         self._token('>')
 
     @graken()
     def _unit_(self):
         self._token('[')
         self._formula_()
-        self.ast['@'] = self.last_node
+        self.name_last_node('@')
         self._token(']')
 
     @graken()
     def _assignment_(self):
         with self._optional():
             self._longname_()
-            self.ast['longname'] = self.last_node
+            self.name_last_node('longname')
         self._variable_name_()
-        self.ast['name'] = self.last_node
+        self.name_last_node('name')
         self._token('=')
         self._formula_()
-        self.ast['value'] = self.last_node
+        self.name_last_node('value')
         with self._optional():
             self._error_()
-            self.ast['error'] = self.last_node
+            self.name_last_node('error')
         with self._optional():
             self._unit_()
-            self.ast['unit'] = self.last_node
+            self.name_last_node('unit')
 
         self.ast._define(
             ['longname', 'name', 'value', 'error', 'unit'],
@@ -223,15 +162,15 @@ class DatParser(Parser):
     def _multi_assignment_spec_(self):
         with self._optional():
             self._longname_()
-            self.ast['longname'] = self.last_node
+            self.name_last_node('longname')
         self._variable_name_()
-        self.ast['name'] = self.last_node
+        self.name_last_node('name')
         with self._optional():
             self._error_()
-            self.ast['error'] = self.last_node
+            self.name_last_node('error')
         with self._optional():
             self._unit_()
-            self.ast['unit'] = self.last_node
+            self.name_last_node('unit')
 
         self.ast._define(
             ['longname', 'name', 'error', 'unit'],
@@ -241,12 +180,12 @@ class DatParser(Parser):
     @graken()
     def _multi_assignment_header_(self):
         self._multi_assignment_spec_()
-        self.ast.setlist('@', self.last_node)
+        self.add_last_node_to_name('@')
 
         def block1():
             self._token(',')
             self._multi_assignment_spec_()
-            self.ast.setlist('@', self.last_node)
+            self.add_last_node_to_name('@')
         self._closure(block1)
         self._newline_()
 
@@ -259,9 +198,8 @@ class DatParser(Parser):
 
         def block0():
             self._multi_assignment_value_()
-            self.ast.setlist('@', self.last_node)
+            self.add_last_node_to_name('@')
         self._positive_closure(block0)
-
         self._newline_()
 
     @graken()
@@ -269,7 +207,7 @@ class DatParser(Parser):
 
         def block0():
             self._multi_assignment_row_()
-            self.ast.setlist('@', self.last_node)
+            self.add_last_node_to_name('@')
             self._whitespace_()
         self._closure(block0)
 
@@ -278,10 +216,10 @@ class DatParser(Parser):
         self._token('{')
         self._whitespace_()
         self._multi_assignment_header_()
-        self.ast['header'] = self.last_node
+        self.name_last_node('header')
         self._whitespace_()
         self._multi_assignment_rows_()
-        self.ast['rows'] = self.last_node
+        self.name_last_node('rows')
         self._whitespace_()
         self._token('}')
 
@@ -294,18 +232,18 @@ class DatParser(Parser):
     def _python_line_(self):
         self._token('>')
         self._pattern(r'[^\n\r]*')
-        self.ast['@'] = self.last_node
+        self.name_last_node('@')
 
     @graken()
     def _python_code_(self):
         with self._group():
             self._python_line_()
-            self.ast.setlist('code', self.last_node)
+            self.add_last_node_to_name('code')
 
             def block1():
                 self._newline_()
                 self._python_line_()
-                self.ast.setlist('code', self.last_node)
+                self.add_last_node_to_name('code')
             self._closure(block1)
 
         self.ast._define(
@@ -320,13 +258,11 @@ class DatParser(Parser):
                 with self._option():
                     self._assignment_()
                 with self._option():
-                    self._function_()
-                with self._option():
                     self._multi_assignment_()
                 with self._option():
                     self._python_code_()
                 self._error('no available options')
-        self.ast['@'] = self.last_node
+        self.name_last_node('@')
         with self._group():
             with self._choice():
                 with self._option():
@@ -341,7 +277,7 @@ class DatParser(Parser):
 
         def block0():
             self._command_()
-            self.ast.setlist('@', self.last_node)
+            self.add_last_node_to_name('@')
             self._whitespace_()
         self._closure(block0)
         self._check_eof()
@@ -355,24 +291,6 @@ class DatSemantics(object):
         return ast
 
     def formula(self, ast):
-        return ast
-
-    def function_name(self, ast):
-        return ast
-
-    def parameter_name(self, ast):
-        return ast
-
-    def parameter_value(self, ast):
-        return ast
-
-    def parameter(self, ast):
-        return ast
-
-    def parameters(self, ast):
-        return ast
-
-    def function(self, ast):
         return ast
 
     def variable_name(self, ast):
@@ -427,8 +345,18 @@ class DatSemantics(object):
         return ast
 
 
-def main(filename, startrule, trace=False, whitespace=None, nameguard=None):
-    import json
+def main(
+        filename,
+        startrule,
+        trace=False,
+        whitespace=None,
+        nameguard=None,
+        comments_re=None,
+        eol_comments_re=None,
+        ignorecase=None,
+        left_recursion=True,
+        **kwargs):
+
     with open(filename) as f:
         text = f.read()
     parser = DatParser(parseinfo=False)
@@ -438,46 +366,17 @@ def main(filename, startrule, trace=False, whitespace=None, nameguard=None):
         filename=filename,
         trace=trace,
         whitespace=whitespace,
-        nameguard=nameguard)
+        nameguard=nameguard,
+        ignorecase=ignorecase,
+        **kwargs)
+    return ast
+
+if __name__ == '__main__':
+    import json
+    ast = generic_main(main, DatParser, name='Dat')
     print('AST:')
     print(ast)
     print()
     print('JSON:')
     print(json.dumps(ast, indent=2))
     print()
-
-if __name__ == '__main__':
-    import argparse
-    import string
-    import sys
-
-    class ListRules(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string):
-            print('Rules:')
-            for r in DatParser.rule_list():
-                print(r)
-            print()
-            sys.exit(0)
-
-    parser = argparse.ArgumentParser(description="Simple parser for Dat.")
-    parser.add_argument('-l', '--list', action=ListRules, nargs=0,
-                        help="list all rules and exit")
-    parser.add_argument('-n', '--no-nameguard', action='store_true',
-                        dest='no_nameguard',
-                        help="disable the 'nameguard' feature")
-    parser.add_argument('-t', '--trace', action='store_true',
-                        help="output trace information")
-    parser.add_argument('-w', '--whitespace', type=str, default=string.whitespace,
-                        help="whitespace specification")
-    parser.add_argument('file', metavar="FILE", help="the input file to parse")
-    parser.add_argument('startrule', metavar="STARTRULE",
-                        help="the start rule for parsing")
-    args = parser.parse_args()
-
-    main(
-        args.file,
-        args.startrule,
-        trace=args.trace,
-        whitespace=args.whitespace,
-        nameguard=not args.no_nameguard
-    )
