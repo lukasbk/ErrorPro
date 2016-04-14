@@ -1,3 +1,5 @@
+from errorpro.core import assign
+from quantities import parse_expr
 
 class PythonCode():
 	def __init__(self, code):
@@ -16,6 +18,13 @@ class Assignment():
 		self.error = None
 		self.error_unit = None
 
-	def execute(self, p):
+	def execute(self, namespace):
+		if self.value is not None:
+		 	self.value = parse_expr(self.value, namespace)
+		if self.error is not None:
+		 	self.error = parse_expr(self.error, namespace)
 
-		p.assign(self.name, longname=self.longname, value=self.value, value_unit=self.value_unit, error=self.error, error_unit=self.error_unit)
+
+		namespace[self.name] = assign(self.value, error=self.error,\
+					name=self.name, longname=self.longname,\
+					value_unit=self.value_unit, error_unit=self.error_unit)
