@@ -62,12 +62,8 @@ def calculation(calc):
     # parse
     syntax_tree = parse(calc)
 
-    # interpret
-    commands = interpreter.interpret(syntax_tree)
-
     # execute
-    for c in commands:
-        c.execute(ns)
+    ns = interpreter.interpret(syntax_tree, ns)
 
 @register_line_cell_magic
 def eq(line, cell=None):
