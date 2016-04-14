@@ -44,12 +44,8 @@ def load_file(filename):
     # parse
     syntax_tree = parse_file(filename)
 
-    # interpret
-    commands = interpreter.interpret(syntax_tree)
-
     # execute
-    for c in commands:
-        c.execute(ns)
+    ns = interpreter.interpret(syntax_tree, ns)
 
 def save_to_csv():
     pass
