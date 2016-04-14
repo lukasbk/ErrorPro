@@ -1,78 +1,41 @@
 from errorpro import commands
 import re
 
-def createAssignmentCommand(value, header):
-	name = header.name
-	if name.endswith("_err"):
-		name = name[:-4]
-		command = commands.Assignment(name)
-		command.error = value
-		command.error_unit = header.unit
-		if header.error is not None:
-			raise RuntimeError("Variables with _err notation cannot use the <...> notation.")
-		if header.longname is not None:
-			raise RuntimeError("Variables with _err notation cannot have a long name: %s"%header.longname)
-	else:
-		command = commands.Assignment(name)
-		command.value = value
-		command.longname = header.longname
-		command.value_unit = header.unit
-		command.error = header.error
-		if header.error is not None:
-			command.error_unit = header.unit
-	return command
-
-def interpret (syntacticProgram):
+def interpret (program, data):
 	"""
-	returns list of commands
+	executes the program
 	"""
-	program = []
-	for syntacticCommand in syntacticProgram:
-		if syntacticCommand.parseinfo.rule == "assignment":
-			program.append(createAssignmentCommand(syntacticCommand.value, syntacticCommand))
-		elif syntacticCommand.parseinfo.rule == "multi_assignment":
-			# create one command for each column
-			for columnIndex in range(len(syntacticCommand.header)):
+	for command in program:
+		if command.parseinfo.rule == "assignment":
+			data[command.name] = assign (command.value, command.error, command.unit, command.name, command.longname)
+		elif command.parseinfo.rule == "multi_assignment":
+			# collect columns:
+			columns = {}
+			for columnIndex in range(len(command.header)):
 				values = []
-				for row in syntacticCommand.rows:
+				for row in command.rows:
 					values.append(row[columnIndex])
-				header = syntacticCommand.header[columnIndex]
-				program.append(createAssignmentCommand(values, header))
-		elif syntacticCommand.parseinfo.rule == "python_code":
-			code = '\n'.join(syntacticCommand.code)
-			program.append(commands.PythonCode(code))
-		elif syntacticCommand.parseinfo.rule == "function":
-			if syntacticCommand.name == "fit":
-				fitFunction = syntacticCommand.parameters[0]
-				xData = syntacticCommand.parameters[1]
-				yData = syntacticCommand.parameters[2]
-				params = syntacticCommand.parameters[3]
-				program.append(commands.Fit(fitFunction, xData, yData, params))
-			elif syntacticCommand.name == "set":
-				name = syntacticCommand.parameters[0]
-				value = syntacticCommand.parameters[1]
-				program.append(commands.Set(name, value))
-			elif syntacticCommand.name == "meanvalue":
-				name = syntacticCommand.parameters[0]
-				longname = None
-				reMatch = re.match('"(.*)"[ \t]+([-_\w]+)', name)
-				if reMatch is not None:
-					longname = reMatch.group(1)
-					name = reMatch.group(2)
-				quantities = syntacticCommand.parameters[1]
+				columns[command.header[columnIndex].name]["header"] = command.header[columnIndex]
+				columns[command.header[columnIndex].name]["values"] = values
+			# pair value columns with err-columns:
+			for column in columns:
+				if column["header"].name.endswith("_err"):
+					continue
+				if column["header"].name + "_err" in columns:
+					errorColumn = columns[column["header"].name + "_err"]
+					if errorColumn["header"].error is not None:
+						raise RuntimeError("Variables with _err notation cannot use the <...> notation:  %s"%errorColumn["header"].name)
+					if errorColumn["header"].header.longname is not None:
+						raise RuntimeError("Variables with _err notation cannot have a long name: %s"%errorColumn["header"].longname)
+					if column["header"].error is not None:
+						raise RuntimeError("Variables with a corresponding _err column cannot have a general error specified: %s"%column["header"].name)
+					data[column["header"].name] = assign (column["value"], errorColumn["value"], column["header"].unit, column["header"].name, column["header"].longname, None, errorColumn["header"].unit)
+				else:
+					data[column["header"].name] = assign (column["value"], column["header"].error, column["header"].unit, column["header"].name, column["header"].longname)
 
-				command = commands.MeanValue(name)
-				command.longname = longname
-				command.quantities = quantities
-
-				program.append(command)
-			elif syntacticCommand.name == "plot":
-				command = commands.Plot()
-				command.expr_pairs = syntacticCommand.parameters[0]
-				program.append(command)
-			else:
-				raise RuntimeError("Unknown Function '%s' " % syntacticCommand.name)
+		elif command.parseinfo.rule == "python_code":
+			code = '\n'.join(command.code)
+			exec (code)
 		else:
 			raise RuntimeError("Unknown syntactic command type")
-
-	return program
+	return data

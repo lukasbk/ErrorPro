@@ -2,13 +2,6 @@ subformula_without_brackets = /[^=,\(\)\[\]<>\n\r']+/ ;
 subformula = [ subformula_without_brackets ] "(" subformula ")" [ subformula ] | subformula_without_brackets ;
 formula = subformula | "'" @:/[^']*/ "'" ;
 
-function_name = /\w+/;
-parameter_name = /\w+/;
-parameter_value = formula | "[" [ @+:parameter_value { "," @+:parameter_value } ] "]";
-parameter = parameter_name "=" parameter_value | parameter_value ;
-parameters = [ @+:parameter { "," @+:parameter } ];
-function = name:function_name "(" parameters:parameters ")";
-
 variable_name = /[\w]+/;
 longname = '"' @:/[^\"]+/ '"' | @:{ /[^,\[\]=\(\)\{\}<>\s]+/ /[\t ]+/ &/[^,\[\]=\(\)\{\}<>\s]+/ }+ ;
 error = "<" @:formula ">";
@@ -29,5 +22,5 @@ multi_assignment = "{" whitespace header:multi_assignment_header whitespace rows
 python_line = ">" @:/[^\n\r]*/;
 python_code = ( code+:python_line { newline code+:python_line });
 
-command = @:( assignment | function | multi_assignment | python_code ) (newline | $);
+command = @:( assignment | multi_assignment | python_code ) (newline | $);
 program = whitespace { @+:command whitespace } $;
