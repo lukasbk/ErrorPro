@@ -2,9 +2,9 @@ import numpy as np
 from sympy import S, Expr, latex, Function, Symbol
 
 from errorpro.units import parse_unit
-from errorpro.quantities import Quantity, get_value, get_error, get_dimension
+from errorpro.quantities import Quantity, get_value, get_error, get_dimension, qtable
 from errorpro.dimensions.dimensions import Dimension
-from errorpro import pytex
+from errorpro import fitting, pytex
 
 from IPython.display import Latex as render_latex
 
@@ -140,9 +140,67 @@ def formula(quantity):
                 formula = formula.subs(var, sigma( Symbol(var.name[:-4], **var._assumptions)))
         latex_code = latex(sigma(quantity)) + " = " + latex(formula)
 
+	# render two show/hide buttons
     form_button, form_code = pytex.hide_div('Formula', '$%s$' % (latex_code) , hide = False)
     latex_button, latex_code = pytex.hide_div('LaTex', latex_code)
     res = 'Error Formula for %s<div width=20px/>%s%s<hr/>%s<br>%s' % (
         '$%s$' % latex(quantity), form_button, latex_button, form_code, latex_code)
 
     return render_latex(res)
+    
+def table(*quants, maxcols=5, latex_only=False):
+        if latex_only:
+            return qtable(*quants, html=False, maxcols=maxcols)[0]
+        else:
+            return render_latex(qtable(*quants, maxcols=maxcols))
+
+def fit(func, xdata, ydata, params, weighted=None, ignore_dim=False):
+	""" fits function to data
+
+	Args:
+		func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
+		xdata: sympy Expr of x-axis data to fit to
+		ydata: sympy Expr of y-axis data
+		params: list of parameters in fit function, e.g. [m, n, b]
+		weighted: if True, will weight fit by errors (returns error if not possible)
+				  if False, will not weight fit by errors
+				  if None, will try to weight fit, but if at least one error is not given, will not weight it
+		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
+	"""
+	
+	# if x- or y-data is an expression, put into quantity
+	if not isinstance(xdata, Quantity):
+		# TODO: This must get better!
+		dummy = assign(xdata)
+		func = func.subs(xdata, dummy)
+		xdata = dummy
+	if not isinstance(ydata, Quantity):
+		ydata = assign(ydata)
+	
+	# check if dimension is right
+	if not ignore_dim:
+		try:
+			dim_func = get_dimension(func)
+		except ValueError:
+			dim_func = None
+		if not dim_func == ydata.dim:
+			# try to solve for dimensionless parameters
+			known_dimensions = {xdata.name: xdata.dim}
+			known_dimensions = dim_solve(func, ydata.dim, known_dimensions)
+			
+			# TODO: CONTINUE WORKING HERE...
+			
+			
+			
+			for q_name in known_dimensions:
+				if q_name in self.data:
+					if not self.data[q_name].dim == known_dimensions[q_name]:
+						self.data[q_name].dim = known_dimensions[q_name]
+						self.data[q_name].prefer_unit = None
+			dim_func = quantities.get_dimension(fit_function)
+			# if it still doesn't work, raise error
+			if not dim_func == y_data.dim:
+				raise RuntimeError("Finding dimensions of fit parameters was not sucessful.\n"\
+									"Check fit function or specify parameter units manually.\n"\
+									"This error will occur until dimensions are right.")
+	
