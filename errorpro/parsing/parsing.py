@@ -42,6 +42,8 @@ class DatSemantics(object):
         if ast is None:
             return ast
         else:
+            if isinstance(ast, list):
+                ast = (x for y in ast for x in y) #flatten array
             return ''.join(ast).strip()
 
     def _default(self, ast):

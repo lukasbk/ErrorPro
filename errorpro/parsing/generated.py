@@ -17,7 +17,7 @@ from grako.parsing import graken, Parser
 from grako.util import re, RE_FLAGS, generic_main  # noqa
 
 
-__version__ = (2016, 4, 14, 9, 55, 34, 3)
+__version__ = (2016, 4, 15, 9, 42, 17, 4)
 
 __all__ = [
     'DatParser',
