@@ -49,7 +49,7 @@ def interpret (program, namespace):
 
 		elif command.parseinfo.rule == "python_code":
 			code = '\n'.join(command.code)
-			exec (code)
+			exec (code, None, namespace)
 		else:
 			raise RuntimeError("Unknown syntactic command type")
 	return namespace
