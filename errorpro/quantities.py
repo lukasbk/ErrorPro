@@ -138,6 +138,10 @@ class Quantity(Symbol):
     def _repr_html_(self):
         return qtable(self)
 
+    @property
+    def shape(self):
+        return self.value.shape
+
     # TODO implementing this method screws up dependent quantities
     #def __getitem__(self, sliced):
     #    slicedValue = None

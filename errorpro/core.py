@@ -4,6 +4,7 @@ from sympy import S, Expr, latex, Function, Symbol
 from errorpro.units import parse_unit
 from errorpro.quantities import Quantity, get_value, get_error, get_dimension, qtable
 from errorpro.dimensions.dimensions import Dimension
+from errorpro.dimensions.solvers import dim_solve
 from errorpro import fitting, pytex
 
 from IPython.display import Latex as render_latex
@@ -120,8 +121,8 @@ def formula(quantity):
     Args:
         quantity: Quantity object
 
-    Return:
-        latex code string of error formula
+    Returns:
+        two HTML buttons showing actual formula and its latex code
     """
 
     assert isinstance(quantity, Quantity)
@@ -130,14 +131,18 @@ def formula(quantity):
         raise ValueError("quantity '%s' doesn't have an error formula." % quantity.name)
 
     formula = quantity.error_formula
+
+    # if formula is only a string
     if isinstance(formula,str):
         return formula
+    # if formula is a sympy expression
     else:
         # replace "_err" by sigma function
         sigma = Function("\sigma")
         for var in formula.free_symbols:
             if var.name[-4:] == "_err":
                 formula = formula.subs(var, sigma( Symbol(var.name[:-4], **var._assumptions)))
+        # add equals sign
         latex_code = latex(sigma(quantity)) + " = " + latex(formula)
 
 	# render two show/hide buttons
@@ -147,60 +152,126 @@ def formula(quantity):
         '$%s$' % latex(quantity), form_button, latex_button, form_code, latex_code)
 
     return render_latex(res)
-    
-def table(*quants, maxcols=5, latex_only=False):
-        if latex_only:
-            return qtable(*quants, html=False, maxcols=maxcols)[0]
-        else:
-            return render_latex(qtable(*quants, maxcols=maxcols))
 
-def fit(func, xdata, ydata, params, weighted=None, ignore_dim=False):
-	""" fits function to data
+def table(*quants, maxcols=5, latex_only=False, table_only=False):
+    """ shows quantities and their values in a table
+    Args:
+     - quants: quantities to be shown
+     - maxcols: maximum number of columns
+     - latex_only: if True, only returns latex code. If False, returns both latex
+                   and actual table.
 
-	Args:
+    """
+    if latex_only:
+        return qtable(*quants, html=False, maxcols=maxcols)[0]
+    elif table_only:
+        return qtable(*quants, html=False, maxcols=maxcols)[1]
+    else:
+        return render_latex(qtable(*quants, maxcols=maxcols))
+
+def params(*names):
+    """ creates empty quantities in order to be used as fit parameters
+    Args:
+     names: names of quantities to be created. Can be either one string using
+            whitespaces as a separator or multiple strings.
+
+    Returns:
+    tuple of empty quantities
+    """
+    if len(names) == 1:
+        names = names[0].split()
+    return (Quantity(name) for name in names)
+
+
+def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, yaxis_of_xdata=None, weighted=None, absolute_sigma=True, ignore_dim=False):
+    """ fits function to data and returns results in table and plot
+
+    Args:
 		func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
-		xdata: sympy Expr of x-axis data to fit to
-		ydata: sympy Expr of y-axis data
+		xdata: sympy expression or list of sympy expressions of x-axis data to fit to
+		ydata: sympy Expr of y-axis data to fit to
 		params: list of parameters in fit function, e.g. [m, n, b]
-		weighted: if True, will weight fit by errors (returns error if not possible)
-				  if False, will not weight fit by errors
-				  if None, will try to weight fit, but if at least one error is not given, will not weight it
+        xvar: if specified, this is the quantity in fit function to be used as
+              x-axis variable. Specify if xdata is not a quantity but an expression.
+        ydata_axes: int or tuple of ints. Specifies which axes of the ydata to use
+        			for the fit. For other axes, fit will be repeated separately.
+        yaxis_of_xdata: int or tuple of ints. Must have the same length as
+                        xdata tuple. Specifies which axis in ydata belongs to each
+                        xdata quantity. Default is (1,2,3,...).
+		weighted: If True, will weight fit by errors (returns error if not possible).
+				  If False, will not weight fit by errors.
+				  If None, will try to weight fit, but if at least one error is
+                  not given, will not weight it.
+    	absolute_sigma: bool. If False, uses errors only to weight data points.
+					    Overall magnitude of errors doesn't affect output errors.
+					    If True, estimated output errors will be based on input
+                        error magnitude.
 		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
-	"""
-	
-	# if x- or y-data is an expression, put into quantity
-	if not isinstance(xdata, Quantity):
-		# TODO: This must get better!
-		dummy = assign(xdata)
-		func = func.subs(xdata, dummy)
-		xdata = dummy
-	if not isinstance(ydata, Quantity):
-		ydata = assign(ydata)
-	
+    """
+    if isinstance(ydata_axes, int):
+        ydata_axes = (ydata_axes,)
+
+    # TODO: Hier geht's weiter
+
+    # if xvar is not specified, use xdata as x-axis variable
+    if xvar is None:
+        xvar = xdata
+    else:
+        assert isinstance(xvar, Quantity)
+
+    # if xdata is an expression, parse it
+    if not isinstance(xdata, Quantity):
+        xdata = assign(xdata)
+
+    # then replace xvar by xdata, if necessary
+    if not xvar is xdata:
+        func = func.subs(xvar, xdata)
+
+    # if ydata is an expression, parse it
+    if not isinstance(ydata, Quantity):
+        ydata = assign(ydata)
+
 	# check if dimension is right
-	if not ignore_dim:
-		try:
-			dim_func = get_dimension(func)
-		except ValueError:
-			dim_func = None
-		if not dim_func == ydata.dim:
-			# try to solve for dimensionless parameters
-			known_dimensions = {xdata.name: xdata.dim}
-			known_dimensions = dim_solve(func, ydata.dim, known_dimensions)
-			
-			# TODO: CONTINUE WORKING HERE...
-			
-			
-			
-			for q_name in known_dimensions:
-				if q_name in self.data:
-					if not self.data[q_name].dim == known_dimensions[q_name]:
-						self.data[q_name].dim = known_dimensions[q_name]
-						self.data[q_name].prefer_unit = None
-			dim_func = quantities.get_dimension(fit_function)
+    if not ignore_dim:
+        # find out function dimension
+        try:
+            func_dim = get_dimension(func)
+        except (ValueError, RuntimeError):
+            func_dim = None
+        # if dimensions don't match
+        if not func_dim == ydata.dim:
+			# try to find right parameters dimensions
+            known_dim = {}
+            for q in func.free_symbols:
+                if not q in params:
+                    known_dim[q.name] = q.dim
+            known_dim = dim_solve(func, ydata.dim, known_dim)
+            # save dimensions to quantities
+            for q in func.free_symbols:
+                if not q.dim == known_dim[q.name]:
+                    q.dim = known_dim[q.name]
+                    q.prefer_unit = None
+            func_dim = get_dimension(func)
 			# if it still doesn't work, raise error
-			if not dim_func == y_data.dim:
-				raise RuntimeError("Finding dimensions of fit parameters was not sucessful.\n"\
+            if not func_dim == ydata.dim:
+                raise RuntimeError("Finding dimensions of fit parameters was not successful.\n"\
 									"Check fit function or specify parameter units manually.\n"\
 									"This error will occur until dimensions are right.")
-	
+
+    # fit
+    values, errors = fitting.fit(func, xdata, ydata, params, weighted)
+
+    # save results
+    for i, p in enumerate(params):
+        p.value = values[i]
+        p.value_formula = "fit"
+        p.error = errors[i]
+        p.error_formula = "fit"
+
+    # render two show/hide buttons
+    form_button, form_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
+    latex_button, latex_code = pytex.hide_div('Plot', 'blub')
+    res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br>%s'\
+            % (form_button, latex_button, form_code, latex_code)
+
+    return render_latex(res)
