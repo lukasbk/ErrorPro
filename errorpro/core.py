@@ -160,7 +160,6 @@ def table(*quants, maxcols=5, latex_only=False, table_only=False):
      - maxcols: maximum number of columns
      - latex_only: if True, only returns latex code. If False, returns both latex
                    and actual table.
-
     """
     if latex_only:
         return qtable(*quants, html=False, maxcols=maxcols)[0]
@@ -183,7 +182,7 @@ def params(*names):
     return (Quantity(name) for name in names)
 
 
-def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, yaxis_of_xdata=None, weighted=None, absolute_sigma=True, ignore_dim=False):
+def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, weighted=None, absolute_sigma=False, ignore_dim=False):
     """ fits function to data and returns results in table and plot
 
     Args:
@@ -193,10 +192,11 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, yaxis_of_xdata=None
 		params: list of parameters in fit function, e.g. [m, n, b]
         xvar: if specified, this is the quantity in fit function to be used as
               x-axis variable. Specify if xdata is not a quantity but an expression.
+              Name or value of xvar don't matter.
         ydata_axes: int or tuple of ints. Specifies which axes of the ydata to use
         			for the fit. For other axes, fit will be repeated separately.
         yaxis_of_xdata: int or tuple of ints. Must have the same length as
-                        xdata tuple. Specifies which axis in ydata belongs to each
+        (only an idea)  xdata tuple. Specifies which axis in ydata belongs to each
                         xdata quantity. Default is (1,2,3,...).
 		weighted: If True, will weight fit by errors (returns error if not possible).
 				  If False, will not weight fit by errors.
@@ -208,10 +208,8 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, yaxis_of_xdata=None
                         error magnitude.
 		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
     """
-    if isinstance(ydata_axes, int):
-        ydata_axes = (ydata_axes,)
 
-    # TODO: Hier geht's weiter
+    # TODO: TESTING!!
 
     # if xvar is not specified, use xdata as x-axis variable
     if xvar is None:
@@ -259,7 +257,7 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, yaxis_of_xdata=None
 									"This error will occur until dimensions are right.")
 
     # fit
-    values, errors = fitting.fit(func, xdata, ydata, params, weighted)
+    values, errors = fitting.fit(func, xdata, ydata, params, ydata_axes, weighted, absolute_sigma)
 
     # save results
     for i, p in enumerate(params):
