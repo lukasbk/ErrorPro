@@ -187,7 +187,8 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, weighted=None, abso
 
     Args:
 		func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
-		xdata: sympy expression or list of sympy expressions of x-axis data to fit to
+		xdata: sympy expression or list of sympy expressions of x-axis
+			   data to fit to. xdata quantities must be 1-dimensional.
 		ydata: sympy Expr of y-axis data to fit to
 		params: list of parameters in fit function, e.g. [m, n, b]
         xvar: if specified, this is the quantity in fit function to be used as
@@ -211,19 +212,25 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, weighted=None, abso
 
     # TODO: TESTING!!
 
-    # if xvar is not specified, use xdata as x-axis variable
-    if xvar is None:
-        xvar = xdata
-    else:
-        assert isinstance(xvar, Quantity)
+	# make xdata and xvar a tuple if it's not already
+	if not hasattr(xdata, '__iter__'):
+		xdata = (xdata,)
+	if xvar is not None:
+		if not hasattr(xvar, '__iter__'):
+			xvar = (xvar,)
+		assert len(xvar)==len(xdata)
+	else:
+		# if xvar is not specified, use xdata as x-axis variable
+		xvar = xdata
+	
+	for xaxis in range(len(xdata)):
+		# if xdata is an expression, parse it
+		if not isinstance(xdata[xaxis], Quantity):
+			xdata[xaxis] = assign(xdata[xaxis])
 
-    # if xdata is an expression, parse it
-    if not isinstance(xdata, Quantity):
-        xdata = assign(xdata)
-
-    # then replace xvar by xdata, if necessary
-    if not xvar is xdata:
-        func = func.subs(xvar, xdata)
+		# then replace xvar by xdata, if necessary
+		if not xvar[xaxis] is xdata[xaxis]:
+			func = func.subs(xvar[xaxis], xdata[xaxis])
 
     # if ydata is an expression, parse it
     if not isinstance(ydata, Quantity):

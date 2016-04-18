@@ -5,11 +5,11 @@ import numpy as np
 def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=False):
 	""" fits function to data
 	Args:
-	- xdata: Quantity of x-axis data
+	- xdata: Quantity of x-axis data or list of quantities
 	- ydata: Quantity of y-axis data
 	- params: list of Quantity objects. parameters to be fitted.
     - ydata_axes: int or tuple of ints. Specifies which axes of the ydata to use
-    			  for the fit. For other axes, fit will be repeated separately.
+    			  for the fit. On other axes, fit will be repeated separately.
 	- weighted: bool. If fit should be weighted by errors or not.
 	- absolute_sigma: bool. If False, uses errors only to weight data points.
 					  Overall magnitude of errors doesn't affect output errors.
@@ -18,8 +18,9 @@ def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=
 	"""
 
 	# create fit function
-	args = [xdata] + params
+	args = list(xdata) + list(params)
 	np_func = lambdify(tuple(args), func, "numpy")
+	def fit_func(x, 
 
 	# list starting values
 	start_params = []
@@ -44,6 +45,11 @@ def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=
 	# make ydata_axes an array
 	if isinstance(ydata_axes, int):
 		ydata_axes = (ydata_axes,)
+		
+	if not len(ydata_axes) == len(xdata):
+		raise ValueError("amount of xdata 1-dim. quantities must equal"\
+						"the amount of used ydata axes.\n %s != %s"\
+						 % (len(xdata),len(ydata_axes)))
 
     # number of dimensions to iterate
 	dim_num = len(ydata.shape)-len(ydata_axes)
