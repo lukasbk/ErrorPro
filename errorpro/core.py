@@ -5,7 +5,7 @@ from errorpro.units import parse_unit
 from errorpro.quantities import Quantity, get_value, get_error, get_dimension, qtable
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.solvers import dim_solve
-from errorpro import fitting, pytex
+from errorpro import fitting, plotting, pytex
 
 from IPython.display import Latex as render_latex
 
@@ -250,6 +250,7 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
             for q in func.free_symbols:
                 if not q in params:
                     known_dim[q.name] = q.dim
+            print(func, ydata.dim, known_dim)
             known_dim = dim_solve(func, ydata.dim, known_dim)
             # save dimensions to quantities
             for q in func.free_symbols:
@@ -280,3 +281,30 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
             % (form_button, latex_button, form_code, latex_code)
 
     return render_latex(res)
+
+def plot(*expr_pairs, save=None, xunit=None, yunit=None, xrange=None, yrange=None, ignore_dim=False):
+    """ Plots data or functions
+
+    Args:
+        expr_pairs: one or more pair of quantity on x-axis and on y-axis. e.g. ["p","V"]
+                    y-axis can also be a function. e.g. ["t", "7*exp(t/t0)"]
+        save: string of file name without extension. if specified, plot will be saved to '<save>.png'
+        xunit: unit on x-axis. if not given, will find unit on its own
+        yunit: unit on y-axis. if not given, will find unit on its own
+        xrange: pair of x-axis range, e.g. [-5,10]
+        yrange: pair of y-axis range
+        ignore_dim: if True, will skip dimension check
+    """
+
+    if len(expr_pairs) == 0:
+        raise ValueError("nothing to plot specified.")
+
+    if not xunit is None:
+        xunit = parse_unit(xunit)[2]
+    if not yunit is None:
+        yunit = parse_unit(yunit)[2]
+    if not xrange is None:
+        xrange = [get_value(xrange[0]), get_value(xrange[1])]
+    if not yrange is None:
+        yrange = [get_value(yrange[0]), get_value(yrange[1])]
+    return plotting.plot(expr_pairs, save=save, xunit=xunit, yunit=yunit, xrange=xrange, yrange=yrange, ignore_dim=ignore_dim)

@@ -3,7 +3,7 @@ from errorpro.units import convert_to_unit
 from sympy import S
 from importlib import import_module
 
-def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yrange=None, ignore_dim=False):
+def plot(expr_pairs, save=None, xunit=None, yunit=None, xrange=None, yrange=None, ignore_dim=False, module="matplotlib"):
 
     # TODO it should be possible to e.g. plot the function [t,2*r] if r depends on t
 
@@ -59,8 +59,8 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
 
             if not ignore_dim:
                 # get factors
-                x_factor, xunit = convert_to_unit(x_dim, outputUnit=xunit)
-                y_factor, yunit = convert_to_unit(y_dim, outputUnit=yunit)
+                x_factor, xunit = convert_to_unit(x_dim, output_unit=xunit)
+                y_factor, yunit = convert_to_unit(y_dim, output_unit=yunit)
 
                 # scale function to units
                 y = y.subs(x,x*x_factor) / y_factor
@@ -131,11 +131,11 @@ def plot(expr_pairs, config, save=None, xunit=None, yunit=None, xrange=None, yra
         y_label = ("" if yunit == S.One else "[" + str(yunit) + "]")
 
     # plot
-    if config["plot_module"] == "matplotlib":
+    if module == "matplotlib":
         from errorpro import plot_mat
         return plot_mat.plot(data_sets, functions, save=save, xrange=xrange, yrange=yrange, x_label=x_label, y_label=y_label)
-    elif config["plot_module"] == "gnuplot":
+    elif module == "gnuplot":
         from errorpro import plot_gnu
         return plot_gnu.plot(data_sets, functions, save=save, xrange=xrange, yrange=yrange, x_label=x_label, y_label=y_label)
     else:
-        raise ValueError("There is not plot module called '%s'" % config["plot_module"])
+        raise ValueError("There is not plot module called '%s'" % module)

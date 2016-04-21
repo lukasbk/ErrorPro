@@ -39,6 +39,9 @@ def init(namespace, register_only = False):
                    "save_to_csv":save_to_csv})
 
 def load_file(filename):
+    """
+    imports assignments and calculations from file
+    """
     global ns
 
     # parse

@@ -143,9 +143,13 @@ class Quantity(Symbol):
         return self.value.shape
 
     # TODO implementing this method screws up dependent quantities
+    # seems like lambdify doesn't like this
+    # lambdify((z**2).free_symbols, (z**2), modules="numpy")
+    # creates a function with no parameters...
+
     #def __getitem__(self, sliced):
     #    slicedValue = None
-    #   slicederror = None
+    #    slicederror = None
     #    if self.value is not None:
     #        slicedValue = self.value[sliced]
     #    if self.error is not None:
