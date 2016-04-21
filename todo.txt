@@ -1,44 +1,29 @@
 
 TODO
 
-Mathis:
-
+Ausgabekram:
 - \phantom{0} erscheint manchmal in HTML-Ausgabe, 10hoch mit Punkt statt Kreuz, *10^2 ist ziemlich nervig
 - pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
-- Fehlerformel auch nice ausgeben. Oder zumindest keine doppelten Backslashes
 - kurze/ausklappbare Fehlerausgabe?
 - Extrastelle nicht nur bei 1 und 2?
 - Option für Ausgabe der exakten Werte?
 
-Machen:
-- absolute_sigma=True beim Fitten?
-- Fehler beheben:
-assign("epsilon",[-2,-1.5,-1,-0.5,0,0.5,1,1.5,2])
-assign("alpha",[-0.003,-0.003,-0.002,-0.001,0.0001,0.001,0.001,0.0015,0.002])
-assign("m",0.0013)
-assign("b",-0.0005)
-fit("m*epsilon+b",["epsilon","alpha"],["m","b"])
+To discuss:
+- mean_value als sympy Funktion
+  -> eigene lambdify-Funktion mit cot-Ersetzung wie in plot_mat
+  -> benutzerdefinierte Funktionen und sowas wie Betrag, Signum
+- plot Schnittstelle
+  -> Achsen, Daten und Funktionen labeln beim Plotten
+- schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
+  -> Was ist das Problem?
 
-- eigene lambdify-Funktion mit cot-Ersetzung wie in plot_mat
-- Damit klarkommen, dass scipy-Fit auch keinen/unendliche Fehler ausgeben kann..
-  Bessere Fehlerberechnung beim Fitten?
-- Achsen, Daten und Funktionen labeln beim Plotten
+Zu tun:
 - Warum liefert mean_value bei gleichen Fehlern trotzdem mit weighted=True und weighted=False unterschiedliche Ergebnisse? Sollte er bei gleichen Fehlern weighted ausschalten? Und das ansagen?
+- Kommt das Programm mit NaN's in data sets klar?
+- Rundungstests und andere tests!
 
 Später:
-- benutzerdefinierte Funktionen und sowas wie Betrag, Signum
-- None in data sets iwie erlauben ??
-- gnuplot: keine doppelten Variablendefinitionen
-- Rundungstests
-- schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
-
-2. Priorität
 - Anleitung
-- Fehlerformel-Datei
-- tests:
-  - assign: dim_ignore mit extra Einheit
-- auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
-- assign prüft nicht, ob eine uncert-liste nur Zahlen enthält, oder?
+- Bessere Fehlerberechnung beim Fitten?
+- gnuplot: keine doppelten Variablendefinitionen
 
-3. Priorität
-- Umgang mit mehrdimensionalen Arrays
