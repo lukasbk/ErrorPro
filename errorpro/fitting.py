@@ -2,7 +2,25 @@ from scipy.optimize import curve_fit
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 
-def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=False):
+def cartesian(arrays, out=None):
+	"""
+	Generate a cartesian product of input arrays but with swapped axis order.
+	"""
+
+	n = np.prod([x.size for x in arrays])
+	if out is None:
+		out = np.zeros([len(arrays), n])
+
+
+	m = n / arrays[0].size
+	out[0,:] = np.repeat(arrays[0], m)
+	if arrays[1:]:
+		cartesian(arrays[1:], out=out[1:,0:m])
+		for j in range(1, arrays[0].size):
+			out[1:, j*m:(j+1)*m] = out[1:, 0:m]
+	return out
+
+def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sigma=False):
 	""" fits function to data
 	Args:
 	- xdata: Quantity of x-axis data or list of quantities
@@ -17,10 +35,22 @@ def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=
 					  error magnitude.
 	"""
 
+	#TODO: TESTING!!!
+
+	# make xdata an array
+	if not hasattr(xdata, '__iter__'):
+		xdata = (xdata,)
+
 	# create fit function
 	args = list(xdata) + list(params)
-	np_func = lambdify(tuple(args), func, "numpy")
-	def fit_func(x, 
+	np_func = lambdify(args, func, "numpy")
+
+	# unfortunately, this must be done in order to pass a right function to curve_fit
+	param_names = ['p'+str(i) for i in range(len(params))]
+	x_refs = ['x[%s]' % str(i) for i in range(len(xdata))]
+	lambdastr = 'lambda x, %s: f(%s)' % (', '.join(param_names),
+											   ', '.join(x_refs+param_names))
+	func = eval(lambdastr, {'f': np_func})
 
 	# list starting values
 	start_params = []
@@ -42,10 +72,14 @@ def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=
 	if weighted is True and ydata.error is None:
 		raise RuntimeError("can't perform weighted fit because error of '%s' is not set." % ydata.name)
 
+	# if ydata_axes is not set, use as many of the first ones to fit to xdata
+	if ydata_axes is None:
+		ydata_axes = tuple(range(0,len(xdata)))
+
 	# make ydata_axes an array
 	if isinstance(ydata_axes, int):
 		ydata_axes = (ydata_axes,)
-		
+
 	if not len(ydata_axes) == len(xdata):
 		raise ValueError("amount of xdata 1-dim. quantities must equal"\
 						"the amount of used ydata axes.\n %s != %s"\
@@ -73,16 +107,22 @@ def fit(func, xdata, ydata, params, ydata_axes=0, weighted=None, absolute_sigma=
 						  + [len(start_params)])
 	params_err = params_opt.copy()
 
-    # iterate over the first d axes
+	# cartesian of xdata
+	if len(xdata) == 1:
+		xvalues = xdata[0].value
+	else:
+		xvalues = cartesian([x.value for x in xdata])
+
+    # iterate over the first <dim_num> axes
 	for i in np.ndindex(yvalues.shape[:dim_num]):
 		if yerrors is not None:
-			err = yerrors[i]
+			err = yerrors[i].flatten()
 			absolute = absolute_sigma
 		else:
 			err = None
 			absolute = False
 		# perform fit
-		params_opt[i], params_covar = curve_fit (np_func,xdata.value, yvalues[i],
+		params_opt[i], params_covar = curve_fit (func, xvalues, yvalues[i].flatten(),
 					sigma=err, p0=start_params, absolute_sigma=absolute)
 
 		# calculate errors

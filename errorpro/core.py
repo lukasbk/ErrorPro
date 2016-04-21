@@ -182,7 +182,7 @@ def params(*names):
     return (Quantity(name) for name in names)
 
 
-def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, weighted=None, absolute_sigma=False, ignore_dim=False):
+def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, absolute_sigma=False, ignore_dim=False):
     """ fits function to data and returns results in table and plot
 
     Args:
@@ -213,24 +213,24 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=0, weighted=None, abso
     # TODO: TESTING!!
 
 	# make xdata and xvar a tuple if it's not already
-	if not hasattr(xdata, '__iter__'):
-		xdata = (xdata,)
-	if xvar is not None:
-		if not hasattr(xvar, '__iter__'):
-			xvar = (xvar,)
-		assert len(xvar)==len(xdata)
-	else:
+    if not hasattr(xdata, '__iter__'):
+        xdata = (xdata,)
+    if xvar is not None:
+        if not hasattr(xvar, '__iter__'):
+            xvar = (xvar,)
+        assert len(xvar)==len(xdata)
+    else:
 		# if xvar is not specified, use xdata as x-axis variable
-		xvar = xdata
-	
-	for xaxis in range(len(xdata)):
+        xvar = xdata
+
+    for xaxis in range(len(xdata)):
 		# if xdata is an expression, parse it
-		if not isinstance(xdata[xaxis], Quantity):
-			xdata[xaxis] = assign(xdata[xaxis])
+        if not isinstance(xdata[xaxis], Quantity):
+            xdata[xaxis] = assign(xdata[xaxis])
 
 		# then replace xvar by xdata, if necessary
-		if not xvar[xaxis] is xdata[xaxis]:
-			func = func.subs(xvar[xaxis], xdata[xaxis])
+        if not xvar[xaxis] is xdata[xaxis]:
+            func = func.subs(xvar[xaxis], xdata[xaxis])
 
     # if ydata is an expression, parse it
     if not isinstance(ydata, Quantity):
