@@ -46,7 +46,7 @@ def dim_simplify(expr):
         if isinstance(args[0], Dimension):
             return args[0].pow(args[1])
         else:
-            raise ValueError("Basis of Pow is not a Dimension: %s" % args[0])
+            return None
     elif isinstance(expr, Add):
         dimargs = [arg for arg in args if isinstance(arg, Dimension)]
         if (all(isinstance(arg, Dimension) or arg==None for arg in args) or
@@ -66,4 +66,4 @@ def dim_simplify(expr):
                 return None
         return result
 
-    raise ValueError("Cannot be simplifed: %s", expr)
+    return None
