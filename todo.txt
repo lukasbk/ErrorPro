@@ -14,6 +14,7 @@ To discuss:
   -> benutzerdefinierte Funktionen und sowas wie Betrag, Signum
 - plot Schnittstelle
   -> Achsen, Daten und Funktionen labeln beim Plotten
+- slicing
 - schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
   -> Was ist das Problem?
 
