@@ -5,13 +5,11 @@ Mathis:
 
 - \phantom{0} erscheint manchmal in HTML-Ausgabe, 10hoch mit Punkt statt Kreuz, *10^2 ist ziemlich nervig
 - pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
-- Fehlerformel auch nice ausgeben. Oder zumindest keine doppelten Backslashes
 - kurze/ausklappbare Fehlerausgabe?
 - Extrastelle nicht nur bei 1 und 2?
 - Option für Ausgabe der exakten Werte?
 
 Machen:
-- absolute_sigma=True beim Fitten?
 - Fehler beheben:
 assign("epsilon",[-2,-1.5,-1,-0.5,0,0.5,1,1.5,2])
 assign("alpha",[-0.003,-0.003,-0.002,-0.001,0.0001,0.001,0.001,0.0015,0.002])
@@ -35,10 +33,5 @@ Später:
 2. Priorität
 - Anleitung
 - Fehlerformel-Datei
-- tests:
-  - assign: dim_ignore mit extra Einheit
+- tests
 - auch Funktionen plotten, deren y-Wert den x-Wert nicht direkt enthält, sondern nur davon abhängige Variablen
-- assign prüft nicht, ob eine uncert-liste nur Zahlen enthält, oder?
-
-3. Priorität
-- Umgang mit mehrdimensionalen Arrays
