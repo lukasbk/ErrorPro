@@ -1,4 +1,4 @@
-from sympy import  Symbol, Dummy, sympify, latex, diff, sqrt as sym_sqrt
+from sympy import  Symbol, Dummy, Expr, sympify, latex, diff, sqrt as sym_sqrt
 from sympy.utilities.lambdify import lambdify
 import numpy as np
 
@@ -70,13 +70,16 @@ def adjust_to_unit (quant, unit=None):
 def get_value(expr):
     """ calculates number value of an expression possibly containing quantities
     """
-    calcFunction=lambdify(expr.free_symbols, expr, modules="numpy")
-    depValues=[]
-    for var in expr.free_symbols:
-        if var.value is None:
-            raise RuntimeError ("quantity '%s' doesn't have a value, yet." % var.name)
-        depValues.append(var.value)
-    return calcFunction(*depValues)
+    if isinstance(expr, Expr) and not expr.is_number:
+        calcFunction=lambdify(expr.free_symbols, expr, modules="numpy")
+        depValues=[]
+        for var in expr.free_symbols:
+            if var.value is None:
+                raise RuntimeError ("quantity '%s' doesn't have a value, yet." % var.name)
+            depValues.append(var.value)
+        return calcFunction(*depValues)
+    else:
+        return np.float_(expr)
 
 def get_error(expr):
     """ calculates error of an expression possibly containing quantities

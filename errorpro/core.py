@@ -2,10 +2,12 @@ import numpy as np
 from sympy import S, Expr, latex, Function, Symbol
 
 from errorpro.units import parse_unit
-from errorpro.quantities import Quantity, get_value, get_error, get_dimension, qtable
+from errorpro.quantities import Quantity, get_value, get_error, get_dimension,\
+                                convert_to_unit, qtable, adjust_to_unit
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.solvers import dim_solve
-from errorpro import fitting, plotting, pytex
+from errorpro import plotting_matplotlib as matplot, plotting_gnuplot as gnuplot,\
+                     fitting, pytex
 
 from IPython.display import Latex as render_latex
 
@@ -250,7 +252,6 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
             for q in func.free_symbols:
                 if not q in params:
                     known_dim[q.name] = q.dim
-            print(func, ydata.dim, known_dim)
             known_dim = dim_solve(func, ydata.dim, known_dim)
             # save dimensions to quantities
             for q in func.free_symbols:
@@ -282,29 +283,160 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
 
     return render_latex(res)
 
-def plot(*expr_pairs, save=None, xunit=None, yunit=None, xrange=None, yrange=None, ignore_dim=False):
+def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
+         yrange=None, legend=None, size=None, save_to=None, return_fig=False,
+         ignore_dim=False, module="matplotlib"):
     """ Plots data or functions
 
     Args:
-        expr_pairs: one or more pair of quantity on x-axis and on y-axis. e.g. ["p","V"]
-                    y-axis can also be a function. e.g. ["t", "7*exp(t/t0)"]
-        save: string of file name without extension. if specified, plot will be saved to '<save>.png'
-        xunit: unit on x-axis. if not given, will find unit on its own
-        yunit: unit on y-axis. if not given, will find unit on its own
-        xrange: pair of x-axis range, e.g. [-5,10]
-        yrange: pair of y-axis range
-        ignore_dim: if True, will skip dimension check
+        plots: triplets of things to plot: x, y, options
+               e.g. plot(t, h**2, {'color': 'r'},
+                         t, 2*t*exp(t/t0), {'title':'theoretical curve'})
+
+    new concept:
+    plot(x1, y1, {color:"#fff", points:"o", ...}, x2, y2, {color:"r"}, xunit="m", yrange=[0,10], ...)
+
+    data set properties:
+        color, point style, line style/width, title, errorbars
+    figure properties:
+        legend, xunit, yunit, xrange, yrange, imagesize, save?/return_fig, ignore_dim
     """
 
-    if len(expr_pairs) == 0:
-        raise ValueError("nothing to plot specified.")
+    #TODO: Tests: dependency unpacking, ...
 
+    # parse units
     if not xunit is None:
         xunit = parse_unit(xunit)[2]
     if not yunit is None:
         yunit = parse_unit(yunit)[2]
+
+    # parse ranges
     if not xrange is None:
         xrange = [get_value(xrange[0]), get_value(xrange[1])]
     if not yrange is None:
         yrange = [get_value(yrange[0]), get_value(yrange[1])]
-    return plotting.plot(expr_pairs, save=save, xunit=xunit, yunit=yunit, xrange=xrange, yrange=yrange, ignore_dim=ignore_dim)
+
+    x_dim = None
+    y_dim = None
+
+    # iterate all data/functions to plot
+    i = 0
+    data_sets = []
+    functions = []
+    while i+1<len(plots):
+
+        # get x, y and options from plots array
+        x = plots[i]
+        y = plots[i+1]
+        if i+2<len(plots) and (isinstance(plots[i+2], dict)
+                            or isinstance(plots[i+2], str)):
+            options = plots[i+2]
+            i += 3
+        else:
+            options = {}
+            i += 2
+
+        if ignore_dim:
+            xunit = S.One
+            yunit = S.One
+
+        if not ignore_dim:
+            # check dimensions
+            if x_dim is None:
+                x_dim = get_dimension(x)
+            else:
+                if not x_dim == get_dimension(x):
+                    raise RuntimeError("dimension mismatch\n%s != %s"
+                                        % (x_dim, get_dimension(x)))
+            if y_dim is None:
+                y_dim = get_dimension(y)
+            else:
+                if not y_dim == get_dimension(y):
+                    raise RuntimeError("dimension mismatch\n%s != %s"
+                                        % (y_dim, get_dimension(y)))
+
+        # find out if it's a function or data points
+        if isinstance(x, Quantity):
+            # if x is a single quantity ...
+            unpacked_y = _find_all_dependencies(y, x)
+            if unpacked_y.has(x):
+                # ... and is part of the dependency of y,
+                # then it must be a function
+
+                # add label if not specified
+                if not 'label' in options:
+                    if isinstance(y, Quantity):
+                        options['label'] = ((y.longname + " ") if y.longname else "") + str(y)
+                    else:
+                        options['label'] = str(unpacked_y)
+
+                y = unpacked_y
+
+                if not ignore_dim:
+                    # get factors
+                    x_factor, xunit = convert_to_unit(x_dim, output_unit=xunit)
+                    y_factor, yunit = convert_to_unit(y_dim, output_unit=yunit)
+
+                    # scale function to units
+                    y = y.subs(x,x*x_factor) / y_factor
+
+                functions.append((x, y, options))
+                continue
+
+        # otherwise, it's a data set
+
+        # add label if not specified
+        if not 'label' in options:
+            if isinstance(y, Quantity):
+                options['label'] = ((y.longname + " ") if y.longname else "") + str(y)
+            else:
+                options['label'] = str(y)
+
+        # exchange expressions by dummy quantities
+        if not isinstance(x, Quantity):
+            x = assign(x)
+        if not isinstance(y, Quantity):
+            y = assign(y)
+
+        if ignore_dim:
+            xvalues = x.value
+            xerrors = x.error
+            yvalues = y.value
+            yerrors = y.error
+        else:
+            # get values and errors all in one unit
+            xvalues, xerrors, xunit = adjust_to_unit(x, unit = xunit)
+            yvalues, yerrors, yunit = adjust_to_unit(y, unit = yunit)
+
+        data_sets.append(((xvalues, xerrors), (yvalues, yerrors), options))
+
+    if xlabel is None:
+        xlabel = "" if xunit == S.One else "[" + str(xunit) + "]"
+    if ylabel is None:
+        ylabel = "" if yunit == S.One else "[" + str(yunit) + "]"
+
+    # pass on to plotting module
+    if module == 'matplotlib':
+        out = matplot.plot(data_sets, functions, xlabel=xlabel, ylabel=ylabel,
+                           xrange=xrange, yrange=yrange, legend=legend, size=size,
+                           save_to=save_to)
+        if return_fig:
+            return out
+    elif module == 'gnuplot':
+        return gnuplot.plot(data_sets, functions, save=save_to, xrange=xrange,
+                            yrange=yrange, x_label=xlabel, y_label=ylabel)
+    else:
+        raise ValueError("plotting module '%s' doesn't exist." % module)
+
+def _find_all_dependencies(expr, find, ignore=[]):
+    """
+    unpacks quantities in <expr> until all dependencies from <find> are found
+    """
+    unpacked = expr
+    for q in expr.free_symbols:
+        if not q in ignore and isinstance(q.value_formula, Expr):
+            ignore.append(q)
+            content = _find_all_dependencies(q.value_formula, find=find, ignore=ignore)
+            if find in content.free_symbols:
+                unpacked = unpacked.subs(q, content)
+    return unpacked

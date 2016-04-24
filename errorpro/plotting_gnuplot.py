@@ -2,6 +2,8 @@ import shlex, subprocess
 import tempfile
 from IPython.display import Image
 
+# TODO: adjust everything to new structure
+
 def plot(data_sets, functions, save=None, xrange=None, yrange=None, x_label="", y_label=""):
 
     gp = Gnuplot(data_sets, functions, xrange, yrange, x_label, y_label)
