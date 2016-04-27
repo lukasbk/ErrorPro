@@ -1,27 +1,27 @@
 
 TODO
 
-Ausgabekram:
-- \phantom{0} erscheint manchmal in HTML-Ausgabe, 10hoch mit Punkt statt Kreuz, *10^2 ist ziemlich nervig
-- pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
-- kurze/ausklappbare Fehlerausgabe?
+Kurzfristig zu tun:
+- \phantom{0} erscheint manchmal in HTML-Ausgabe, 10hoch mit Punkt statt Kreuz,
 - Extrastelle nicht nur bei 1 und 2?
-- Option für Ausgabe der exakten Werte?
+- Warum liefert mean_value bei gleichen Fehlern trotzdem mit weighted=True und weighted=False unterschiedliche Ergebnisse? Sollte er bei gleichen Fehlern weighted ausschalten? Und das ansagen?
+- Rundungstests und andere tests!
 
-To discuss:
+In einfacher Form kurzfristig:
 - mean_value als sympy Funktion
   -> eigene lambdify-Funktion mit cot-Ersetzung wie in plot_mat
   -> benutzerdefinierte Funktionen und sowas wie Betrag, Signum
-- plot Schnittstelle
-  -> Achsen, Daten und Funktionen labeln beim Plotten
 - slicing
-- schönere Formatierung der Fehlerformel (z.B. Ausmultiplizieren vs. Ausklammern?)
-  -> Was ist das Problem?
+
+Ausgabekram:
+- *10^2 ist ziemlich nervig
+- pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
+- kurze/ausklappbare Fehlerausgabe?
+- Option für Ausgabe der exakten Werte?
 
 Zu tun:
-- Warum liefert mean_value bei gleichen Fehlern trotzdem mit weighted=True und weighted=False unterschiedliche Ergebnisse? Sollte er bei gleichen Fehlern weighted ausschalten? Und das ansagen?
 - Kommt das Programm mit NaN's in data sets klar?
-- Rundungstests und andere tests!
+- schönere Formatierung der Fehlerformel -> simplify-Optionen
 
 Später:
 - Anleitung
