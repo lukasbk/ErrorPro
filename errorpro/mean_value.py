@@ -3,21 +3,12 @@ from scipy.stats import t as student_t
 import numpy as np
 from errorpro.quantities import Quantity
 
-def mean_value(quantity_to_assign, quantities, weighted, force_weighted):
+def mean(quantities, weighted, name=None, longname=None):
 	# put all values and errors into arrays
 	values = np.ndarray((0),dtype=np.float_)
 	errors = np.ndarray((0),dtype=np.float_)
 	dim = None
 	for q in quantities:
-		if q.value is None:
-			raise RuntimeError("quantity '%s' has no value, yet." % q.name)
-		# if one error is missing, can't do weighted mean value
-		if q.error is None or q.error.any()==0:
-			if weighted is True:
-				if force_weighted:
-					raise RuntimeError("at least one error missing or zero for calculating mean value '%s'" % quantity_to_assign.name)
-				else:
-					weighted = False
 
 		# check dimension
 		if dim is None:
@@ -42,11 +33,14 @@ def mean_value(quantity_to_assign, quantities, weighted, force_weighted):
 		error_formula = "standard mean value error"
 
 	# save things
-	quantity_to_assign.value = mean_value
-	quantity_to_assign.value_formula = value_formula
-	quantity_to_assign.error = stat_error
-	quantity_to_assign.error_formula = error_formula
-	quantity_to_assign.dim = dim
+	mean_quant = Quantity(name=name, longname=longname)
+	mean_quant.value = mean_value
+	mean_quant.value_formula = value_formula
+	mean_quant.error = stat_error
+	mean_quant.error_formula = error_formula
+	mean_quant.dim = dim
+
+	return mean_quant
 
 # calculate student-t-factor
 def get_t_factor(sample_number, confidence_interval = 0.683):

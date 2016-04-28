@@ -124,7 +124,6 @@ class Quantity(Symbol):
         else:
             self = Symbol.__new__(cls, name)
 
-        self.count = Quantity.quantity_count
         Quantity.quantity_count += 1
 
         self.abbrev = name
@@ -220,7 +219,7 @@ def qtable(*quantities, html=True, maxcols=5):
         column = [header]
         if error is None:
             if isinstance(value, np.ndarray):
-                column.extend(pytex.align_num_list(value))
+                column.extend(pytex.align_num_list(value, math_env=True))
             else:
                 column.append(pytex.align_num(value))
         else:

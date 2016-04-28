@@ -8,6 +8,8 @@ from IPython.core.magic import register_line_cell_magic
 from sympy import functions as funcs
 import sympy
 
+__all__ = ['init', 'load_file', 'save_to_csv', 'calculation']
+
 ns = None
 
 def init(namespace, register_only = False):

@@ -1,5 +1,5 @@
 import numpy as np
-from sympy import S, Expr, latex, Function, Symbol
+from sympy import S, Expr, latex, Function, Symbol, simplify as simp
 
 from errorpro.units import parse_unit
 from errorpro.quantities import Quantity, get_value, get_error, get_dimension,\
@@ -7,9 +7,11 @@ from errorpro.quantities import Quantity, get_value, get_error, get_dimension,\
 from errorpro.dimensions.dimensions import Dimension
 from errorpro.dimensions.solvers import dim_solve
 from errorpro import plotting_matplotlib as matplot, plotting_gnuplot as gnuplot,\
-                     fitting, pytex
+                     fitting, pytex, mean_value
 
 from IPython.display import Latex as render_latex
+
+__all__ = ['assign', 'mean', 'table', 'params', 'fit', 'plot', 'concat', 'slice']
 
 def assign(value, error=None, unit=None, name=None, longname=None, value_unit=None, error_unit=None, ignore_dim=False):
     """ function to create a new quantity
@@ -78,6 +80,9 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
             else:
                 if not calculated_dim == value_dim:
                     raise RuntimeError("dimension mismatch \n%s != %s" % (value_dim, calculated_dim))
+        # if names are None, add information to longname
+        if name is None and longname is None:
+            longname = '('+str(value_formula)+')'
 
     # if it's a number
     else:
@@ -117,7 +122,7 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
 
     return q
 
-def formula(quantity):
+def formula(quantity, simplify=True):
     """ returns error formula of quantity as latex code
 
     Args:
@@ -145,7 +150,7 @@ def formula(quantity):
             if var.name[-4:] == "_err":
                 formula = formula.subs(var, sigma( Symbol(var.name[:-4], **var._assumptions)))
         # add equals sign
-        latex_code = latex(sigma(quantity)) + " = " + latex(formula)
+        latex_code = latex(sigma(quantity)) + " = " + latex(simp(formula) if simplify else formula)
 
 	# render two show/hide buttons
     form_button, form_code = pytex.hide_div('Formula', '$%s$' % (latex_code) , hide = False)
@@ -154,6 +159,35 @@ def formula(quantity):
         '$%s$' % latex(quantity), form_button, latex_button, form_code, latex_code)
 
     return render_latex(res)
+
+def mean(*quants, name=None, longname=None, weighted=None):
+    """ Calculates mean value of quantities
+
+    Args:
+        quantities: one or more quantities or expressions, of which mean value shall be calculated
+        name: name for new quantity
+        longname: description for new quantity
+        weighted: if True, will weight mean value by errors (returns error if not possible)
+                  if False, will not weight mean value by errors
+                  if None, will try to weight mean value, but if at least one error is not given, will not weight it
+    """
+    if weighted is False:
+        actually_weight = False
+    else:
+        actually_weight = True
+
+    actual_quants = []
+    for q in quants:
+        if isinstance(q, Quantity):
+            actual_quants.append(q)
+        else:
+            actual_quants.append(assign(q))
+        if q.error is None or np.isnan(np.sum(q.error)) or q.error.any()==0:
+            if weighted is True:
+                raise RuntimeError("mean value can't be weighted because error of '%s' is missing." % q.name)
+            else:
+                actually_weight = False
+    return mean_value.mean(actual_quants, actually_weight, name, longname)
 
 def table(*quants, maxcols=5, latex_only=False, table_only=False):
     """ shows quantities and their values in a table
@@ -198,9 +232,6 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
               Name or value of xvar don't matter.
         ydata_axes: int or tuple of ints. Specifies which axes of the ydata to use
         			for the fit. For other axes, fit will be repeated separately.
-        yaxis_of_xdata: int or tuple of ints. Must have the same length as
-        (only an idea)  xdata tuple. Specifies which axis in ydata belongs to each
-                        xdata quantity. Default is (1,2,3,...).
 		weighted: If True, will weight fit by errors (returns error if not possible).
 				  If False, will not weight fit by errors.
 				  If None, will try to weight fit, but if at least one error is
@@ -211,6 +242,11 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
                         error magnitude.
 		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
     """
+
+    # TODO: further option for not rectangled multidimensional fitting
+    #  yaxis_of_xdata: int or tuple of ints. Must have the same length as
+    #           xdata tuple. Specifies which axis in ydata belongs to each
+    #           xdata quantity. Default is (1,2,3,...).
 
     # TODO: TESTING!!
 
@@ -428,15 +464,108 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
     else:
         raise ValueError("plotting module '%s' doesn't exist." % module)
 
-def _find_all_dependencies(expr, find, ignore=[]):
+def _find_all_dependencies(expr, find, ignore=()):
     """
     unpacks quantities in <expr> until all dependencies from <find> are found
     """
     unpacked = expr
     for q in expr.free_symbols:
         if not q in ignore and isinstance(q.value_formula, Expr):
-            ignore.append(q)
+            ignore = ignore + (q,)
             content = _find_all_dependencies(q.value_formula, find=find, ignore=ignore)
             if find in content.free_symbols:
                 unpacked = unpacked.subs(q, content)
     return unpacked
+
+def concat(*quants, name=None, longname=None):
+    """ concatenates 0- or 1-dimensional quantities
+
+    Args:
+        quants: quantities to be concatenated
+        name: name of new quantity
+        longname: description of new quantity
+    """
+
+    values=[]
+    errors=[]
+
+    dim = None
+
+    for q in quants:
+        # check dimension
+        if dim is None:
+            dim = q.dim
+        else:
+            if not dim==q.dim:
+                raise RuntimeError("dimension mismatch\n%s != %s" % (dim,q.dim))
+
+        # check if values or errors are None
+        if not values is None:
+            if q.value is None:
+                values = None
+            else:
+                v= np.float_(q.value)
+                if not isinstance(v, np.ndarray) or v.shape == ():
+                    v = v.reshape((1,))
+                values.append(v)
+        if not errors is None:
+            if q.error is None:
+                errors = None
+            else:
+                u = np.float_(q.error)
+                if not isinstance(u, np.ndarray) or u.shape == ():
+                    u = u.reshape((1,))
+                errors.append(u)
+    # concatenate
+    new_value = None
+    new_error = None
+    if not values is None:
+        new_value = np.concatenate(values)
+    if not errors is None:
+        new_error = np.concatenate(errors)
+    if new_value is None and new_error is None:
+        raise RuntimeError("Could not concatenate. At least one value and one error are None.")
+
+    new_q = Quantity(name, longname)
+    new_q.value = new_value
+    new_q.error = new_error
+    new_q.dim = dim
+    return new_q
+
+def slice(quantity, start=0, end=None, name=None, longname=None):
+    """ creates new quantity that only contains values from start to end
+
+    Args:
+        quantity: name of quantity to be sliced
+        start: number of value in data set where new quantity is supposed to start.
+               First value is 0.
+        end: number of value to be the first one not taken into the new quantity.
+             None to get all values until the end.
+        name: name of new quantity
+        longname: description of new quantity
+    """
+
+    new_value = None
+    new_error = None
+    # check if values or errors are None
+    if not quantity.value is None:
+        if not isinstance(quantity.value, np.ndarray):
+            raise RuntimeError("Could not slice '%s'. It's not a data set." % quantity)
+        if end is None:
+            new_value = quantity.value[start:]
+        else:
+            new_value = quantity.value[start:end]
+    if not quantity.error is None:
+        if not isinstance(quantity.value, np.ndarray):
+            raise RuntimeError("Could not slice '%s'. Error is not an array." % quantity)
+        if end is None:
+            new_error = quantity.error[start:]
+        else:
+            new_error = quantity.error[start:end]
+
+
+    new_q = Quantity(name, longname)
+    new_q.value = new_value
+    new_q.error = new_error
+    new_q.dim = quantity.dim
+    return new_q
