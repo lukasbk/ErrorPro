@@ -14,6 +14,7 @@ In einfacher Form kurzfristig:
 - multidimensional plotting: repeating (!) or 3d-plots
 
 Ausgabekram:
+- 2-dimensionale Ausgabe!
 - Extrastelle nicht nur bei 1 und 2?
 - 10hoch mit Punkt statt Kreuz,
 - Optionen für Einheiten und Exponenten
