@@ -1,20 +1,18 @@
 import unittest
-from errorpro.project import Project
 from errorpro.quantities import Quantity
+from errorpro.core import *
 import numpy as np
 
 class concatTestCase(unittest.TestCase):
 
     def test_concat(self):
-        p = Project()
+        a = Quantity("a")
+        a.value = np.float_([1,2,3])
+        b = Quantity("b")
+        b.value = np.float_(4)
+        c = concat(a,b, name='c')
 
-        p.data["a"] = Quantity("a")
-        p.data["a"].value = np.float_([1,2,3])
-        p.data["b"] = Quantity("b")
-        p.data["b"].value = np.float_(4)
-        p.concat("c","a","b")
-
-        self.assertTrue((p.data["c"].value == np.float_([1,2,3,4])).all())
+        self.assertTrue((c.value == np.float_([1,2,3,4])).all())
 
 if __name__ == '__main__':
     unittest.main()

@@ -32,7 +32,8 @@ def init(namespace, register_only = False):
 
         # add sympy functions and constants
         ns.update(vars(funcs))
-        ns.update({"pi":sympy.pi})
+        ns.update({"pi":sympy.pi,
+                   "Pi":sympy.pi})
         # TODO: more constants...?
 
         # add basic errorpro functions

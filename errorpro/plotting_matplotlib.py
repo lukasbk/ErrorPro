@@ -5,7 +5,8 @@ from sympy.utilities.lambdify import lambdify
 # TODO: adjust everything to new structure
 
 def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
-         yrange=None, legend=True, size=None, save_to=None, show=False):
+         yrange=None, xscale=None, yscale=None,  legend=True, size=None,
+         save_to=None, show=True, return_fig=False):
     """ plots data and functions with matplotlib
 
     Args:
@@ -80,11 +81,17 @@ def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
         ax.set_xlim(xrange)
     if not yrange is None:
         ax.set_ylim(yrange)
+    if not xscale is None:
+        ax.set_xscale(xscale)
+    if not yscale is None:
+        ax.set_yscale(yscale)
     if size is not None:
         fig.set_size_inches(*size)
     if not save_to is None:
         fig.savefig(save_to)
     if show:
         plt.show()
-
-    return fig
+    if return_fig:
+        return fig
+    else:
+        fig.clear()

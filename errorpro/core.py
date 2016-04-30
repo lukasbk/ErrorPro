@@ -220,7 +220,15 @@ def params(*names):
     """
     if len(names) == 1:
         names = names[0].split()
-    return (Quantity(name) for name in names)
+    p = []
+    for name in names:
+        q = Quantity(name)
+        q.dim = Dimension()
+        p.append(q)
+    if len(p) == 1:
+        return p[0]
+    else:
+        return tuple(p)
 
 
 def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
@@ -255,11 +263,12 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
     #           xdata tuple. Specifies which axis in ydata belongs to each
     #           xdata quantity. Default is (1,2,3,...).
 
-    # TODO: TESTING!!
-
-	# make xdata and xvar a tuple if it's not already
+	# make xdata and xvar a list/tuple if it's not already
     if not hasattr(xdata, '__iter__'):
-        xdata = (xdata,)
+        xdata = [xdata,]
+    else:
+        xdata = list(xdata)
+
     if xvar is not None:
         if not hasattr(xvar, '__iter__'):
             xvar = (xvar,)
@@ -268,14 +277,14 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
 		# if xvar is not specified, use xdata as x-axis variable
         xvar = xdata
 
-    for xaxis in range(len(xdata)):
+    for i_axis in range(len(xdata)):
 		# if xdata is an expression, parse it
-        if not isinstance(xdata[xaxis], Quantity):
-            xdata[xaxis] = assign(xdata[xaxis])
+        if not isinstance(xdata[i_axis], Quantity):
+            xdata[i_axis] = assign(xdata[i_axis])
 
 		# then replace xvar by xdata, if necessary
-        if not xvar[xaxis] is xdata[xaxis]:
-            func = func.subs(xvar[xaxis], xdata[xaxis])
+        if not xvar[i_axis] is xdata[i_axis]:
+            func = func.subs(xvar[i_axis], xdata[i_axis])
 
     # if ydata is an expression, parse it
     if not isinstance(ydata, Quantity):
@@ -324,7 +333,7 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
 
     if plot_result:
         # generate image for html-code
-        fig = plot(xdata[0], func, xdata[0], ydata)
+        fig = plot(xdata[0], func, xdata[0], ydata, return_fig=True, show=False, ignore_dim=ignore_dim)
         image_data = "data:image/png;base64,%s" % b64encode(print_figure(fig)).decode("utf-8")
         Gcf.destroy_fig(fig)
 
@@ -342,8 +351,8 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
     return render_latex(res)
 
 def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
-         yrange=None, legend=True, size=None, save_to=None,
-         show=False, ignore_dim=False, module="matplotlib"):
+         yrange=None, xscale=None, yscale=None, legend=True, size=None, save_to=None,
+         show=True, return_fig=False, ignore_dim=False, module="matplotlib"):
     """ Plots data or functions
 
     Args:
@@ -361,16 +370,19 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
      yunit: str. unit on y-axis
      xrange: 2-tuple of viewed x-axis section in given unit, e.g. [0,100]
      yrange: 2-tuple of viewed y-axis section in given unit
+     xscale: str. option to change linear scale for x-axis, e.g. 'log'
+     yscale: str. same for y-axis
      legend: bool, int or str. Turn off legend with False. Specify position with
              number or string. (matplotlib's 'legend(loc=...)')
      size: 2-tuple of size in inches
      save_to: filename to save image to
-     show: if True, will show the image additionally to returning the figure
+     show: if True, will show the image (with plt.show())
+     return_fig: if True, will return the Figure object
      ignore_dim: if True, will ignore all dimensional errors and just plot in
                  base units.
      module: 'matplotlib' or 'gnuplot'
 
-     Returns:
+    Returns:
       Figure object
     """
 
@@ -488,8 +500,9 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
     # pass on to plotting module
     if module == 'matplotlib':
         return matplot.plot(data_sets, functions, xlabel=xlabel, ylabel=ylabel,
-                           xrange=xrange, yrange=yrange, legend=legend, size=size,
-                           save_to=save_to, show=show)
+                           xrange=xrange, yrange=yrange, xscale=xscale,
+                           yscale=yscale,  legend=legend, size=size,
+                           save_to=save_to, show=show, return_fig=return_fig)
     elif module == 'gnuplot':
         raise NotImplementedError('gnuplot module is not adjusted to new structure, yet.')
         return gnuplot.plot(data_sets, functions, save=save_to, xrange=xrange,

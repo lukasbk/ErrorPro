@@ -67,9 +67,9 @@ def prec_by_err(err, small_dig=ERR_SMALL_DIG):
 
 
 def round_to_mag(num, mag, rdg=None, use_dec=False):
-    """ Round num to order of magintude prec using method rdg.
+    """ Round num to order of magnitude prec using method rdg.
 
-    Note taht -3.1 will be 'UP'rounded to -40.0 (i.e. 'UP' and 'DOWN'
+    Note that -3.1 will be 'UP'rounded to -4.0 (i.e. 'UP' and 'DOWN'
     referes to the rounding of absoulte values).
 
     Args:

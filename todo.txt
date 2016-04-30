@@ -2,7 +2,7 @@
 TODO
 
 Kurzfristig zu tun:
-- Rundungstests und andere tests! (Plot-Abhängigkeitskram, ...)
+- Rundungstests, mehrdimensionale Fits testen
 
 In einfacher Form kurzfristig:
 - mean_value als sympy Funktion
