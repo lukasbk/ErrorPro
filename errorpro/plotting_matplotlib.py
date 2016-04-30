@@ -5,7 +5,7 @@ from sympy.utilities.lambdify import lambdify
 # TODO: adjust everything to new structure
 
 def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
-         yrange=None, legend=None, size=None, save_to=None):
+         yrange=None, legend=True, size=None, save_to=None, show=False):
     """ plots data and functions with matplotlib
 
     Args:
@@ -14,17 +14,16 @@ def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
         functions: list of tuples like this
                    (x_quantity, y_expression, options)
                    -> must be adjusted to unit choice already
-        ...
+        ... (see core.py)
 
     Returns:
         figure object
     """
-
+    plt.ioff()
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     # plot data sets
-    legend = False
     min = None
     max = None
     for data_set in data_sets:
@@ -61,7 +60,6 @@ def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
         # standard min/max if no xrange and no data set
         min = 0
         max = 10
-
     # plot functions
     for f in functions:
         f = list(f)
@@ -74,8 +72,8 @@ def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
         y = numpy_func(x)
         ax.plot(x,y,**f[2])
 
-    if legend is not None:
-        plt.legend(loc=legend)
+    if legend:
+        plt.legend(loc=legend if isinstance(legend, str) or isinstance(legend, int) else None)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     if not xrange is None:
@@ -86,5 +84,7 @@ def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
         fig.set_size_inches(*size)
     if not save_to is None:
         fig.savefig(save_to)
+    if show:
+        plt.show()
 
     return fig

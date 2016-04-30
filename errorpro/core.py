@@ -11,6 +11,11 @@ from errorpro import plotting_matplotlib as matplot, plotting_gnuplot as gnuplot
 
 from IPython.display import Latex as render_latex
 
+# for plots in HTML context
+from matplotlib._pylab_helpers import Gcf
+from IPython.core.pylabtools import print_figure
+from base64 import b64encode
+
 __all__ = ['assign', 'mean', 'table', 'params', 'fit', 'plot', 'concat', 'slice']
 
 def assign(value, error=None, unit=None, name=None, longname=None, value_unit=None, error_unit=None, ignore_dim=False):
@@ -218,7 +223,8 @@ def params(*names):
     return (Quantity(name) for name in names)
 
 
-def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, absolute_sigma=False, ignore_dim=False):
+def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
+        absolute_sigma=False, ignore_dim=False, plot_result=True):
     """ fits function to data and returns results in table and plot
 
     Args:
@@ -241,6 +247,7 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
 					    If True, estimated output errors will be based on input
                         error magnitude.
 		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
+        plot_result: bool. plots data and fit function if possible.
     """
 
     # TODO: further option for not rectangled multidimensional fitting
@@ -311,34 +318,61 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None, a
         p.error = errors[i]
         p.error_formula = "fit"
 
-    # render two show/hide buttons
-    form_button, form_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
-    latex_button, latex_code = pytex.hide_div('Plot', 'blub')
-    res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br>%s'\
-            % (form_button, latex_button, form_code, latex_code)
+    # can't plot if there is more than one x-axis or more than one y-dimension
+    if len(xdata)>1 or len(ydata.shape)>1:
+        plot_result = False
+
+    if plot_result:
+        # generate image for html-code
+        fig = plot(xdata[0], func, xdata[0], ydata)
+        image_data = "data:image/png;base64,%s" % b64encode(print_figure(fig)).decode("utf-8")
+        Gcf.destroy_fig(fig)
+
+    # render show/hide buttons
+    params_button, params_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
+    if plot_result:
+        plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data)
+        res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br />%s'\
+                % (params_button, plot_button, params_code, plot_code)
+    else:
+        # render only one button
+        res = 'Results of fit<div width=20px/>%s<hr/>%s'\
+                % (params_button, params_code)
 
     return render_latex(res)
 
 def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
-         yrange=None, legend=None, size=None, save_to=None, return_fig=False,
-         ignore_dim=False, module="matplotlib"):
+         yrange=None, legend=True, size=None, save_to=None,
+         show=False, ignore_dim=False, module="matplotlib"):
     """ Plots data or functions
 
     Args:
-        plots: triplets of things to plot: x, y, options
-               e.g. plot(t, h**2, {'color': 'r'},
-                         t, 2*t*exp(t/t0), {'title':'theoretical curve'})
+     plots: two consecutive arguments define one plot. The first argument is the
+            x-axis quantity or expression, the second argument is the y-axis.
+            A third dict argument can be added for options. To plot more than one
+            thing in one plot, just add more pairs/triplets of arguments. The
+            options dict will be passed to matplotlib's 'errorbar' or 'plot'
+            function.
+            e.g. plot(t, h, {'label':'data points', marker:'.'},
+                      t, h0*exp(t/t0), {'color':'blue'})
+     xlabel: str. title for x-axis
+     ylabel: str. title for y-axis
+     xunit: str. unit on x-axis
+     yunit: str. unit on y-axis
+     xrange: 2-tuple of viewed x-axis section in given unit, e.g. [0,100]
+     yrange: 2-tuple of viewed y-axis section in given unit
+     legend: bool, int or str. Turn off legend with False. Specify position with
+             number or string. (matplotlib's 'legend(loc=...)')
+     size: 2-tuple of size in inches
+     save_to: filename to save image to
+     show: if True, will show the image additionally to returning the figure
+     ignore_dim: if True, will ignore all dimensional errors and just plot in
+                 base units.
+     module: 'matplotlib' or 'gnuplot'
 
-    new concept:
-    plot(x1, y1, {color:"#fff", points:"o", ...}, x2, y2, {color:"r"}, xunit="m", yrange=[0,10], ...)
-
-    data set properties:
-        color, point style, line style/width, title, errorbars
-    figure properties:
-        legend, xunit, yunit, xrange, yrange, imagesize, save?/return_fig, ignore_dim
+     Returns:
+      Figure object
     """
-
-    #TODO: Tests: dependency unpacking, ...
 
     # parse units
     if not xunit is None:
@@ -453,12 +487,11 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
 
     # pass on to plotting module
     if module == 'matplotlib':
-        out = matplot.plot(data_sets, functions, xlabel=xlabel, ylabel=ylabel,
+        return matplot.plot(data_sets, functions, xlabel=xlabel, ylabel=ylabel,
                            xrange=xrange, yrange=yrange, legend=legend, size=size,
-                           save_to=save_to)
-        if return_fig:
-            return out
+                           save_to=save_to, show=show)
     elif module == 'gnuplot':
+        raise NotImplementedError('gnuplot module is not adjusted to new structure, yet.')
         return gnuplot.plot(data_sets, functions, save=save_to, xrange=xrange,
                             yrange=yrange, x_label=xlabel, y_label=ylabel)
     else:
