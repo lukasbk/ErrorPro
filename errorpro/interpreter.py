@@ -18,7 +18,8 @@ def interpret (program, namespace):
 			namespace[command.name] = assign (value, error, command.unit, command.name, command.longname)
 
 		elif command.parseinfo.rule == "multi_assignment":
-			if len(command.header) == 1: # only one header => one 2-dimensional dataset
+			if len(command.header) == 1 and not all (len(row) == 1 for row in command.rows):
+				# only one header, but more columns => one 2-dimensional dataset
 				values = []
 				for row in command.rows:
 					row_values = []
@@ -29,7 +30,7 @@ def interpret (program, namespace):
 				header = command.header[0]
 				namespace[header.name] = assign (values, header.error, header.unit, header.name, header.longname)
 
-			else: # more than one header => multiple 1-dimensional datasets
+			else: # more than one header or only one column => multiple 1-dimensional datasets
 				# collect columns:
 				columns = {}
 				for columnIndex in range(len(command.header)):
