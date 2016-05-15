@@ -125,6 +125,7 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 			err = None
 			absolute = False
 		# perform fit
+		print(xvalues, yvalues[i].flatten())
 		params_opt[i], params_covar = curve_fit (func, xvalues, yvalues[i].flatten(),
 					sigma=err, p0=start_params, absolute_sigma=absolute)
 

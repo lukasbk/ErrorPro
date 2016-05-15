@@ -16,7 +16,7 @@ from matplotlib._pylab_helpers import Gcf
 from IPython.core.pylabtools import print_figure
 from base64 import b64encode
 
-__all__ = ['assign', 'mean', 'table', 'params', 'fit', 'plot', 'concat', 'slice']
+__all__ = ['assign', 'formula', 'mean', 'table', 'params', 'fit', 'plot', 'concat', 'slice']
 
 def assign(value, error=None, unit=None, name=None, longname=None, value_unit=None, error_unit=None, ignore_dim=False):
     """ function to create a new quantity

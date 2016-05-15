@@ -5,12 +5,17 @@ You may use these functions to work on your data:
 core.py functions:
 - assign
 - formula
-- ...
+- mean
+- table
+- params
+- fit
+- plot
+- concat
+- slice
+
 interactive.py functions:
 - init
 - load_file
-- save_to_csv
-- ...
 
 Get detailed description with 'help(my_function)'!
 """
