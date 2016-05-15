@@ -5,6 +5,7 @@ ErrorPro
 ErrorPro allows to do calculations in IPython with physical quantities, which contain a value, error and unit.
 
 It's features are:
+
 * calculations with physical quantities including error propagation and SI unit propagation
 * specifying your data in an intuitive physicist-oriented way
 * calculating whole data sets at once (to a certain extend multi-dimensional)
