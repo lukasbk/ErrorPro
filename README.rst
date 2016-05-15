@@ -14,4 +14,4 @@ It's features are:
 - arranging your data nicely in HTML and LaTex tables
 - showing the error formula and it's LaTex code
 
-To learn more about ErrorPro, have a look at the `Wiki <wiki>`_!
+To learn more about ErrorPro, have a look at the `Wiki <../../wiki>`_!
