@@ -28,13 +28,12 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
      error: number that is saved as the value's uncertainty. this will replace
             any error coming from a calculation.
      unit: sympy expression of Unit objects. This is used to convert and save
-           value and error in base units. Replaces value_unit and error_unit if
-           specified.
+           value and error in base units.
      name: short name of the quantity (usually one letter). If not specified,
            quantity will get a dummy name.
      longname: optional additional description of the quantity
-     value_unit: unit of value. Use this if value and error have different units.
-     error_unit: unit of error.
+     value_unit: unit of value. Overwrites unit if specified.
+     error_unit: unit of error. Overwrites unit if specified.
      ignore_dim: bool. Keeps function from raising an error even if calculated
                  and given unit don't match. Then given unit is used instead.
     """
@@ -48,24 +47,30 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
     error_dim = Dimension()
 
     # parse units
+
+    # if one general unit is given
     if unit is not None:
-        # if one general unit is given
-        value_factor, value_dim, value_unit = parse_unit(unit)
-        error_factor = value_factor
-        error_dim = value_dim
-        error_unit = value_unit
-    else:
-        # if value unit is given
-        if value_unit is not None:
-            value_factor, value_dim, value_unit = parse_unit(value_unit)
+        f, d, u = parse_unit(unit)
 
-        # if error unit is given
-        if error_unit is not None:
-            error_factor, error_dim, error_unit = parse_unit(error_unit)
+    # if value unit is given
+    if value_unit is not None:
+        value_factor, value_dim, value_unit = parse_unit(value_unit)
+    elif unit is not None:
+        value_factor = f
+        value_dim = d
+        value_unit = u
 
-            # check dimension consistency between value_dim and error_dim
-            if value_unit is not None and not value_dim == error_dim:
-                raise RuntimeError("dimension mismatch\n%s != %s" % (value_dim, error_dim))
+    # if error unit is given
+    if error_unit is not None:
+        error_factor, error_dim, error_unit = parse_unit(error_unit)
+
+        # check dimension consistency between value_dim and error_dim
+        if value_unit is not None and not value_dim == error_dim:
+            raise RuntimeError("dimension mismatch\n%s != %s" % (value_dim, error_dim))
+    elif unit is not None:
+        error_factor = f
+        error_dim = d
+        error_unit = u
 
     # process value
 
