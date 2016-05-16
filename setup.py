@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name = "errorpro",
-    version = "0.1.1",
+    version = "0.1.2",
     author = "Lukas Bentkamp",
     author_email = "lukas.bentkamp@mailbox.org",
     description = ("calculates physical quantities from data including units and error propagation."),
