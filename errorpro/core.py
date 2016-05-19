@@ -229,6 +229,7 @@ def params(*names):
     for name in names:
         q = Quantity(name)
         q.dim = Dimension()
+        q.value = np.float_(1)
         p.append(q)
     if len(p) == 1:
         return p[0]
@@ -323,14 +324,15 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
 									"This error will occur until dimensions are right.")
 
     # fit
-    values, errors = fitting.fit(func, xdata, ydata, params, ydata_axes, weighted, absolute_sigma)
 
-    # save results
-    for i, p in enumerate(params):
-        p.value = values[i]
-        p.value_formula = "fit"
-        p.error = errors[i]
-        p.error_formula = "fit"
+    values, errors = fitting.fit(func, xdata, ydata, params, ydata_axes, weighted, absolute_sigma)
+    if not values is None:
+        # save results
+        for i, p in enumerate(params):
+            p.value = values[i]
+            p.value_formula = "fit"
+            p.error = errors[i]
+            p.error_formula = "fit"
 
     # can't plot if there is more than one x-axis or more than one y-dimension
     if len(xdata)>1 or len(ydata.shape)>1:
@@ -342,16 +344,24 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
         image_data = "data:image/png;base64,%s" % b64encode(print_figure(fig)).decode("utf-8")
         Gcf.destroy_fig(fig)
 
-    # render show/hide buttons
-    params_button, params_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
-    if plot_result:
-        plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data)
-        res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br />%s'\
-                % (params_button, plot_button, params_code, plot_code)
+    if values is None:
+        if plot_result:
+            plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data, hide = False)
+            res = 'Fit failed!<div width=20px/>%s<hr/>%s'\
+                    % (plot_button, plot_code)
+        else:
+            res = 'Fit failed!'
     else:
-        # render only one button
-        res = 'Results of fit<div width=20px/>%s<hr/>%s'\
-                % (params_button, params_code)
+        # render show/hide buttons
+        params_button, params_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
+        if plot_result:
+            plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data)
+            res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br />%s'\
+                    % (params_button, plot_button, params_code, plot_code)
+        else:
+            # render only one button
+            res = 'Results of fit<div width=20px/>%s<hr/>%s'\
+                    % (params_button, params_code)
 
     return render_latex(res)
 

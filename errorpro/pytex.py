@@ -125,7 +125,7 @@ def repr_float(num):
     numr = repr(float(num))
     if 'e' in numr:
         val, mag = numr.split('e')
-        return val + r' \times 10^{%s}' % mag.strip('+')
+        return val + r' \cdot 10^{%s}' % mag.strip('+')
     else:
         return numr
 
@@ -315,7 +315,7 @@ def format_valerr(val, err, mult=True, small_dig=ERR_SMALL_DIG, fmt=NUM_FORMAT):
     Returns:
         String giving the representation. Using the default values, for example:
         format_by_err(123e7, 123e7) returns
-        '$( 12 \\pm 13 ) \\times 10^{8}$'.
+        '$( 12 \\pm 13 ) \\cdot 10^{8}$'.
     """
     rpref, rtol, lpref, ltol = fmt
     # mult 0 or False
@@ -339,7 +339,7 @@ def format_valerr(val, err, mult=True, small_dig=ERR_SMALL_DIG, fmt=NUM_FORMAT):
             return format_valerr(val, err, 0)
 
     iplier = 10 ** (-mult)
-    return r'$(%s) \times 10^{%i}$' % (
+    return r'$(%s) \cdot 10^{%i}$' % (
         format_valerr(val * iplier, err * iplier, 0).strip('$'), mult)
 
 

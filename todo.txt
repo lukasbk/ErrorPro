@@ -16,12 +16,10 @@ In einfacher Form kurzfristig:
 Ausgabekram:
 - 2-dimensionale Ausgabe!
 - Extrastelle nicht nur bei 1 und 2?
-- 10hoch mit Punkt statt Kreuz,
 - Optionen für Einheiten und Exponenten
 - *10^2 ist ziemlich nervig
 - pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
 - kurze/ausklappbare Fehlerausgabe?
-- schöne Ausgabe bei fehlerhaftem Fit, vllt trotzdem Plot?
 - Option für Ausgabe der exakten Werte?
 
 Zu tun:

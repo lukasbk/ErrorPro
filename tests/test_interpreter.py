@@ -83,8 +83,8 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertEqual(ns["s"].name, 's')
         self.assertEqual(ns["s"].value[0], 2)
         self.assertEqual(ns["s"].value[1], 4)
-        self.assertEqual(ns["s"].error[0], 0.1)
-        self.assertEqual(ns["s"].error[1], 0.2)
+        self.assertEqual(ns["s"].error[0], 0.001)
+        self.assertEqual(ns["s"].error[1], 0.002)
 
 """ TODO
     def test_assignment_formula_quoted(self):

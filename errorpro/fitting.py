@@ -56,8 +56,8 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 	# list starting values
 	start_params = []
 	for p in params:
-		if p.value == None:
-			start_params.append(np.float_(1))
+		if p.value is None:
+			raise RuntimeError("'%s' doesn't have value." % p.name)
 		else:
 			if isinstance(p.value,np.ndarray):
 				raise ValueError("fit parameter '%s' is a data set." % p.name)
@@ -124,7 +124,10 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 			absolute = False
 		# perform fit
 		params_opt[i], params_covar = curve_fit (func, xvalues, yvalues[i].flatten(),
-					sigma=err, p0=start_params, absolute_sigma=absolute)
+				sigma=err, p0=start_params, absolute_sigma=absolute)
+		if np.isnan(params_covar).any() or np.isinf(params_covar).any():
+			return (None, None)
+
 
 		# calculate errors
 		params_err[i] = np.sqrt(np.diag(params_covar))
