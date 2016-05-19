@@ -21,6 +21,7 @@ Ausgabekram:
 - *10^2 ist ziemlich nervig
 - pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
 - kurze/ausklappbare Fehlerausgabe?
+- schöne Ausgabe bei fehlerhaftem Fit, vllt trotzdem Plot?
 - Option für Ausgabe der exakten Werte?
 
 Zu tun:
