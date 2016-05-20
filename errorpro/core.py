@@ -27,8 +27,9 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
             will perform the calculation, otherwise it just saves the value.
      error: number that is saved as the value's uncertainty. this will replace
             any error coming from a calculation.
-     unit: sympy expression of Unit objects. This is used to convert and save
-           value and error in base units.
+     unit: string or sympy expression of Unit objects. This is used to convert
+     	   and save value and error in base units. Dimension of unit as well as
+     	   preferred unit will be saved.
      name: short name of the quantity (usually one letter). If not specified,
            quantity will get a dummy name.
      longname: optional additional description of the quantity
