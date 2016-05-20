@@ -36,7 +36,7 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
      value_unit: unit of value. Overwrites unit if specified.
      error_unit: unit of error. Overwrites unit if specified.
      ignore_dim: bool. Keeps function from raising an error even if calculated
-                 and given unit don't match. Then given unit is used instead.
+                 and given unit don't match. Then, given unit is used instead.
     """
 
     value_formula = None
@@ -175,7 +175,7 @@ def mean(*quants, name=None, longname=None, weighted=None):
     """ Calculates mean value of quantities
 
     Args:
-        quantities: one or more quantities or expressions, of which mean value shall be calculated
+        quants: one or more quantities or expressions, of which mean value shall be calculated
         name: name for new quantity
         longname: description for new quantity
         weighted: if True, will weight mean value by errors (returns error if not possible)
@@ -216,7 +216,7 @@ def table(*quants, maxcols=5, latex_only=False, table_only=False):
         return render_latex(qtable(*quants, maxcols=maxcols))
 
 def params(*names):
-    """ creates empty quantities in order to be used as fit parameters
+    """ creates empty quantities (value=1) in order to be used as fit parameters
     Args:
      names: names of quantities to be created. Can be either one string using
             whitespaces as a separator or multiple strings.
@@ -243,25 +243,28 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
     """ fits function to data and returns results in table and plot
 
     Args:
-		func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
-		xdata: sympy expression or list of sympy expressions of x-axis
-			   data to fit to. xdata quantities must be 1-dimensional.
-		ydata: sympy Expr of y-axis data to fit to
-		params: list of parameters in fit function, e.g. [m, n, b]
+	func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
+	xdata: sympy expression or list of sympy expressions of x-axis
+	       data to fit to. xdata quantities must be 1-dimensional.
+	ydata: sympy Expr of y-axis data to fit to
+	params: list of parameters in fit function, e.g. [m, n, b]
+	        If you don't want to specify starting values, you can create
+	        parameter quantities with the 'params' function.
         xvar: if specified, this is the quantity in fit function to be used as
               x-axis variable. Specify if xdata is not a quantity but an expression.
               Name or value of xvar don't matter.
+              (e.g. empty quantity can be created with params)
         ydata_axes: int or tuple of ints. Specifies which axes of the ydata to use
-        			for the fit. For other axes, fit will be repeated separately.
-		weighted: If True, will weight fit by errors (returns error if not possible).
-				  If False, will not weight fit by errors.
-				  If None, will try to weight fit, but if at least one error is
+        	    for the fit. For other axes, fit will be repeated separately.
+	weighted: If True, will weight fit by errors (returns error if not possible).
+		  If False, will not weight fit by errors.
+		  If None, will try to weight fit, but if at least one error is
                   not given, will not weight it.
     	absolute_sigma: bool. If False, uses errors only to weight data points.
-					    Overall magnitude of errors doesn't affect output errors.
-					    If True, estimated output errors will be based on input
+			Overall magnitude of errors doesn't affect output errors.
+			If True, estimated output errors will be based on input
                         error magnitude.
-		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
+	ignore_dim: if True, will ignore dimensions and just calculate in base units instead
         plot_result: bool. plots data and fit function if possible.
     """
 
@@ -396,7 +399,7 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
      return_fig: if True, will return the Figure object
      ignore_dim: if True, will ignore all dimensional errors and just plot in
                  base units.
-     module: 'matplotlib' or 'gnuplot'
+     module: 'matplotlib' or 'gnuplot' (gnuplot currently not working)
 
     Returns:
       Figure object
@@ -540,7 +543,7 @@ def _find_all_dependencies(expr, find, ignore=()):
     return unpacked
 
 def concat(*quants, name=None, longname=None):
-    """ concatenates 0- or 1-dimensional quantities
+    """ concatenates 0- or 1-dimensional quantities to one long 1-dimensional quantity
 
     Args:
         quants: quantities to be concatenated
@@ -598,7 +601,7 @@ def slice(quantity, start=0, end=None, name=None, longname=None):
     """ creates new quantity that only contains values from start to end
 
     Args:
-        quantity: name of quantity to be sliced
+        quantity: name of quantity to be sliced (must be 1-dim)
         start: number of value in data set where new quantity is supposed to start.
                First value is 0.
         end: number of value to be the first one not taken into the new quantity.
