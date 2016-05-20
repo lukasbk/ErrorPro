@@ -30,8 +30,8 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
      unit: string or sympy expression of Unit objects. This is used to convert
      	   and save value and error in base units. Dimension of unit as well as
      	   preferred unit will be saved.
-     name: short name of the quantity (usually one letter). If not specified,
-           quantity will get a dummy name.
+     name: short name of the quantity (usually one or a fewletter). If not
+     	   specified, quantity will get a dummy name.
      longname: optional additional description of the quantity
      value_unit: unit of value. Overwrites unit if specified.
      error_unit: unit of error. Overwrites unit if specified.
