@@ -2,6 +2,7 @@
 TODO
 
 Vor Veröffentlichung:
+- grid-Option beim Plotten
 - fontsize in plots einstellbar machen
 - Optionen für Einheiten und Exponenten bei Ausgabe (und *10^2 ist ziemlich nervig)
 - Rundungstests, mehrdimensionale Fits testen
