@@ -200,7 +200,7 @@ def mean(*quants, name=None, longname=None, weighted=None):
                 actually_weight = False
     return mean_value.mean(actual_quants, actually_weight, name, longname)
 
-def table(*quantities, maxcols=5, latex_only=False, table_only=False):
+def table(*quants, maxcols=5, latex_only=False, table_only=False):
     """ shows quantities and their values in a table
     Args:
         quantities: quantities to be shown. Each quantity can be followed by a

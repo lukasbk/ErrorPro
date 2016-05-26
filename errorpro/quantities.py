@@ -221,7 +221,7 @@ def qtable(*quantities, html=True, maxcols=5):
             if isinstance(value, np.ndarray):
                 column.extend(pytex.align_num_list(value, math_env=True))
             else:
-                column.append(pytex.align_num(value))
+                column.append('$'+pytex.align_num(value)+'$')
         else:
             if isinstance(value, np.ndarray):
                 column.extend(pytex.format_valerr_list(value,error))
