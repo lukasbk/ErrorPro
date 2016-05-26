@@ -200,14 +200,32 @@ def mean(*quants, name=None, longname=None, weighted=None):
                 actually_weight = False
     return mean_value.mean(actual_quants, actually_weight, name, longname)
 
-def table(*quants, maxcols=5, latex_only=False, table_only=False):
+def table(*quantities, maxcols=5, latex_only=False, table_only=False):
     """ shows quantities and their values in a table
     Args:
-     - quants: quantities to be shown
-     - maxcols: maximum number of columns
-     - latex_only: if True, only returns latex code. If False, returns both latex
-                   and actual table.
+        quantities: quantities to be shown. Each quantity can be followed by a
+            dict argument specifying the multiplier and/or unit:
+            e.g. {'unit': ..., 'mult': ...}
+        maxcols: maximum number of columns
+        latex_only: if True, only returns latex code. If False, returns both latex
+            and actual table.
     """
+
+    """ code for display options (+ passing to qtable needed)
+    i = 0
+    quants = []
+    options = []
+    while i<len(quantities):
+        # get x, y and options from plots array
+        quants.append(quantities[i])
+        if i+1<len(quantities) and isinstance(quantities[i+1], dict):
+            options.append(quantities[i+1])
+            i += 2
+        else:
+            options.append({})
+            i += 1
+    """
+
     if latex_only:
         return qtable(*quants, html=False, maxcols=maxcols)[0]
     elif table_only:
@@ -370,8 +388,8 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
     return render_latex(res)
 
 def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
-         yrange=None, xscale=None, yscale=None, legend=True, size=None, save_to=None,
-         show=True, return_fig=False, ignore_dim=False, module="matplotlib"):
+         yrange=None, xscale=None, yscale=None, legend=True, size=None, grid=False,
+         save_to=None, show=True, return_fig=False, ignore_dim=False, module="matplotlib"):
     """ Plots data or functions
 
     Args:
@@ -394,9 +412,12 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
      legend: bool, int or str. Turn off legend with False. Specify position with
              number or string. (matplotlib's 'legend(loc=...)')
      size: 2-tuple of size in inches
+     grid: bool. if True, plots a standard grid. If dict, parameters passed to
+           matplotlib's ax.grid(...) can be specified.
      save_to: filename to save image to
      show: if True, will show the image (with plt.show())
-     return_fig: if True, will return the Figure object
+     return_fig: if True, will return the Figure object. Otherwise, figure will
+                 be cleared after showing/saving.
      ignore_dim: if True, will ignore all dimensional errors and just plot in
                  base units.
      module: 'matplotlib' or 'gnuplot' (gnuplot currently not working)
@@ -520,7 +541,7 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
     if module == 'matplotlib':
         return matplot.plot(data_sets, functions, xlabel=xlabel, ylabel=ylabel,
                            xrange=xrange, yrange=yrange, xscale=xscale,
-                           yscale=yscale,  legend=legend, size=size,
+                           yscale=yscale,  legend=legend, size=size, grid=grid,
                            save_to=save_to, show=show, return_fig=return_fig)
     elif module == 'gnuplot':
         raise NotImplementedError('gnuplot module is not adjusted to new structure, yet.')

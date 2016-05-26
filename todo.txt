@@ -2,8 +2,6 @@
 TODO
 
 Vor Veröffentlichung:
-- grid-Option beim Plotten
-- fontsize in plots einstellbar machen
 - Optionen für Einheiten und Exponenten bei Ausgabe (und *10^2 ist ziemlich nervig)
 - Rundungstests, mehrdimensionale Fits testen
 - mean value: value_formula und error_formula
@@ -24,6 +22,6 @@ Später:
 - Anleitung um mehr ergänzen
 - schönere Formatierung der Fehlerformel -> simplify-Optionen
 - Bessere Fehlerberechnung beim Fitten?
-- gnuplot: 
+- gnuplot:
   * wieder zum Laufen bringen
   * keine doppelten Variablendefinitionen
