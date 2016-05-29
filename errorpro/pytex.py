@@ -42,7 +42,7 @@ def magnitude(num):
         Example:
         magnitude(array([12.1, 0.02, -2.1])) -> array([1, -2, 0]).
     """
-    # because of float encoding, mag(.1) would be -1
+    # because of float encoding, mag(.1) would be -2
     # if floats were not incremented
     if isinstance(num, np.ndarray):
         mag = np.zeros(len(num), int)
@@ -94,7 +94,7 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
 
         # handle some nasty problems due to float encoding
         if rdg == 'UP':
-            numd = dec.Decimal(repr(num - sys.float_info.epsilon))
+            numd = dec.Decimal(repr(num - np.sign(num)*sys.float_info.epsilon))
         elif rdg == 'DOWN':
             numd = dec.Decimal(repr(num + sys.float_info.epsilon))
         else:
@@ -178,6 +178,7 @@ def repr_error(error, small_dig=ERR_SMALL_DIG):
     Error is rounded to magnitude given by prec_by_err(error, small_dig).
     The representation may contain x 10^p.
     """
+    if error == 0: return '0'
     mag = prec_by_err(error, small_dig)
 
     return repr_float(round_to_mag(error, mag, 'UP'))
