@@ -9,7 +9,7 @@ import numpy as np
 import decimal as dec
 
 # PREFERENCES
-NUM_FORMAT = (-4, -4, 0, 1)
+NUM_FORMAT = (-4, -4, 0, 3)
 """ Tuple of four ints: Formatting preferences for floats.
 
 NUM_FORMAT = (rpref, rtol, lpref, ltol) with
@@ -20,16 +20,15 @@ lpref: Preferred number of digits left of decimal point.
 ltol: Number of tolerated '0's left of decimal point.
 """
 
-# max digit in error in which case to add precision (mag_by_err)
+# largest digit for which to increase precision in error representation
+# used by mag_by_err
 ERR_SMALL_DIG = 2
-""" Biggist digit, for which to give two significant digit of error.
+""" Largest digit for which to keep an additional significant digit of error.
 
-Example: For ERR_SMALL_DIG = 2, errors will be rounded (by mag_by_err) like
-    12.2 -> 13
-    13.0 -> 13
+Example: Behaviour of mag_by_err for ERR_SMALL_DIG = 2
+    13.1 -> 14
     20.1 -> 21
-    30.0 -> 30
-    31.1 ->  4
+    31.1 -> 40
 """
 
 def magnitude(num):
@@ -39,9 +38,9 @@ def magnitude(num):
         val: number or numpy array of numbers
 
     Returns:
-        An int or a numpy array of ints giving the order of magnitude(s)
-        of num. For example:
-        magnitude(array([12.1, 0.02, -2.1])) returns array([1, -2, 0]).
+        An int or a numpy array of ints: order of magnitude(s) of num.
+        Example:
+        magnitude(array([12.1, 0.02, -2.1])) -> array([1, -2, 0]).
     """
     # because of float encoding, mag(.1) would be -1
     # if floats were not incremented
@@ -74,7 +73,7 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
 
     Args:
         num: Number.
-        mag: Order of magnitude to which num shall be rounded.
+        mag: Order of magnitude to which to round num.
         rdg: String specifying rounding mode.
             None: half up, 'UP': up, 'DOWN': down.
         dec: Bool. If True output is dec.Decimal, else float.
@@ -93,7 +92,7 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
         elif rdg == 'DOWN':
             prim, sec = 'ROUND_DOWN', 'ROUND_UP'
 
-        # handle some nasty problems due float encoding
+        # handle some nasty problems due to float encoding
         if rdg == 'UP':
             numd = dec.Decimal(repr(num - sys.float_info.epsilon))
         elif rdg == 'DOWN':
@@ -113,14 +112,13 @@ def round_to_mag(num, mag, rdg=None, use_dec=False):
 def repr_float(num):
     """ LaTeX string representation of num in format abc.def x 10^p.
 
-    A multiplicator for indicating the order of magnitude is used
+    A multiplicator is used for indicating the order of magnitude
     according to python's repr of num.
 
     Args:
         num: Number.
 
-    Returns: String giving a LaTeX representation of num.
-        It is not enclosed in '$'.
+    Returns: String, LaTeX representation of num. Not surrounded by '$'.
     """
     numr = repr(float(num))
     if 'e' in numr:
@@ -130,7 +128,7 @@ def repr_float(num):
         return numr
 
 def repr_decimal(num, prec=None, rdg=None):
-    """ Represent number rounded to given order of magnitude.
+    """ Represent number rounded to order of magnitude. Force decimal repr.
 
     Round number using rounding specified by rdg. The output will always
     be in decimal representation, wich may be unfortunate if num is very
@@ -247,7 +245,7 @@ def align_num(numr, dleft=None, dright=None, sgn=True):
 
 
 def align_num_list(values, math_env=False):
-    """ Align values with each represented using repr_float.
+    """ Align values, each represented using repr_float.
 
     Args:
         values: List (or generator) of numbers.
@@ -299,9 +297,8 @@ def format_valerr(val, err, mult=True, small_dig=ERR_SMALL_DIG, fmt=NUM_FORMAT):
     Args:
         val: Number.
         err: Number giving the error of val.
-        mult: Number or bool. If True allow for '10^?' in determining a
-            representation. If a number is specified, the multiplier '10^{mult}
-            will be used.
+        mult: Number or bool. If True allow for '10^..' in representation.
+            If a number is specified, the multiplier '10^{mult} will be used.
         small_dig: Largest significant digit in which case to round to
             two significant digits.
         fmt: Tuple of four integers specifying display preferences.
@@ -313,9 +310,8 @@ def format_valerr(val, err, mult=True, small_dig=ERR_SMALL_DIG, fmt=NUM_FORMAT):
             ltol: Number of tolerated '0's left of decimal point.
 
     Returns:
-        String giving the representation. Using the default values, for example:
-        format_by_err(123e7, 123e7) returns
-        '$( 12 \\pm 13 ) \\cdot 10^{8}$'.
+        String giving the representation. Example using the default values:
+        format_by_err(123e7, 123e7) -> '$( 12 \\pm 13 ) \\cdot 10^{8}$'.
     """
     rpref, rtol, lpref, ltol = fmt
     # mult 0 or False
@@ -355,7 +351,7 @@ def format_valerr_list(data, error, small_dig=ERR_SMALL_DIG):
             two significant digits.
 
     Returns:
-        List of strings. Each entry is LaTeX code enclosed in '$'.
+        List of strings. Each entry is LaTeX code surrounded by '$'.
     """
     data = np.array(data)
     if isinstance(error, (list, np.ndarray)):
