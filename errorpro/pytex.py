@@ -245,18 +245,24 @@ def align_num(numr, dleft=None, dright=None, sgn=True):
     return lbuff + numr + rbuff
 
 
-def align_num_list(values, math_env=False):
+def align_num_list(values, math_env=False, mult=True):
     """ Align values, each represented using repr_float.
 
     Args:
-        values: List (or generator) of numbers.
+        values: List (or generator) of numbers or strings
         math_env: If True enclose strings with '$'.
+        mult: Try to use multiplicator 10^mult.
 
     Returns:
         List (LaTeX) strings.
     """
+    # no automatic detection for appropriate mult implemented
+    if mult is True:
+        mult = 0    
+    if mult is False:
+        mult = 0
 
-    entries = [repr_float(val) for val in values]
+    entries = [repr_float(val*10**(-mult)) for val in values]
 
     count = len(entries)
 
@@ -265,7 +271,8 @@ def align_num_list(values, math_env=False):
     for i in range(count):
         idx = entries[i].find('\\')
         if idx != -1:
-            mults[i] = entries[i][idx - 1:]
+            expon = entries[i][idx - 1:]
+            mults[i] = int(expon[expon.find('{',idx):expon.find('}',idx)])
             entries[i] = entries[i][:idx - 1] # entries[i][idx-1] is ' '
 
     dleft = max(_get_dleft(ent) for ent in entries)
@@ -274,6 +281,18 @@ def align_num_list(values, math_env=False):
 
     for i in range(count):
         entries[i] = align_num(entries[i], dleft, dright, sgn)
+
+    if mult != 0:   # correct mults
+        for i in range(count):
+            if i in mults:
+                mults[i] += mult
+            else:
+                mults[i] = mult
+
+    # convert mults to list of strings
+    for i in range(count):
+        if i in mults:
+            mults[i] = r'\cdot 10^{%i}' % mults[i]
 
     if len(mults) > 0:
         largest_mult = max(mults.values(), key=len)
@@ -340,7 +359,7 @@ def format_valerr(val, err, mult=True, small_dig=ERR_SMALL_DIG, fmt=NUM_FORMAT):
         format_valerr(val * iplier, err * iplier, 0).strip('$'), mult)
 
 
-def format_valerr_list(data, error, small_dig=ERR_SMALL_DIG):
+def format_valerr_list(data, error, mult=0, small_dig=ERR_SMALL_DIG):
     """ Format list of values and errors to align.
 
     Values in data will be rounded according to error.
@@ -350,13 +369,20 @@ def format_valerr_list(data, error, small_dig=ERR_SMALL_DIG):
         error: Number, list of numbers or numpy array.
         small_dig: Largest significant digit in which case to round to
             two significant digits.
+        mult: use multiplicator 10^mult for every entry.
 
     Returns:
         List of strings. Each entry is LaTeX code surrounded by '$'.
     """
-    data = np.array(data)
+    # no automatic detection for appropriate mult implemented
+    if mult is True:
+        mult = 0    
+    if mult is False:
+        mult = 0
+
+    data = np.array(data)*10**(-mult)
     if isinstance(error, (list, np.ndarray)):
-        error = np.array(error)
+        error = np.array(error)*10**(-mult)
         prec = [prec_by_err(err, small_dig) for err in error]
         dright = max(0, -min(prec))  # highest precision or 0
     else:
@@ -378,9 +404,18 @@ def format_valerr_list(data, error, small_dig=ERR_SMALL_DIG):
 
     neg = (data < 0).any()
 
-    return [r'$%s \pm %s$' % (align_num(val, val_dl, dright, neg),
-                              align_num(err, err_dl, dright, False))
-            for val, err in repr_rounded]
+    if mult != 0:
+        return [r'$(%s \pm %s)\cdot 10^{%i}$' % (
+                    align_num(val, val_dl, dright, neg),
+                    align_num(err, err_dl, dright, False),
+                    mult)
+                for val, err in repr_rounded]
+    else:
+        return [r'$%s \pm %s$' % (
+                    align_num(val, val_dl, dright, neg),
+                    align_num(err, err_dl, dright, False))
+                for val, err in repr_rounded]
+
 
 
 def _table_params(cols, fill, just, vsep, hsep):
