@@ -165,7 +165,7 @@ class Quantity(Symbol):
 
 
 
-def qtable(*quantities, mult=dict(), html=True, maxcols=5):
+def qtable(*quantities, mult=dict(), unit=dict(), html=True, maxcols=5):
     """ Represent quantites in a table.
 
     Args:
@@ -173,7 +173,7 @@ def qtable(*quantities, mult=dict(), html=True, maxcols=5):
         html: If True, output will be formatted to be displayable html.
             Else, LaTeX and html code is returned in a tuple.
         mult: Dict specifying the order of magnitude for quantity at index.
-            qtable(A,B,mult={B:10}) will display all B entries 
+            qtable(A,B,mult={B:10}) will display all B entries
             as ... cdot 10^10.
         maxcols: Maximum number of columns. Table will be split.
 
@@ -195,7 +195,7 @@ def qtable(*quantities, mult=dict(), html=True, maxcols=5):
         html = []
         ltx = []
         for chunk in chunks(quantities):
-            l, h = qtable(*chunk, html=False, maxcols=None, mult=mult)
+            l, h = qtable(*chunk, html=False, maxcols=None, mult=mult, unit=unit)
             html.append(h)
             ltx.append(l)
 
@@ -212,14 +212,17 @@ def qtable(*quantities, mult=dict(), html=True, maxcols=5):
     for quant in quantities:
         if not quant in mult:
             mult[quant] = True # if not provided, determine automatically
+        if quant in unit:
+            unit_obj = parse_unit(unit[quant])[2]
+        else:
+            unit_obj = None
 
         assert isinstance(quant, Quantity)
-
-        value, error, unit = adjust_to_unit(quant)
+        value, error, unit_obj = adjust_to_unit(quant, unit_obj)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
-            latex(quant), latex(unit))
+            latex(quant), latex(unit_obj))
 
         column = [header]
         if error is None:
@@ -232,7 +235,7 @@ def qtable(*quantities, mult=dict(), html=True, maxcols=5):
                 else:
                     column.append(
                         '$'
-                        + pytex.align_num(value/mult[quant])
+                        + pytex.align_num(value/10**mult[quant])
                         + r' \cdot 10^{%i}$' % mult[quant])
         else:
             if isinstance(value, np.ndarray):

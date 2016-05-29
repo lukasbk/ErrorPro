@@ -200,38 +200,38 @@ def mean(*quants, name=None, longname=None, weighted=None):
                 actually_weight = False
     return mean_value.mean(actual_quants, actually_weight, name, longname)
 
-def table(*quants, maxcols=5, latex_only=False, table_only=False):
+def table(*quantities, maxcols=5, latex_only=False, table_only=False):
     """ shows quantities and their values in a table
     Args:
         quantities: quantities to be shown. Each quantity can be followed by a
-            dict argument specifying the multiplier and/or unit:
+            dict argument specifying the multiplier exponent and/or unit:
             e.g. {'unit': ..., 'mult': ...}
         maxcols: maximum number of columns
         latex_only: if True, only returns latex code. If False, returns both latex
             and actual table.
     """
 
-    """ code for display options (+ passing to qtable needed)
     i = 0
-    quants = []
-    options = []
+    quants = [] # quantities list without options
+    mult = dict()
+    unit = dict()
     while i<len(quantities):
-        # get x, y and options from plots array
         quants.append(quantities[i])
         if i+1<len(quantities) and isinstance(quantities[i+1], dict):
-            options.append(quantities[i+1])
+            if 'mult' in quantities[i+1]:
+                mult[quantities[i]] = quantities[i+1]['mult']
+            if 'unit' in quantities[i+1]:
+                unit[quantities[i]] = quantities[i+1]['unit']
             i += 2
         else:
-            options.append({})
             i += 1
-    """
 
     if latex_only:
-        return qtable(*quants, html=False, maxcols=maxcols)[0]
+        return qtable(*quants, mult=mult, unit=unit, html=False, maxcols=maxcols)[0]
     elif table_only:
-        return qtable(*quants, html=False, maxcols=maxcols)[1]
+        return qtable(*quants, mult=mult, unit=unit, html=False, maxcols=maxcols)[1]
     else:
-        return render_latex(qtable(*quants, maxcols=maxcols))
+        return render_latex(qtable(*quants, mult=mult, unit=unit, maxcols=maxcols))
 
 def params(*names):
     """ creates empty quantities (value=1) in order to be used as fit parameters
