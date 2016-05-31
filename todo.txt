@@ -14,6 +14,8 @@ Kleinkram:
 - Kommt das Programm mit NaN's in data sets klar?
 
 Später:
+- Naturkonstanten
+- besseres Importieren
 - 2-dimensionale Ausgabe!
 - multidimensional plotting: repeating (3d-plots maybe later)
 - Slicing
