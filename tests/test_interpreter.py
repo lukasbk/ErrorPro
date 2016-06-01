@@ -72,8 +72,8 @@ class InterpreterTestCase(unittest.TestCase):
         ast = parse(
             "{\n" +
             " F[N], s[m], s_err[cm]\n" +
-            " 1.1 2 0.1\n" +
-            " 3 4 0.2\n"
+            " 1.1 2 1\n" +
+            " 3 4 2\n"
             "}"
         )
         program = interpreter.interpret(ast, ns)
@@ -83,8 +83,8 @@ class InterpreterTestCase(unittest.TestCase):
         self.assertEqual(ns["s"].name, 's')
         self.assertEqual(ns["s"].value[0], 2)
         self.assertEqual(ns["s"].value[1], 4)
-        self.assertEqual(ns["s"].error[0], 0.1)
-        self.assertEqual(ns["s"].error[1], 0.2)
+        self.assertEqual(ns["s"].error[0], 0.01)
+        self.assertEqual(ns["s"].error[1], 0.02)
 
 """ TODO
     def test_assignment_formula_quoted(self):
