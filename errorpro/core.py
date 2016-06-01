@@ -479,31 +479,37 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
 
         # find out if it's a function or data points
         if isinstance(x, Quantity):
-            # if x is a single quantity ...
+            # if x is a single quantity, ...
             unpacked_y = _find_all_dependencies(y, x)
             if unpacked_y.has(x):
-                # ... and is part of the dependency of y,
-                # then it must be a function
+                # ... is part of the dependency of y ...
+                no_sets = True
+                for q in unpacked_y.free_symbols:
+                    if q is not x and isinstance(q.value, np.ndarray):
+                        no_sets = False
+                if no_sets:
+                    # ... and y does not contain any data sets,
+                    # then it must be a function!
 
-                # add label if not specified
-                if not 'label' in options:
-                    if isinstance(y, Quantity):
-                        options['label'] = ((y.longname + " ") if y.longname else "") + str(y)
-                    else:
-                        options['label'] = str(unpacked_y)
+                    # add label if not specified
+                    if not 'label' in options:
+                        if isinstance(y, Quantity):
+                            options['label'] = ((y.longname + " ") if y.longname else "") + str(y)
+                        else:
+                            options['label'] = str(unpacked_y)
 
-                y = unpacked_y
+                    y = unpacked_y
 
-                if not ignore_dim:
-                    # get factors
-                    x_factor, xunit = convert_to_unit(x_dim, output_unit=xunit)
-                    y_factor, yunit = convert_to_unit(y_dim, output_unit=yunit)
+                    if not ignore_dim:
+                        # get factors
+                        x_factor, xunit = convert_to_unit(x_dim, output_unit=xunit)
+                        y_factor, yunit = convert_to_unit(y_dim, output_unit=yunit)
 
-                    # scale function to units
-                    y = y.subs(x,x*x_factor) / y_factor
+                        # scale function to units
+                        y = y.subs(x,x*x_factor) / y_factor
 
-                functions.append((x, y, options))
-                continue
+                    functions.append((x, y, options))
+                    continue
 
         # otherwise, it's a data set
 
