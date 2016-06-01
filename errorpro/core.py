@@ -27,15 +27,16 @@ def assign(value, error=None, unit=None, name=None, longname=None, value_unit=No
             will perform the calculation, otherwise it just saves the value.
      error: number that is saved as the value's uncertainty. this will replace
             any error coming from a calculation.
-     unit: sympy expression of Unit objects. This is used to convert and save
-           value and error in base units.
-     name: short name of the quantity (usually one letter). If not specified,
-           quantity will get a dummy name.
+     unit: string or sympy expression of Unit objects. This is used to convert
+     	   and save value and error in base units. Dimension of unit as well as
+     	   preferred unit will be saved.
+     name: short name of the quantity (usually one or a fewletter). If not
+     	   specified, quantity will get a dummy name.
      longname: optional additional description of the quantity
      value_unit: unit of value. Overwrites unit if specified.
      error_unit: unit of error. Overwrites unit if specified.
      ignore_dim: bool. Keeps function from raising an error even if calculated
-                 and given unit don't match. Then given unit is used instead.
+                 and given unit don't match. Then, given unit is used instead.
     """
 
     value_formula = None
@@ -174,7 +175,7 @@ def mean(*quants, name=None, longname=None, weighted=None):
     """ Calculates mean value of quantities
 
     Args:
-        quantities: one or more quantities or expressions, of which mean value shall be calculated
+        quants: one or more quantities or expressions, of which mean value shall be calculated
         name: name for new quantity
         longname: description for new quantity
         weighted: if True, will weight mean value by errors (returns error if not possible)
@@ -199,23 +200,41 @@ def mean(*quants, name=None, longname=None, weighted=None):
                 actually_weight = False
     return mean_value.mean(actual_quants, actually_weight, name, longname)
 
-def table(*quants, maxcols=5, latex_only=False, table_only=False):
+def table(*quantities, maxcols=5, latex_only=False, table_only=False):
     """ shows quantities and their values in a table
     Args:
-     - quants: quantities to be shown
-     - maxcols: maximum number of columns
-     - latex_only: if True, only returns latex code. If False, returns both latex
-                   and actual table.
+        quantities: quantities to be shown. Each quantity can be followed by a
+            dict argument specifying the multiplier exponent and/or unit:
+            e.g. {'unit': ..., 'mult': ...}
+        maxcols: maximum number of columns
+        latex_only: if True, only returns latex code. If False, returns both latex
+            and actual table.
     """
+
+    i = 0
+    quants = [] # quantities list without options
+    mult = dict()
+    unit = dict()
+    while i<len(quantities):
+        quants.append(quantities[i])
+        if i+1<len(quantities) and isinstance(quantities[i+1], dict):
+            if 'mult' in quantities[i+1]:
+                mult[quantities[i]] = quantities[i+1]['mult']
+            if 'unit' in quantities[i+1]:
+                unit[quantities[i]] = quantities[i+1]['unit']
+            i += 2
+        else:
+            i += 1
+
     if latex_only:
-        return qtable(*quants, html=False, maxcols=maxcols)[0]
+        return qtable(*quants, mult=mult, unit=unit, html=False, maxcols=maxcols)[0]
     elif table_only:
-        return qtable(*quants, html=False, maxcols=maxcols)[1]
+        return qtable(*quants, mult=mult, unit=unit, html=False, maxcols=maxcols)[1]
     else:
-        return render_latex(qtable(*quants, maxcols=maxcols))
+        return render_latex(qtable(*quants, mult=mult, unit=unit, maxcols=maxcols))
 
 def params(*names):
-    """ creates empty quantities in order to be used as fit parameters
+    """ creates empty quantities (value=1) in order to be used as fit parameters
     Args:
      names: names of quantities to be created. Can be either one string using
             whitespaces as a separator or multiple strings.
@@ -229,6 +248,7 @@ def params(*names):
     for name in names:
         q = Quantity(name)
         q.dim = Dimension()
+        q.value = np.float_(1)
         p.append(q)
     if len(p) == 1:
         return p[0]
@@ -241,25 +261,28 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
     """ fits function to data and returns results in table and plot
 
     Args:
-		func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
-		xdata: sympy expression or list of sympy expressions of x-axis
-			   data to fit to. xdata quantities must be 1-dimensional.
-		ydata: sympy Expr of y-axis data to fit to
-		params: list of parameters in fit function, e.g. [m, n, b]
+	func: sympy Expr of function to fit, e.g. n*t**2 + m*t + b
+	xdata: sympy expression or list of sympy expressions of x-axis
+	       data to fit to. xdata quantities must be 1-dimensional.
+	ydata: sympy Expr of y-axis data to fit to
+	params: list of parameters in fit function, e.g. [m, n, b]
+	        If you don't want to specify starting values, you can create
+	        parameter quantities with the 'params' function.
         xvar: if specified, this is the quantity in fit function to be used as
               x-axis variable. Specify if xdata is not a quantity but an expression.
               Name or value of xvar don't matter.
+              (e.g. empty quantity can be created with params)
         ydata_axes: int or tuple of ints. Specifies which axes of the ydata to use
-        			for the fit. For other axes, fit will be repeated separately.
-		weighted: If True, will weight fit by errors (returns error if not possible).
-				  If False, will not weight fit by errors.
-				  If None, will try to weight fit, but if at least one error is
+        	    for the fit. For other axes, fit will be repeated separately.
+	weighted: If True, will weight fit by errors (returns error if not possible).
+		  If False, will not weight fit by errors.
+		  If None, will try to weight fit, but if at least one error is
                   not given, will not weight it.
     	absolute_sigma: bool. If False, uses errors only to weight data points.
-					    Overall magnitude of errors doesn't affect output errors.
-					    If True, estimated output errors will be based on input
+			Overall magnitude of errors doesn't affect output errors.
+			If True, estimated output errors will be based on input
                         error magnitude.
-		ignore_dim: if True, will ignore dimensions and just calculate in base units instead
+	ignore_dim: if True, will ignore dimensions and just calculate in base units instead
         plot_result: bool. plots data and fit function if possible.
     """
 
@@ -323,14 +346,15 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
 									"This error will occur until dimensions are right.")
 
     # fit
-    values, errors = fitting.fit(func, xdata, ydata, params, ydata_axes, weighted, absolute_sigma)
 
-    # save results
-    for i, p in enumerate(params):
-        p.value = values[i]
-        p.value_formula = "fit"
-        p.error = errors[i]
-        p.error_formula = "fit"
+    values, errors = fitting.fit(func, xdata, ydata, params, ydata_axes, weighted, absolute_sigma)
+    if not values is None:
+        # save results
+        for i, p in enumerate(params):
+            p.value = values[i]
+            p.value_formula = "fit"
+            p.error = errors[i]
+            p.error_formula = "fit"
 
     # can't plot if there is more than one x-axis or more than one y-dimension
     if len(xdata)>1 or len(ydata.shape)>1:
@@ -342,22 +366,30 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
         image_data = "data:image/png;base64,%s" % b64encode(print_figure(fig)).decode("utf-8")
         Gcf.destroy_fig(fig)
 
-    # render show/hide buttons
-    params_button, params_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
-    if plot_result:
-        plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data)
-        res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br />%s'\
-                % (params_button, plot_button, params_code, plot_code)
+    if values is None:
+        if plot_result:
+            plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data, hide = False)
+            res = 'Fit failed!<div width=20px/>%s<hr/>%s'\
+                    % (plot_button, plot_code)
+        else:
+            res = 'Fit failed!'
     else:
-        # render only one button
-        res = 'Results of fit<div width=20px/>%s<hr/>%s'\
-                % (params_button, params_code)
+        # render show/hide buttons
+        params_button, params_code = pytex.hide_div('Results', table(*params, table_only=True), hide = False)
+        if plot_result:
+            plot_button, plot_code = pytex.hide_div('Plot', "<img src='%s' />" % image_data)
+            res = 'Results of fit<div width=20px/>%s%s<hr/>%s<br />%s'\
+                    % (params_button, plot_button, params_code, plot_code)
+        else:
+            # render only one button
+            res = 'Results of fit<div width=20px/>%s<hr/>%s'\
+                    % (params_button, params_code)
 
     return render_latex(res)
 
 def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
-         yrange=None, xscale=None, yscale=None, legend=True, size=None, save_to=None,
-         show=True, return_fig=False, ignore_dim=False, module="matplotlib"):
+         yrange=None, xscale=None, yscale=None, legend=True, size=None, grid=False,
+         save_to=None, show=True, return_fig=False, ignore_dim=False, module="matplotlib"):
     """ Plots data or functions
 
     Args:
@@ -380,12 +412,15 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
      legend: bool, int or str. Turn off legend with False. Specify position with
              number or string. (matplotlib's 'legend(loc=...)')
      size: 2-tuple of size in inches
+     grid: bool. if True, plots a standard grid. If dict, parameters passed to
+           matplotlib's ax.grid(...) can be specified.
      save_to: filename to save image to
      show: if True, will show the image (with plt.show())
-     return_fig: if True, will return the Figure object
+     return_fig: if True, will return the Figure object. Otherwise, figure will
+                 be cleared after showing/saving.
      ignore_dim: if True, will ignore all dimensional errors and just plot in
                  base units.
-     module: 'matplotlib' or 'gnuplot'
+     module: 'matplotlib' or 'gnuplot' (gnuplot currently not working)
 
     Returns:
       Figure object
@@ -506,7 +541,7 @@ def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
     if module == 'matplotlib':
         return matplot.plot(data_sets, functions, xlabel=xlabel, ylabel=ylabel,
                            xrange=xrange, yrange=yrange, xscale=xscale,
-                           yscale=yscale,  legend=legend, size=size,
+                           yscale=yscale,  legend=legend, size=size, grid=grid,
                            save_to=save_to, show=show, return_fig=return_fig)
     elif module == 'gnuplot':
         raise NotImplementedError('gnuplot module is not adjusted to new structure, yet.')
@@ -529,7 +564,7 @@ def _find_all_dependencies(expr, find, ignore=()):
     return unpacked
 
 def concat(*quants, name=None, longname=None):
-    """ concatenates 0- or 1-dimensional quantities
+    """ concatenates 0- or 1-dimensional quantities to one long 1-dimensional quantity
 
     Args:
         quants: quantities to be concatenated
@@ -587,7 +622,7 @@ def slice(quantity, start=0, end=None, name=None, longname=None):
     """ creates new quantity that only contains values from start to end
 
     Args:
-        quantity: name of quantity to be sliced
+        quantity: name of quantity to be sliced (must be 1-dim)
         start: number of value in data set where new quantity is supposed to start.
                First value is 0.
         end: number of value to be the first one not taken into the new quantity.

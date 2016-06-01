@@ -165,15 +165,17 @@ class Quantity(Symbol):
 
 
 
-def qtable(*quantities, html=True, maxcols=5):
+def qtable(*quantities, mult=dict(), unit=dict(), html=True, maxcols=5):
     """ Represent quantites in a table.
 
     Args:
         quantities: List of quantity objects.
         html: If True, output will be formatted to be displayable html.
             Else, LaTeX and html code is returned in a tuple.
-        maxcols:
-            Maximum number of columns. Table will be split.
+        mult: Dict specifying the order of magnitude for quantity at index.
+            qtable(A,B,mult={B:10}) will display all B entries
+            as ... cdot 10^10.
+        maxcols: Maximum number of columns. Table will be split.
 
     Returns:
         String of html code (html=True) or tuple (LaTeX table, html table).
@@ -182,7 +184,6 @@ def qtable(*quantities, html=True, maxcols=5):
     if len(quantities) == 0:
         return 'No quantities selected.'
 
-    cols = []
     if html:
         if not maxcols:
             maxcols = len(quantities)
@@ -194,7 +195,7 @@ def qtable(*quantities, html=True, maxcols=5):
         html = []
         ltx = []
         for chunk in chunks(quantities):
-            l, h = qtable(*chunk, html=False, maxcols=None)
+            l, h = qtable(*chunk, html=False, maxcols=None, mult=mult, unit=unit)
             html.append(h)
             ltx.append(l)
 
@@ -207,26 +208,42 @@ def qtable(*quantities, html=True, maxcols=5):
 
         return res
 
+    cols = []
     for quant in quantities:
-        assert isinstance(quant, Quantity)
+        if not quant in mult:
+            mult[quant] = True # if not provided, determine automatically
+        if quant in unit:
+            unit_obj = parse_unit(unit[quant])[2]
+        else:
+            unit_obj = None
 
-        value, error, unit = adjust_to_unit(quant)
+        assert isinstance(quant, Quantity)
+        value, error, unit_obj = adjust_to_unit(quant, unit_obj)
 
         header = quant.longname + ' ' if quant.longname else ''
         header += '$%s \\; \\mathrm{\\left[%s\\right]}$' % (
-            latex(quant), latex(unit))
+            latex(quant), latex(unit_obj))
 
         column = [header]
         if error is None:
             if isinstance(value, np.ndarray):
-                column.extend(pytex.align_num_list(value, math_env=True))
+                column.extend(
+                    pytex.align_num_list(value,math_env=True,mult=mult[quant]))
             else:
-                column.append(pytex.align_num(value))
+                if mult[quant] is True:
+                    column.append('$'+pytex.align_num(value)+'$')
+                else:
+                    column.append(
+                        '$'
+                        + pytex.align_num(value/10**mult[quant])
+                        + r' \cdot 10^{%i}$' % mult[quant])
         else:
             if isinstance(value, np.ndarray):
-                column.extend(pytex.format_valerr_list(value,error))
+                column.extend(
+                    pytex.format_valerr_list(value,error,mult=mult[quant]))
             else:
-                column.append(pytex.format_valerr(value,error))
+                column.append(
+                    pytex.format_valerr(value,error,mult=mult[quant]))
         cols.append(column)
 
     return (pytex.table_latex(cols), pytex.table_html(cols))

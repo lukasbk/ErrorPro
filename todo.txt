@@ -1,34 +1,29 @@
 
 TODO
 
-Kurzfristig zu tun:
+Vor Veröffentlichung:
+- Optionen für Einheiten und Exponenten bei Ausgabe (und *10^2 ist ziemlich nervig)
 - Rundungstests, mehrdimensionale Fits testen
-
-In einfacher Form kurzfristig:
-- mean_value als sympy Funktion
-  -> eigene lambdify-Funktion mit cot-Ersetzung wie in plot_mat
-  -> benutzerdefinierte Funktionen und sowas wie Betrag, Signumk
-
 - mean value: value_formula und error_formula
-
-- multidimensional plotting: repeating (!) or 3d-plots
-
-Ausgabekram:
-- 2-dimensionale Ausgabe!
-- Extrastelle nicht nur bei 1 und 2?
-- 10hoch mit Punkt statt Kreuz,
-- Optionen für Einheiten und Exponenten
-- *10^2 ist ziemlich nervig
-- pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
 - kurze/ausklappbare Fehlerausgabe?
-- Option für Ausgabe der exakten Werte?
+- Betrag, Signum, funktioniert die cot-Ersetzung?
 
-Zu tun:
+Kleinkram:
+- pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
+- Extrastelle nicht nur bei 1 und 2?
 - Kommt das Programm mit NaN's in data sets klar?
-- schönere Formatierung der Fehlerformel -> simplify-Optionen
-- Slicing
 
 Später:
-- Anleitung
+- Naturkonstanten
+- besseres Importieren
+- 2-dimensionale Ausgabe!
+- multidimensional plotting: repeating (3d-plots maybe later)
+- Slicing
+- mean_value als sympy Funktion
+- Option für Ausgabe der exakten Werte?
+- Anleitung um mehr ergänzen
+- schönere Formatierung der Fehlerformel -> simplify-Optionen
 - Bessere Fehlerberechnung beim Fitten?
-- gnuplot: keine doppelten Variablendefinitionen
+- gnuplot:
+  * wieder zum Laufen bringen
+  * keine doppelten Variablendefinitionen
