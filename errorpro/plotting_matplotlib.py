@@ -73,20 +73,27 @@ def plot(data_sets, functions, xlabel=None, ylabel=None, xrange=None,
         y = numpy_func(x)
         ax.plot(x,y,**f[2])
 
+
+    # legend
     if legend:
         plt.legend(loc=legend if isinstance(legend, str) or isinstance(legend, int) else None)
+    # labels
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
+    # ranges
     if not xrange is None:
         ax.set_xlim(xrange)
     if not yrange is None:
         ax.set_ylim(yrange)
+    # scale, e.g. logscale
     if not xscale is None:
         ax.set_xscale(xscale)
     if not yscale is None:
         ax.set_yscale(yscale)
+    # image size
     if size is not None:
         fig.set_size_inches(*size)
+    # saving or showing
     if not save_to is None:
         fig.savefig(save_to)
     if show:

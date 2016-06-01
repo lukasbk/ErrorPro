@@ -41,17 +41,21 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 
 	# create fit function
 	args = list(xdata) + list(params)
-	np_func = lambdify(args, func, "numpy")
+	constants = [var for var in func.free_symbols if not var in args]
+	args = args + constants
+	np_func_with_consts = lambdify(args, func, "numpy")
+	def np_func_wout_consts(*args):
+		return np_func_with_consts(*args, *[c.value for c in constants])
 
 	if len(xdata) == 1:
-		func = np_func
+		func = np_func_wout_consts
 	else:
 		# unfortunately, this must be done in order to pass a right function to curve_fit
 		param_names = ['p'+str(i) for i in range(len(params))]
 		x_refs = ['x[%s]' % str(i) for i in range(len(xdata))]
 		lambdastr = 'lambda x, %s: f(%s)' % (', '.join(param_names),
-												   ', '.join(x_refs+param_names))
-		func = eval(lambdastr, {'f': np_func})
+											   ', '.join(x_refs+param_names))
+		func = eval(lambdastr, {'f': np_func_wout_consts})
 
 	# list starting values
 	start_params = []
@@ -123,6 +127,8 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 			err = None
 			absolute = False
 		# perform fit
+
+
 		params_opt[i], params_covar = curve_fit (func, xvalues, yvalues[i].flatten(),
 					sigma=err, p0=start_params, absolute_sigma=absolute)
 
