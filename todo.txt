@@ -14,6 +14,7 @@ Kleinkram:
 - Kommt das Programm mit NaN's in data sets klar?
 
 Später:
+- charakteristische Größenordnung des Fits erkennen und Startwert anpassen
 - Naturkonstanten
 - besseres Importieren
 - 2-dimensionale Ausgabe!
