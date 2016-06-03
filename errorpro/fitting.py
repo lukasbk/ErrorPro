@@ -44,8 +44,9 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 	constants = [var for var in func.free_symbols if not var in args]
 	args = args + constants
 	np_func_with_consts = lambdify(args, func, "numpy")
-	def np_func_wout_consts(*args):
-		return np_func_with_consts(*args, *[c.value for c in constants])
+	def np_func_wout_consts(*args_wo_consts):
+		new_args = args_wo_consts + tuple([c.value for c in constants])
+		return np_func_with_consts(*new_args)
 
 	if len(xdata) == 1:
 		func = np_func_wout_consts
