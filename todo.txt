@@ -11,6 +11,8 @@ Vor Veröffentlichung:
 plot(lamda**3, a_Al, lamda**3, m1*lamda**3) als Punkte und Funktion fitten ohne ignore_dim
 
 Kleinkram:
+- statt "formula"-Funktion einfach Button in normaler Ausgabe?
+- Dinge in der Reihenfolge plotten, in der sie auch angegeben wurden
 - pytex.format_valerr(0,0) ergibt $0.0 \\pm -0.1$
 - Extrastelle nicht nur bei 1 und 2?
 - Kommt das Programm mit NaN's in data sets klar?

@@ -43,6 +43,8 @@ def fit(func, xdata, ydata, params, ydata_axes=None, weighted=None, absolute_sig
 	args = list(xdata) + list(params)
 	constants = [var for var in func.free_symbols if not var in args]
 	args = args + constants
+	# as constants could be non-scalar, they need to be
+	# inserted after converting to numpy
 	np_func_with_consts = lambdify(args, func, "numpy")
 	def np_func_wout_consts(*args_wo_consts):
 		new_args = args_wo_consts + tuple([c.value for c in constants])
