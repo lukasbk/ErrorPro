@@ -10,14 +10,14 @@ def read(fname):
 
 setup(
     name = "errorpro",
-    version = "0.1.4",
+    version = "0.1.5",
     author = "Lukas Bentkamp",
     author_email = "lukas.bentkamp@mailbox.org",
-    description = ("calculates physical quantities from data including units and error propagation."),
+    description = ("ErrorPro allows to do calculations in IPython with physical quantities, which contain a value, error and unit."),
     license = "BSD",
     keywords = "error uncertainty propagation units physics",
     url = "http://github.com/lukasbk/ErrorPro",
-    download_url = 'https://github.com/lukasbk/ErrorPro/tarball/0.1.1',
+    download_url = 'https://github.com/lukasbk/ErrorPro/tarball/0.1.5',
     packages=['errorpro','errorpro.dimensions','errorpro.parsing'],
     long_description=read('README.rst'),
     classifiers=[
