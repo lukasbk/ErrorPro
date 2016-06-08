@@ -20,7 +20,9 @@ class FitTestCase(unittest.TestCase):
         y.dim = Dimension()
 
         m = Quantity("m")
+        m.value = 1
         b = Quantity("b")
+        b.value = 1
 
         return (x, y, m, b)
 

@@ -62,7 +62,7 @@ def prec_by_err(err, small_dig=ERR_SMALL_DIG):
     smaller or equal to small_dig, then magnitude - 1 (greater precision).
     """
     mag = magnitude(err)
-    return mag - (abs(err) < (small_dig + 1) * 10 ** mag)
+    return mag - (abs(err) < (small_dig + 1) * np.float_(10) ** mag)
 
 
 def round_to_mag(num, mag, rdg=None, use_dec=False):
@@ -258,7 +258,7 @@ def align_num_list(values, math_env=False, mult=True):
     """
     # no automatic detection for appropriate mult implemented
     if mult is True:
-        mult = 0    
+        mult = 0
     if mult is False:
         mult = 0
 
@@ -354,7 +354,7 @@ def format_valerr(val, err, mult=True, small_dig=ERR_SMALL_DIG, fmt=NUM_FORMAT):
         else:
             return format_valerr(val, err, 0)
 
-    iplier = 10 ** (-mult)
+    iplier = np.float_(10) ** (-mult)
     return r'$(%s) \cdot 10^{%i}$' % (
         format_valerr(val * iplier, err * iplier, 0).strip('$'), mult)
 
@@ -376,13 +376,13 @@ def format_valerr_list(data, error, mult=0, small_dig=ERR_SMALL_DIG):
     """
     # no automatic detection for appropriate mult implemented
     if mult is True:
-        mult = 0    
+        mult = 0
     if mult is False:
         mult = 0
 
-    data = np.array(data)*10**(-mult)
+    data = np.array(data)*np.float_(10)**(-mult)
     if isinstance(error, (list, np.ndarray)):
-        error = np.array(error)*10**(-mult)
+        error = np.array(error)*np.float_(10)**(-mult)
         prec = [prec_by_err(err, small_dig) for err in error]
         dright = max(0, -min(prec))  # highest precision or 0
     else:
