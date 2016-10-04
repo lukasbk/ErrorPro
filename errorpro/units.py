@@ -65,7 +65,8 @@ class DerivedUnit(Unit):
 			dim=subs_symbols(dim,{var.name:var.dim})
 		self.dim=dim_simplify(dim)
 
-		#calculate complexity
+		# calculate complexity
+		# (sum over all absolute values of composing base units exponents)
 		self.complexity=0
 		for exponent in self.dim.values():
 			self.complexity+=abs(exponent)
@@ -99,7 +100,7 @@ def parse_unit(unit, unit_system=None):
 		if not isinstance(u,Unit):
 			raise ValueError("%s is not a unit." % u.name)
 
-	#calculate dimension
+	# calculate dimension
 	dim=unit
 	factor=unit
 	for var in unit.free_symbols:
@@ -124,69 +125,88 @@ def convert_to_unit(input_dimension, output_unit=None, only_base=False, unit_sys
 
 	Returns tuple of factor and unit.
 	"""
+	dim = input_dimension
+
 	if unit_system is None:
 		unit_system = DEF_UNIT_SYSTEM
 
-	if output_unit==None:
-		output_unit=S.One
-		if input_dimension.is_dimensionless:
+	if output_unit == None:
+		output_unit = S.One
+		if dim.is_dimensionless:
 			return (S.One,S.One)
-		assert isinstance(input_dimension,Dimension)
-		factor=1
+		assert isinstance(dim, Dimension)
+		factor = S.One
 
 		sortedComplexities=sorted(set(map(lambda x:unit_system[x].complexity,unit_system)), reverse=True)
-		#iterates all complexities
-		for complexity in sortedComplexities:
-			reciprocal=S.One
-			#checks first putting in normally, then putting in reciprocally
-			while True:
-				#iterates all units of this complexity
-				for unit in unit_system.values():
-					if (not only_base) or isinstance(unit,BaseUnit):
-						if unit.standard and unit.complexity==complexity:
-							#tries to put in as often as possible
-							while True:
-								if fits_in(unit,input_dimension,reciprocal):
-									input_dimension=dim_simplify(input_dimension/(unit.dim**reciprocal))
-									output_unit*=unit**reciprocal
-									factor*=unit.factor**reciprocal
-									if input_dimension.is_dimensionless:
+		fractions = False
+		# try first integral exponents, then also fractions
+		while True:
+			# iterate all complexities
+			for complexity in sortedComplexities:
+				reciprocal = S.One
+				# try first putting in normally, then putting in reciprocally
+				while True:
+					# iterates all units of this complexity
+					for unit in unit_system.values():
+						if (not only_base) or isinstance(unit,BaseUnit):
+							if unit.standard and unit.complexity == complexity:
+								# tries to put in as often as possible
+								possible_exp = _fits_in(unit, dim, reciprocal, fractions)
+								if not possible_exp is S.Zero:
+									dim=dim_simplify(dim/(unit.dim**(possible_exp*reciprocal)))
+									output_unit*=unit**(possible_exp*reciprocal)
+									factor*=unit.factor**(possible_exp*reciprocal)
+									if dim.is_dimensionless:
 										return (factor,output_unit)
-								else:
-									break
 
-				if reciprocal==S.One:
-					reciprocal=S.NegativeOne
-				else:
-					break
-		assert input_dimension.is_dimensionless
+					if reciprocal==S.One:
+						reciprocal=S.NegativeOne
+					else:
+						break
+			if dim.is_dimensionless:
+				break
+			if fractions is False:
+				fractions = True
+			else:
+				raise RuntimeError("Could not convert dimension %s to unit." % dim)
+				break
 	else:
-		factor, dim, unit=parse_unit(output_unit,unit_system)
-		if not input_dimension==dim:
-			raise RuntimeError("unit %s does not fit dimension %s." % (output_unit,input_dimension))
+		factor, unit_dim, unit=parse_unit(output_unit,unit_system)
+		if not dim==unit_dim:
+			raise RuntimeError("unit %s does not fit dimension %s."
+								% (output_unit, dim))
 
 	return (factor,output_unit)
 
-def fits_in(unit,dimension,reciprocal):
+def _fits_in(unit, dimension, reciprocal, fractions):
 	"""
-	Checks if unit fits in given dimension
+	Checks if unit "fits in" given dimension. This is true if there is some
+	exponent for the unit to describe part of the dimension.
 	(just for use inside this module)
 
 	Args:
 	 - unit
 	 - dimension
-	 - reciprocal: 1 or -1 to show if unit is supposed to be fitted in as reciprocal or not
+	 - reciprocal: 1 or -1 to show if unit is supposed to be fitted in as
+	   reciprocal or not
+	 - fractions: bool if fractions are allowed
+
+	Returns:
+	  maximal possible exponent (positive)
 	"""
 	assert isinstance(unit,Unit)
 	assert isinstance(dimension,Dimension)
 	assert reciprocal is S.One or reciprocal is S.NegativeOne
 
+	max_exp = None
 	for lookAtThis, unitExp in unit.dim.items():
 		dimExp=dimension.get(lookAtThis,0)
 		if not unitExp==0:
 			if not sign(unitExp)==sign(dimExp*reciprocal):
-				return False
-			if not abs(unitExp)<=abs(dimExp):
-				return False
-
-	return True
+				return 0
+			exponent = sympify(abs(dimExp))/sympify(abs(unitExp))
+			if not fractions and not exponent.is_integer:
+				return S.Zero
+			if max_exp is None or exponent < max_exp:
+				max_exp = exponent
+	return max_exp

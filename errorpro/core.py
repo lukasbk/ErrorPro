@@ -9,7 +9,7 @@ from errorpro.dimensions.solvers import dim_solve
 from errorpro import plotting_matplotlib as matplot, plotting_gnuplot as gnuplot,\
                      fitting, pytex, mean_value
 
-from IPython.display import Latex as render_latex
+from IPython.display import Latex as render_latex, HTML, display
 
 # for plots in HTML context
 from matplotlib._pylab_helpers import Gcf
@@ -169,7 +169,7 @@ def formula(quantity, simplify=True):
     res = 'Error Formula for %s<div width=20px/>%s%s<hr/>%s<br>%s' % (
         '$%s$' % latex(quantity), form_button, latex_button, form_code, latex_code)
 
-    return render_latex(res)
+    return HTML(res)
 
 def mean(*quants, name=None, longname=None, weighted=None):
     """ Calculates mean value of quantities
@@ -231,7 +231,7 @@ def table(*quantities, maxcols=5, latex_only=False, table_only=False):
     elif table_only:
         return qtable(*quants, mult=mult, unit=unit, html=False, maxcols=maxcols)[1]
     else:
-        return render_latex(qtable(*quants, mult=mult, unit=unit, maxcols=maxcols))
+        return HTML(qtable(*quants, mult=mult, unit=unit, maxcols=maxcols))
 
 def params(*names):
     """ creates empty quantities (value=1) in order to be used as fit parameters
@@ -385,7 +385,7 @@ def fit(func, xdata, ydata, params, xvar=None, ydata_axes=None, weighted=None,
             res = 'Results of fit<div width=20px/>%s<hr/>%s'\
                     % (params_button, params_code)
 
-    return render_latex(res)
+    return HTML(res)
 
 def plot(*plots, xlabel=None, ylabel=None, xunit=None, yunit=None, xrange=None,
          yrange=None, xscale=None, yscale=None, legend=True, size=None, grid=False,

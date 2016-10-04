@@ -146,8 +146,7 @@ def repr_decimal(num, prec=None, rdg=None):
         String giving the decimal representation of num.
     """
     if prec is None:
-        # this is not very pretty.. Maybe there is a simpler way?
-        sgn = '-' * (num < 0)
+        sgn = '-' if num < 0 else ''
         num = abs(num)
         rep = repr(num)
         if 'e' in rep:
