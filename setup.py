@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name = "errorpro",
-    version = "0.1.5",
+    version = "0.1.6",
     author = "Lukas Bentkamp",
     author_email = "lukas.bentkamp@mailbox.org",
     description = ("ErrorPro allows to do calculations in IPython with physical quantities, which contain a value, error and unit."),
